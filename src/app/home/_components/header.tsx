@@ -5,32 +5,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
 
-  // Sync with <html> class
+  // Always force light mode
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDark]);
-
-  // Optional: On mount, check system preference or localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") setIsDark(true);
-    else if (saved === "light") setIsDark(false);
-    else if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    )
-      setIsDark(true);
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark]);
 
   const menuItems = [
     { label: "Home", href: "/" },
@@ -164,7 +144,7 @@ export default function Header() {
                 <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
                   Login
                 </button>
-                <button
+                {/* <button
                   aria-label="Toggle dark mode"
                   onClick={() => setIsDark((v) => !v)}
                   className="p-2 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition"
@@ -200,7 +180,7 @@ export default function Header() {
                       />
                     </svg>
                   )}
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
