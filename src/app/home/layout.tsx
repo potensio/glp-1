@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "@/app/dash/_components/header";
+import Header from "@/app/home/_components/header";
 import { Footer } from "@/components/ui/footer";
 
 export default function DashLayout({
