@@ -78,7 +78,7 @@ export const QuickActions = () => {
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 truncate">
                       {item.label}
                     </span>
                   </Button>
