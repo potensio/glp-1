@@ -1,8 +1,9 @@
 "use client";
 
-import { Scale, Heart, TrendingDown } from "lucide-react";
+import { Scale, Heart, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { XAxis, YAxis, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Button } from "@/components/ui/button";
 
 const weightData = [
   { name: "Jan", value: 168 },
@@ -34,10 +35,9 @@ export const HealthTrends = () => {
                 Weight Trend
               </h3>
             </div>
-            <div className="flex items-center space-x-2 text-green-600">
-              <TrendingDown className="h-4 w-4" />
-              <span className="text-sm font-medium">-2.5 lbs this month</span>
-            </div>
+            <Button variant={"outline"} className="cursor-pointer">
+              <Printer />
+            </Button>
           </div>
 
           <div className="h-40 ">
@@ -93,9 +93,9 @@ export const HealthTrends = () => {
                 Blood Pressure
               </h3>
             </div>
-            <span className="text-sm font-medium text-green-600">
-              Normal range
-            </span>
+            <Button variant={"outline"} className="cursor-pointer">
+              <Printer />
+            </Button>
           </div>
 
           <div className="h-40">

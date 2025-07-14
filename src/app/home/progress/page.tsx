@@ -162,7 +162,7 @@ function RecentEntries() {
         {dailyEntries.map((day, i) => (
           <Card
             key={i}
-            className="rounded-2xl shadow-xl transition-all duration-200 hover:shadow-2xl gap-2"
+            className="rounded-2xl shadow-xl transition-all duration-200 hover:shadow-2xl gap-2 cursor-pointer"
           >
             <div className="px-5 pb-2 flex items-center justify-between">
               <span className="font-semibold text-base">{day.date}</span>
