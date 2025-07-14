@@ -2,6 +2,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,8 +20,8 @@ export default function Header() {
   }, []);
 
   const menuItems = [
-    { label: "Home", href: "/" },
-    { label: "Progress", href: "/#features" },
+    { label: "Home", href: "/home" },
+    { label: "Progress", href: "/home/progress" },
     { label: "Medication", href: "/#pricing" },
     { label: "Journal", href: "/#about" },
   ];
@@ -37,10 +44,44 @@ export default function Header() {
           ))}
         </ul>
         <div className="hidden md:flex flex-1 justify-end items-center gap-2">
-          <Avatar className="size-12">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span className="cursor-pointer">
+                <Avatar className="size-10">
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 p-2">
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/billing"
+                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                >
+                  Billing
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/account"
+                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                >
+                  Account Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
+                onSelect={() => {
+                  /* TODO: Add logout logic */
+                }}
+              >
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* <button
             aria-label="Toggle dark mode"

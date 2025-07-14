@@ -47,7 +47,7 @@ export const QuickActions = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
@@ -73,7 +73,7 @@ export const QuickActions = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
@@ -101,7 +101,7 @@ export const QuickActions = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
@@ -130,7 +130,7 @@ export const QuickActions = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
@@ -156,7 +156,7 @@ export const QuickActions = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
                     <div className={`${item.color} p-3 rounded-full mb-2`}>
                       <item.icon className="h-6 w-6 text-white" />
@@ -181,7 +181,7 @@ export const QuickActions = () => {
             <Button
               key={index}
               variant="ghost"
-              className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md"
+              className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
             >
               <div className={`${item.color} p-3 rounded-full mb-2`}>
                 <item.icon className="h-6 w-6 text-white" />

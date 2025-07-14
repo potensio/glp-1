@@ -38,7 +38,7 @@ export function ActivityDialogContent({
           </div>
         </div>
       </DialogHeader>
-      <div className="mb-3">
+      <div className="flex flex-col gap-2">
         <label className="block text-sm font-medium mb-1 text-gray-600">
           Activity Type
         </label>
@@ -77,8 +77,8 @@ export function ActivityDialogContent({
             style={{ maxWidth: 120 }}
             aria-label="Duration in minutes"
           />
-          <span className="text-base font-medium text-gray-500 ml-1">
-            minutes
+          <span className="text-base font-medium text-secondary ml-1">
+            mins
           </span>
         </label>
       </div>

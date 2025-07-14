@@ -32,7 +32,7 @@ export function Glp1DialogContent({
         </div>
       </DialogHeader>
       {/* GLP-1 type selector */}
-      <div className="gap-2">
+      <div className="flex flex-col gap-2">
         <label
           className="block text-sm font-medium text-secondary w-full"
           htmlFor="glp1-type-toggle"

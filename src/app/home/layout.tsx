@@ -36,7 +36,7 @@ export default function DashLayout({
       {/* Header */}
       <Header />
       {/* Content */}
-      <div className="relative z-10 flex flex-col w-full max-w-6xl mx-auto justify-start gap-10 px-5 py-10 md:py-20">
+      <div className="relative z-10 flex flex-col w-full max-w-6xl mx-auto justify-start gap-10 px-4 py-10 md:py-20">
         {children}
       </div>
       <Footer />
