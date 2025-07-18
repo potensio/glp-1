@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
+import AddEntryButton from "./AddEntryButton";
 
 const journalEntries = [
   {
@@ -57,13 +58,11 @@ export default function JournalPage() {
             Your personal space for thoughts and reflections
           </p>
         </div>{" "}
-        <Button
+        <AddEntryButton
           size={"lg"}
           variant={"outline"}
           className="md:w-36 bg-transparent text-background hover:bg-background/10 hover:text-background"
-        >
-          Add New Entry
-        </Button>
+        />
       </div>
 
       {/* Journal Entries */}
@@ -98,14 +97,6 @@ export default function JournalPage() {
       </div>
 
       {/* Add New Entry Button */}
-      <div className="flex justify-center mt-8">
-        <Button
-          size="lg"
-          className="w-full max-w-xs text-base font-semibold py-6 rounded-xl shadow-md"
-        >
-          + Add New Entry
-        </Button>
-      </div>
     </div>
   );
 }

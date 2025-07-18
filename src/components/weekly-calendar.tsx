@@ -25,13 +25,20 @@ const MONTHS = [
 
 // Sample events data
 const sampleEvents = {
-  "2025-01-15": [{ title: "Team Meeting", time: "10:00 AM" }],
-  "2025-01-22": [{ title: "Project Deadline", time: "5:00 PM" }],
-  "2025-01-28": [{ title: "Client Call", time: "2:00 PM" }],
-  "2025-01-10": [
-    { title: "Morning Standup", time: "9:00 AM" },
-    { title: "Design Review", time: "2:00 PM" },
-    { title: "Client Presentation", time: "4:00 PM" },
+  "2025-07-02": [
+    { title: "Injection Reminder", time: "7:00 AM" },
+    { title: "Weight Check-in", time: "8:00 AM" },
+  ],
+  "2025-07-05": [{ title: "Doctor Appointment", time: "3:00 PM" }],
+  "2025-07-10": [{ title: "Blood Sugar Log", time: "9:00 AM" }],
+  "2025-07-15": [
+    { title: "Injection Reminder", time: "7:00 AM" },
+    { title: "Food Log Review", time: "6:00 PM" },
+  ],
+  "2025-07-20": [{ title: "Progress Journal Entry", time: "8:00 PM" }],
+  "2025-07-25": [
+    { title: "Monthly Summary Export", time: "10:00 AM" },
+    { title: "Doctor Follow-up", time: "2:00 PM" },
   ],
 };
 
@@ -296,7 +303,7 @@ export default function WeeklyCalendar({
             {selectedDate && (
               <Button
                 variant="outline"
-                className="w-full h-11"
+                className="w-full h-11 cursor-pointer"
                 onClick={() => setDialogOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />

@@ -46,17 +46,18 @@ export default function Header() {
         <div className="hidden md:flex flex-1 justify-end items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <span className="cursor-pointer">
+              <span className="flex items-center gap-2 cursor-pointer">
                 <Avatar className="size-10">
                   <AvatarImage src="https://github.com/shadcn.png" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
+                <span className="font-medium text-background">John</span>
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 p-2">
               <DropdownMenuItem asChild>
                 <Link
-                  href="/billing"
+                  href="/home/billing"
                   className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
                 >
                   Billing
@@ -64,7 +65,7 @@ export default function Header() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/account"
+                  href="/home/account"
                   className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
                 >
                   Account Settings

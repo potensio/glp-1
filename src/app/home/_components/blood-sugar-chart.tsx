@@ -1,22 +1,21 @@
 "use client";
 
-import { Scale, Printer } from "lucide-react";
+import { Droplet, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   Tooltip,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import React from "react";
 
-interface WeightTrendChartProps {
-  data: { name: string; value: number }[];
-  currentWeight: number;
-  targetWeight: number;
+interface BloodSugarChartProps {
+  data: { name: string; sugar: number }[];
+  latestReading: number;
 }
 
 // Define a local type for the custom tooltip props
@@ -26,10 +25,9 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
+export const BloodSugarChart: React.FC<BloodSugarChartProps> = ({
   data,
-  currentWeight,
-  targetWeight,
+  latestReading,
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
     const active = props?.active;
@@ -40,7 +38,8 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
         <div className="bg-white p-2 rounded shadow text-xs border border-gray-200">
           <div className="font-semibold">{label}</div>
           <div>
-            Weight: <span className="font-bold">{payload[0].value} lbs</span>
+            Blood Sugar:{" "}
+            <span className="font-bold">{payload[0].value} mg/dL</span>
           </div>
         </div>
       );
@@ -50,32 +49,20 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
 
   return (
     <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
-      <div className="flex items-center justify-between ">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="bg-purple-100 p-2 rounded-lg">
-            <Scale className="h-5 w-5 text-purple-600" />
+          <div className="bg-teal-100 p-2 rounded-lg">
+            <Droplet className="h-5 w-5 text-teal-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">Weight Trend</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Blood Sugar</h3>
         </div>
         <Button variant={"outline"} className="cursor-pointer">
           <Printer />
         </Button>
       </div>
-      <div className="h-40 ">
+      <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <defs>
-              <linearGradient
-                id="weightBarGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.7} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
-              </linearGradient>
-            </defs>
+          <LineChart data={data}>
             <XAxis
               dataKey="name"
               axisLine={false}
@@ -84,21 +71,20 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
             />
             <YAxis hide />
             <Tooltip content={<CustomTooltip />} />
-            <Bar
-              dataKey="value"
-              fill="url(#weightBarGradient)"
-              radius={[4, 4, 0, 0]}
-              barSize={24}
+            <Line
+              type="monotone"
+              dataKey="sugar"
+              stroke="#14b8a6"
+              strokeWidth={3}
+              dot={{ r: 4, fill: "#14b8a6" }}
+              activeDot={{ r: 6 }}
             />
-          </BarChart>
+          </LineChart>
         </ResponsiveContainer>
       </div>
       <div className="flex justify-between text-sm">
         <span className="text-gray-600">
-          Current: <span className="font-semibold">{currentWeight} lbs</span>
-        </span>
-        <span className="text-gray-600">
-          Target: <span className="font-semibold">{targetWeight} lbs</span>
+          Latest: <span className="font-semibold">{latestReading} mg/dL</span>
         </span>
       </div>
     </Card>

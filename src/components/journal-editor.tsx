@@ -9,7 +9,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import {
   Clock,
-  Heart,
   Bold,
   Italic,
   Strikethrough,
@@ -125,6 +124,7 @@ export default function JournalEditor() {
         }}
         className="fixed z-50 -translate-x-1/2 flex items-center gap-1 bg-gray-900 text-white rounded-lg shadow-lg px-2 py-1 border border-gray-700"
       >
+        {/* Formatting Buttons */}
         <ToolbarBtn
           isActive={editor?.isActive("bold")}
           onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -132,7 +132,6 @@ export default function JournalEditor() {
         >
           <Bold className="w-4 h-4" />
         </ToolbarBtn>
-
         <ToolbarBtn
           isActive={editor?.isActive("italic")}
           onClick={() => editor?.chain().focus().toggleItalic().run()}
@@ -140,7 +139,6 @@ export default function JournalEditor() {
         >
           <Italic className="w-4 h-4" />
         </ToolbarBtn>
-
         <ToolbarBtn
           isActive={editor?.isActive("strike")}
           onClick={() => editor?.chain().focus().toggleStrike().run()}
@@ -148,7 +146,6 @@ export default function JournalEditor() {
         >
           <Strikethrough className="w-4 h-4" />
         </ToolbarBtn>
-
         <ToolbarBtn
           isActive={editor?.isActive("code")}
           onClick={() => editor?.chain().focus().toggleCode().run()}
@@ -156,9 +153,7 @@ export default function JournalEditor() {
         >
           <Code className="w-4 h-4" />
         </ToolbarBtn>
-
         <div className="w-px h-4 bg-gray-600 mx-1" />
-
         <ToolbarBtn
           isActive={editor?.isActive("link")}
           onClick={() => {
@@ -197,7 +192,10 @@ export default function JournalEditor() {
     title?: string;
   }) => (
     <button
-      onClick={onClick}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       title={title}
       className={`p-2 rounded transition-colors ${
         isActive ? "bg-gray-700" : "hover:bg-gray-700/60"
@@ -211,45 +209,44 @@ export default function JournalEditor() {
   /* UI Layout                                                          */
   /* ------------------------------------------------------------------ */
   return (
-    <Card className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          How are you feeling today?
-        </h1>
-        <div className="flex items-center gap-2 text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium">{currentTime}</span>
-        </div>
-      </header>
+    <>
+      <h1 className="text-background text-3xl leading-tight font-semibold">
+        How are you feeling today?
+      </h1>
 
-      {/* Subtitle */}
-      <div className="px-8 py-4">
-        <p className="text-gray-600 italic text-lg">{currentDate}</p>
-      </div>
+      <Card className="min-h-screen bg-white flex flex-col py-0">
+        {/* Header */}
+        <header className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
+          <p className="text-gray-600 italic text-lg">{currentDate}</p>
+          <div className="flex items-center gap-2 text-gray-500">
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-medium">{currentTime}</span>
+          </div>
+        </header>
 
-      {/* Editor */}
-      <main className="flex-1 px-8 py-4 relative">
-        {editor && <Toolbar />}
-        <EditorContent editor={editor} className="w-full h-full" />
-      </main>
+        {/* Editor */}
+        <main className="flex-1 px-8 py-4 relative">
+          {editor && <Toolbar />}
+          <EditorContent editor={editor} className="w-full h-full" />
+        </main>
 
-      {/* Footer */}
-      <footer className="flex justify-between items-center px-8 py-6 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-        <div className="flex items-center gap-6">
-          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-            <Heart className="w-4 h-4" />
-            <span className="text-sm">Add to Favorites</span>
-          </button>
-          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-            <Trash className="w-4 h-4" />
-            <span className="text-sm">Delete</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button className="h-11">Save Entry</Button>
-        </div>
-      </footer>
-    </Card>
+        {/* Footer */}
+        <footer className="flex justify-between items-center px-8 py-6 border-t border-gray-100 sticky bottom-0 z-10">
+          <div className="flex items-center gap-6">
+            {/* <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <Heart className="w-4 h-4" />
+              <span className="text-sm">Add to Favorites</span>
+            </button> */}
+            <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <Trash className="w-4 h-4" />
+              <span className="text-sm">Delete</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button className="h-11">Save Entry</Button>
+          </div>
+        </footer>
+      </Card>
+    </>
   );
 }
