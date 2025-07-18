@@ -1,7 +1,7 @@
 import WeeklyCalendar from "@/components/weekly-calendar";
 import { Button } from "@/components/ui/button";
 
-export default function page() {
+export default function CalendarPage() {
   return (
     <>
       {" "}

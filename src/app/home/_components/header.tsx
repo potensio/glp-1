@@ -22,8 +22,8 @@ export default function Header() {
   const menuItems = [
     { label: "Home", href: "/home" },
     { label: "Progress", href: "/home/progress" },
-    { label: "Medication", href: "/home/medications" },
-    { label: "Journal", href: "/#about" },
+    { label: "Calendar", href: "/home/calendar" },
+    { label: "Journal", href: "/home/journal" },
   ];
 
   return (

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MedicalReminderDialog } from "@/app/home/_components/dialogs/medical-reminder-dialog";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -34,9 +35,28 @@ const sampleEvents = {
   ],
 };
 
-export default function CalendarView() {
+type WeeklyCalendarProps = {
+  headerButtonId?: string;
+};
+
+export default function WeeklyCalendar({
+  headerButtonId,
+}: WeeklyCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Attach click handler to header button if id is provided
+  useEffect(() => {
+    if (!headerButtonId) return;
+    const btn = document.getElementById(headerButtonId);
+    if (!btn) return;
+    const handler = () => setDialogOpen(true);
+    btn.addEventListener("click", handler);
+    return () => {
+      btn.removeEventListener("click", handler);
+    };
+  }, [headerButtonId]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -181,6 +201,12 @@ export default function CalendarView() {
 
   return (
     <div className="w-full space-y-4">
+      {/* MedicalReminderDialog for both header and sidebar button */}
+      <MedicalReminderDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        trigger={null}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
         {/* Calendar Grid */}
         <Card className="lg:col-span-4 gap-0">
@@ -270,11 +296,11 @@ export default function CalendarView() {
             {selectedDate && (
               <Button
                 variant="outline"
-                size="sm"
-                className="w-full bg-transparent"
+                className="w-full h-11"
+                onClick={() => setDialogOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Event
+                Add Reminder
               </Button>
             )}
           </CardContent>
