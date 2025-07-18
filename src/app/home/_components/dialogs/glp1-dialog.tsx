@@ -7,7 +7,7 @@ import {
 import { useState } from "react";
 import { Syringe } from "lucide-react";
 
-const glp1Types = ["Ozempic", "Wegovy", "Mounjaro", "Other"];
+const glp1Types = ["Ozempic", "Wegovy", "Mounjaro", "Zepbound"];
 
 export function Glp1DialogContent({
   onSave,

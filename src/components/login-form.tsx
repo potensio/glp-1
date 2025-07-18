@@ -34,7 +34,7 @@ export function LoginForm({
             id="email"
             type="email"
             placeholder="m@example.com"
-            className="h-11"
+            className="h-11 text-lg"
           />
         </div>
         <div className="grid gap-3">
@@ -47,7 +47,7 @@ export function LoginForm({
               Forgot your password?
             </a>
           </div>
-          <Input id="password" type="password" className="h-11" />
+          <Input id="password" type="password" className="h-11 text-lg" />
         </div>
         <Button size={"lg"} className="w-full cursor-pointer">
           Login

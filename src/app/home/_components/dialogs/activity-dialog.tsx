@@ -47,9 +47,9 @@ export function ActivityDialogContent({
             <button
               key={t}
               type="button"
-              className={`px-4 py-3 rounded-lg border text-base font-semibold transition-colors flex items-center justify-center min-w-[90px] ${
+              className={`px-4 py-3 rounded-lg border text-base font-semibold transition-colors flex items-center justify-center min-w-[90px] cursor-pointer ${
                 type === t
-                  ? "bg-background border-primary ring ring-primary text-foreground"
+                  ? "bg-primary/10 border-primary ring ring-primary text-foreground"
                   : "bg-background border-border text-secondary hover:border-primary"
               }`}
               onClick={() => setType(t)}
