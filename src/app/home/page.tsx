@@ -1,3 +1,5 @@
+"use client";
+
 import { WelcomeHero } from "./_components/welcome-hero";
 import { QuickActions } from "./_components/quick-actions";
 import { MedicationList } from "./_components/medical-list";
@@ -6,7 +8,7 @@ import { BloodPressureChart } from "./_components/blood-pressure-chart";
 import { CaloriesIntakeChart } from "./_components/calories-intake-chart";
 import { BloodSugarChart } from "./_components/blood-sugar-chart";
 import { addDays, format } from "date-fns";
-import { stackServerApp } from "@/stack-server";
+import { useUser } from "@stackframe/stack";
 
 // Helper to generate 14 days of labels like 'Apr 1', 'Apr 2', ...
 function generateDateLabels(startDate: Date, days: number) {
@@ -36,13 +38,13 @@ const bloodSugarData = labels.map((label, i) => ({
   sugar: 95 + Math.round(Math.cos(i / 2) * 8 + Math.random() * 5),
 }));
 
-export default async function DashPage() {
+export default function DashPage() {
   // Get the current user from Neon Auth
-  const user = await stackServerApp.getUser();
+  const user = useUser();
   
   if (!user) {
     // This should be handled by middleware, but just in case
-    throw new Error("User not authenticated");
+    return <div>Loading...</div>;
   }
   
   return (
