@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useUser } from "@stackframe/stack";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,12 +13,13 @@ import {
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const user = useUser();
 
   // Always force light mode
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
-  }, []);
+  // useEffect(() => {
+  //   document.documentElement.classList.remove("dark");
+  //   localStorage.setItem("theme", "light");
+  // }, []);
 
   const menuItems = [
     { label: "Home", href: "/home" },
@@ -51,7 +53,7 @@ export default function Header() {
                   <AvatarImage src="https://github.com/shadcn.png" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
-                <span className="font-medium text-background">John</span>
+                <span className="font-medium text-background">{user?.displayName || user?.primaryEmail || 'User'}</span>
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 p-2">
@@ -76,7 +78,7 @@ export default function Header() {
                 variant="destructive"
                 className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
                 onSelect={() => {
-                  /* TODO: Add logout logic */
+                  user?.signOut();
                 }}
               >
                 Logout

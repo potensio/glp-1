@@ -1,9 +1,8 @@
-export const dynamic = "force-dynamic";
+import PlanCard from "@/app/home/billing/_components/plan-card";
+import PaymentMethods from "@/app/home/billing/_components/payment-methods";
+import BillingHistory from "@/app/home/billing/_components/billing-history";
+import BillingInfo from "@/app/home/billing/_components/billing-info";
 
-import PlanCard from "@/components/PlanCard";
-import PaymentMethods from "@/components/PaymentMethods";
-import BillingHistory from "@/components/BillingHistory";
-import BillingInfo from "@/components/BillingInfo";
 export default function BillingPage() {
   // Mock data
   const plan = {
@@ -64,8 +63,8 @@ export default function BillingPage() {
 
   return (
     <>
-      <div className="flex flex-col">
-        <h1 className="text-background text-3xl leading-tight font-semibold mb-2">
+      <div className="space-y-2">
+        <h1 className="text-background text-3xl leading-tight font-semibold">
           Billing & Subscription
         </h1>
         <p className="text-background text-lg mb-6">
@@ -73,11 +72,13 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-10">
         <PlanCard plan={plan} />
-        <PaymentMethods methods={paymentMethods} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <PaymentMethods methods={paymentMethods} />
+          <BillingInfo info={billingInfo} />
+        </div>
         <BillingHistory history={billingHistory} />
-        <BillingInfo info={billingInfo} />
       </div>
     </>
   );

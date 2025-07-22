@@ -1,10 +1,22 @@
 "use client";
 
-export const WelcomeHero = () => {
+interface WelcomeHeroProps {
+  userName: string;
+}
+
+export const WelcomeHero = ({ userName }: WelcomeHeroProps) => {
+  // Get the time of day to display appropriate greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   return (
     <div>
       <h1 className="text-background text-3xl leading-tight font-semibold mb-2">
-        Good Morning, John!
+        {getGreeting()}, {userName}!
       </h1>
       <p className="text-background text-lg mb-6">
         &quot;Take care of your body. It&apos;s the only place you have to

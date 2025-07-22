@@ -6,16 +6,59 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter();
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Here you would handle forgot password logic
-    router.push("/login");
+    setError("");
+    setSuccess(false);
+
+    if (!email) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // In a real implementation, you would call an API endpoint to send a reset email
+      // For now, we'll just simulate success after a delay
+      setTimeout(() => {
+        setSuccess(true);
+        setIsLoading(false);
+      }, 1500);
+
+      // Uncomment and implement when you have the reset password API endpoint
+      // const response = await fetch("/api/reset-password", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ email }),
+      // });
+      // 
+      // const data = await response.json();
+      // 
+      // if (!response.ok) {
+      //   throw new Error(data.error || "Failed to send reset email");
+      // }
+      // 
+      // setSuccess(true);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred. Please try again.");
+    } finally {
+      // setIsLoading(false); // Uncomment when using the real API
+    }
   }
   return (
     <form
@@ -29,20 +72,45 @@ export function ForgotPasswordForm({
           Enter your email and we will send you a reset link
         </p>
       </div>
-      <div className="grid gap-6">
-        <div className="grid gap-3">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="m@example.com"
-            className="h-11 text-lg"
-          />
+      {success ? (
+        <div className="grid gap-6">
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            <p>Reset link sent! Check your email for instructions to reset your password.</p>
+          </div>
+          <Button 
+            size={"lg"} 
+            className="w-full cursor-pointer"
+            onClick={() => router.push("/login")}
+          >
+            Return to Login
+          </Button>
         </div>
-        <Button size={"lg"} className="w-full cursor-pointer">
-          Send Reset Link
-        </Button>
-      </div>
+      ) : (
+        <div className="grid gap-6">
+          <div className="grid gap-3">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              className="h-11 text-lg"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          {error && (
+            <div className="text-red-500 text-sm">{error}</div>
+          )}
+          <Button 
+            size={"lg"} 
+            className="w-full cursor-pointer"
+            disabled={isLoading}
+          >
+            {isLoading ? "Sending..." : "Send Reset Link"}
+          </Button>
+        </div>
+      )}
       <div className="text-center text-sm">
         Remembered your password?{" "}
         <Link href="/login" className="underline underline-offset-4">

@@ -1,5 +1,6 @@
-// SVGs for Visa and Mastercard are used inline for card visuals
-import React from "react";
+"use client";
+
+import { Card } from "@/components/ui/card";
 import Image from "next/image";
 
 type PaymentMethod = {
@@ -15,7 +16,7 @@ type PaymentMethodsProps = {
 
 export default function PaymentMethods({ methods }: PaymentMethodsProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-4 border">
+    <Card className="px-6">
       <div className="flex justify-between items-center mb-4">
         <div className="font-semibold text-lg">Payment Method</div>
         <button className="border px-3 py-1 rounded text-sm hover:bg-gray-100">
@@ -36,7 +37,9 @@ export default function PaymentMethods({ methods }: PaymentMethodsProps) {
                 <Image
                   src="/visa.png"
                   alt="Visa"
-                  className="absolute left-2 top-2 w-8 h-auto"
+                  width={32}
+                  height={20}
+                  className="absolute left-2 top-2 h-auto"
                 />
                 <div className="absolute left-2 bottom-2 text-gray-700 font-mono tracking-widest">
                   •••• {m.last4}
@@ -49,6 +52,6 @@ export default function PaymentMethods({ methods }: PaymentMethodsProps) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

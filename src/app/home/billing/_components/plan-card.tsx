@@ -1,5 +1,7 @@
-import React from "react";
-import { Button } from "./ui/button";
+"use client";
+
+import { Card } from "@/components/ui/card";
+import { Button } from "../../../../components/ui/button";
 
 type PlanCardProps = {
   plan: {
@@ -14,15 +16,15 @@ type PlanCardProps = {
 
 export default function PlanCard({ plan }: PlanCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-4 border">
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <div className="text-2xl font-semibold flex items-center gap-2 mb-1">
+    <Card className="px-6">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <h3 className="text-2xl font-semibold flex items-center gap-1">
             {plan.name}
             <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">
               {plan.status}
             </span>
-          </div>
+          </h3>
           <div className="text-muted-foreground text-sm mb-2">
             {plan.description}
           </div>
@@ -45,11 +47,15 @@ export default function PlanCard({ plan }: PlanCardProps) {
           </div>
         </div>
       </div>
-      <div className="flex gap-2 mt-4">
-        <Button variant={"outline"} size={"sm"} className="h-11 text-sm">
+      <div className="flex">
+        <Button
+          variant={"outline"}
+          size={"sm"}
+          className="h-11 text-sm cursor-pointer"
+        >
           Cancel Subscription
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

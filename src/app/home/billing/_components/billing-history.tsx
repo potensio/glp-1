@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import { Card } from "@/components/ui/card";
 
 type BillingHistoryItem = {
   id: number;
@@ -14,7 +16,7 @@ type BillingHistoryProps = {
 
 export default function BillingHistory({ history }: BillingHistoryProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-4 border">
+    <Card className="px-6">
       <div className="font-semibold text-lg mb-4">Billing History</div>
       <div>
         {history.map((item, idx) => (
@@ -35,6 +37,6 @@ export default function BillingHistory({ history }: BillingHistoryProps) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

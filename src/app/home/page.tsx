@@ -6,6 +6,7 @@ import { BloodPressureChart } from "./_components/blood-pressure-chart";
 import { CaloriesIntakeChart } from "./_components/calories-intake-chart";
 import { BloodSugarChart } from "./_components/blood-sugar-chart";
 import { addDays, format } from "date-fns";
+import { stackServerApp } from "@/stack-server";
 
 // Helper to generate 14 days of labels like 'Apr 1', 'Apr 2', ...
 function generateDateLabels(startDate: Date, days: number) {
@@ -35,10 +36,18 @@ const bloodSugarData = labels.map((label, i) => ({
   sugar: 95 + Math.round(Math.cos(i / 2) * 8 + Math.random() * 5),
 }));
 
-export default function DashPage() {
+export default async function DashPage() {
+  // Get the current user from Neon Auth
+  const user = await stackServerApp.getUser();
+  
+  if (!user) {
+    // This should be handled by middleware, but just in case
+    throw new Error("User not authenticated");
+  }
+  
   return (
     <>
-      <WelcomeHero />
+      <WelcomeHero userName={user.displayName || user.primaryEmail || 'User'} />
       <QuickActions />
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
         <WeightTrendChart

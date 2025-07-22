@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import { Card } from "@/components/ui/card";
 
 type BillingInfoProps = {
   info: {
@@ -10,7 +12,7 @@ type BillingInfoProps = {
 
 export default function BillingInfo({ info }: BillingInfoProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-4 border">
+    <Card className="px-6">
       <div className="flex justify-between items-center mb-4">
         <div className="font-semibold text-lg">Billing Information</div>
         <button className="border px-3 py-1 rounded text-sm hover:bg-gray-100">
@@ -31,6 +33,6 @@ export default function BillingInfo({ info }: BillingInfoProps) {
           <div className="font-medium whitespace-pre-line">{info.address}</div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackServerApp } from "../stack-server";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         data-theme="light"
-      >
-        {children}
-      </body>
+      ><StackProvider app={stackServerApp}><StackTheme>
+        <Providers>
+          {children}
+        </Providers>
+      </StackTheme></StackProvider></body>
     </html>
   );
 }
