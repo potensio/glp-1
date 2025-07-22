@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackServerApp } from "../stack-server";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -30,11 +28,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         data-theme="light"
-      ><StackProvider app={stackServerApp}><StackTheme>
-        <Providers>
-          {children}
-        </Providers>
-      </StackTheme></StackProvider></body>
+      >
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

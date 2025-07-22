@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { HealthTrends } from "../_components/health-trends";
 import { Card } from "@/components/ui/card";

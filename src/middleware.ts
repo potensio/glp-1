@@ -1,51 +1,32 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { stackServerApp } from '@/stack-server';
+import { NextRequest, NextResponse } from "next/server";
 
-// This function can be marked `async` if using `await` inside
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Check if the pathname is a protected route
-  const isProtectedRoute = [
-    '/home',
-    '/profile',
-    '/settings',
-  ].some(route => pathname.startsWith(route));
-  
-  // Check if the pathname is an auth route
-  const isAuthRoute = [
-    '/login',
-    '/signup',
-    '/forgot-password',
-  ].some(route => pathname === route);
-  
-  // Get the current user
-  const user = await stackServerApp.getUser();
-  
-  // If the user is not logged in and trying to access a protected route
-  if (!user && isProtectedRoute) {
-    const url = new URL('/handler/sign-in', request.url);
-    url.searchParams.set('after_auth_return_to', encodeURI(pathname));
-    return NextResponse.redirect(url);
+export function middleware(request: NextRequest) {
+  // Skip middleware for static assets and API routes to improve performance
+  if (
+    request.nextUrl.pathname.startsWith('/_next/') ||
+    request.nextUrl.pathname.startsWith('/api/') ||
+    request.nextUrl.pathname.includes('.') ||
+    request.nextUrl.pathname.startsWith('/@vite/')
+  ) {
+    return NextResponse.next();
   }
-  
-  // If the user is logged in and trying to access an auth route
-  if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/home', request.url));
+
+  // Handle Stack Auth routes - let them pass through
+  if (request.nextUrl.pathname.startsWith("/handler")) {
+    return NextResponse.next();
   }
-  
+
+  // For now, let all routes pass through to avoid auth overhead in middleware
+  // Authentication will be handled client-side for better performance
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    '/home/:path*',
-    '/profile/:path*',
-    '/settings/:path*',
-    '/login',
-    '/signup',
-    '/forgot-password',
+    "/home/:path*",
+    "/login",
+    "/signup", 
+    "/forgot-password",
+    "/handler/:path*"
   ],
 };

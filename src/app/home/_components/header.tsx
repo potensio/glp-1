@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
-import { useUser } from "@stackframe/stack";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,10 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useUser } from "@stackframe/stack";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const user = useUser();
+  const router = useRouter();
+
+  // Optimistic navigation for instant SPA feel
+  const handleNavigation = (href: string) => {
+    router.push(href);
+    setMenuOpen(false);
+  };
 
   // Always force light mode
   // useEffect(() => {
@@ -39,9 +46,12 @@ export default function Header() {
         <ul className="hidden md:flex flex-1 justify-center gap-12 text-background font-medium">
           {menuItems.map((item) => (
             <li key={item.label}>
-              <Link href={item.href} className="hover:underline transition">
+              <button
+                onClick={() => handleNavigation(item.href)}
+                className="hover:underline transition cursor-pointer bg-transparent border-none text-background font-medium"
+              >
                 {item.label}
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
@@ -57,28 +67,25 @@ export default function Header() {
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 p-2">
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/home/billing"
-                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                >
-                  Billing
-                </Link>
+              <DropdownMenuItem
+                className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                onSelect={() => handleNavigation('/home/billing')}
+              >
+                Billing
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/home/account"
-                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                >
-                  Account Settings
-                </Link>
+              <DropdownMenuItem
+                className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                onSelect={() => handleNavigation('/home/account')}
+              >
+                Account Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
-                onSelect={() => {
-                  user?.signOut();
+                onSelect={async () => {
+                  await user?.signOut();
+                  window.location.href = "/handler/sign-in";
                 }}
               >
                 Logout
@@ -175,14 +182,13 @@ export default function Header() {
                 </svg>
               </button>
               {menuItems.map((item) => (
-                <Link
+                <button
                   key={item.label}
-                  href={item.href}
-                  className="text-gray-700 dark:text-gray-200 font-medium text-lg hover:text-blue-600 dark:hover:text-blue-400"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => handleNavigation(item.href)}
+                  className="text-gray-700 dark:text-gray-200 font-medium text-lg hover:text-blue-600 dark:hover:text-blue-400 bg-transparent border-none text-left"
                 >
                   {item.label}
-                </Link>
+                </button>
               ))}
               <div className="flex gap-2 mt-4">
                 <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">

@@ -1,5 +1,3 @@
-"use client";
-
 import { ProfileInfo } from "@/components/ProfileInfo";
 import { SecurityPrivacy } from "@/components/SecurityPrivacy";
 

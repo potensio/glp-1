@@ -1,5 +1,3 @@
-"use client";
-
 import WeeklyCalendar from "@/components/weekly-calendar";
 import { Button } from "@/components/ui/button";
 
