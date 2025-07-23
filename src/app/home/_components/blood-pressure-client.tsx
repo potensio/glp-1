@@ -27,12 +27,15 @@ const BloodPressureSkeleton = () => {
       <div className="h-40 mt-4">
         <div className="flex items-end justify-between h-full space-x-2">
           {[...Array(7)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center space-y-1 flex-1">
-              <div 
+            <div
+              key={i}
+              className="flex flex-col items-center space-y-1 flex-1"
+            >
+              <div
                 className="bg-gray-200 rounded-t animate-pulse w-full"
                 style={{ height: `${Math.random() * 60 + 40}%` }}
               ></div>
-              <div 
+              <div
                 className="bg-gray-300 rounded-t animate-pulse w-full"
                 style={{ height: `${Math.random() * 40 + 20}%` }}
               ></div>
@@ -62,11 +65,13 @@ export const BloodPressureClient: React.FC<BloodPressureClientProps> = ({
   showTitle = false,
   title = "Blood Pressure",
 }) => {
-  const { chartData, isLoading, error, fetchBloodPressures } = useBloodPressure();
+  const { chartData, isLoading, error, fetchBloodPressures } =
+    useBloodPressure();
 
   useEffect(() => {
-    fetchBloodPressures(true); // Show loading state on initial fetch
-  }, [fetchBloodPressures]);
+    fetchBloodPressures(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run on mount
 
   if (isLoading) {
     return (
@@ -87,16 +92,21 @@ export const BloodPressureClient: React.FC<BloodPressureClientProps> = ({
         )}
         <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
           <div className="flex items-center justify-center h-40">
-            <p className="text-red-500">Error loading blood pressure data: {error}</p>
+            <p className="text-red-500">
+              Error loading blood pressure data: {error}
+            </p>
           </div>
         </Card>
       </div>
     );
   }
 
-  const latestReading = chartData.length > 0 
-    ? `${chartData[chartData.length - 1].systolic}/${chartData[chartData.length - 1].diastolic}` 
-    : "No data";
+  const latestReading =
+    chartData.length > 0
+      ? `${chartData[chartData.length - 1].systolic}/${
+          chartData[chartData.length - 1].diastolic
+        }`
+      : "No data";
 
   return (
     <div>

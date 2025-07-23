@@ -27,8 +27,11 @@ const BloodSugarSkeleton = () => {
       <div className="h-40 mt-4">
         <div className="flex items-end justify-between h-full">
           {[...Array(7)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center space-y-2 flex-1">
-              <div 
+            <div
+              key={i}
+              className="flex flex-col items-center space-y-2 flex-1"
+            >
+              <div
                 className="w-1 bg-gray-200 rounded animate-pulse"
                 style={{ height: `${Math.random() * 60 + 40}%` }}
               ></div>
@@ -53,7 +56,8 @@ export const BloodSugarClient: React.FC<BloodSugarClientProps> = ({
 
   useEffect(() => {
     fetchBloodSugars(true); // Show loading state on initial fetch
-  }, [fetchBloodSugars]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run on mount
 
   if (isLoading) {
     return (
@@ -74,16 +78,17 @@ export const BloodSugarClient: React.FC<BloodSugarClientProps> = ({
         )}
         <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
           <div className="flex items-center justify-center h-40">
-            <p className="text-red-500">Error loading blood sugar data: {error}</p>
+            <p className="text-red-500">
+              Error loading blood sugar data: {error}
+            </p>
           </div>
         </Card>
       </div>
     );
   }
 
-  const latestReading = chartData.length > 0 
-    ? chartData[chartData.length - 1].sugar 
-    : 0;
+  const latestReading =
+    chartData.length > 0 ? chartData[chartData.length - 1].sugar : 0;
 
   return (
     <div>
