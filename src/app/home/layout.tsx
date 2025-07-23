@@ -1,39 +1,14 @@
 "use client";
-import React, { useEffect } from "react";
-import { useUser } from "@stackframe/stack";
-import { useRouter } from "next/navigation";
+import React from "react";
 import Header from "@/app/home/_components/header";
 import { Footer } from "@/components/ui/footer";
-
 
 export default function DashLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = useUser();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Only redirect if we're certain the user is not authenticated
-    if (user === null) {
-      router.push("/handler/sign-in");
-    }
-  }, [user, router]);
-
-  // Show loading state while checking authentication
-  if (user === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Don't render content if user is not authenticated
-  if (user === null) {
-    return null;
-  }
+  // Authentication is now handled by middleware - no client-side checks needed
 
   return (
     <div className="relative min-h-screen bg-background font-sans min-w-[375px]">

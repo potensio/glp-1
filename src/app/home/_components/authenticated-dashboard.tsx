@@ -8,7 +8,8 @@ import { BloodPressureChart } from "./blood-pressure-chart";
 import { CaloriesIntakeChart } from "./calories-intake-chart";
 import { BloodSugarChart } from "./blood-sugar-chart";
 import { addDays, format } from "date-fns";
-import { useUser } from "@stackframe/stack";
+import { useAuth } from "@/contexts/auth-context";
+import { useEffect, useState } from "react";
 
 // Helper to generate 14 days of labels like 'Apr 1', 'Apr 2', ...
 function generateDateLabels(startDate: Date, days: number) {
@@ -38,11 +39,23 @@ const bloodSugarData = labels.map((label, i) => ({
   sugar: 95 + Math.round(Math.cos(i / 2) * 8 + Math.random() * 5),
 }));
 
+
+
 export function AuthenticatedDashboard() {
-  // Get the current user from Neon Auth
-  const user = useUser();
+  // Get the current user from our custom auth context
+  const { user, profile, isLoading } = useAuth();
+  const [profileError, setProfileError] = useState<string | null>(null);
   
-  if (!user) {
+  // Profile is already loaded from auth context
+  useEffect(() => {
+    if (user && !profile) {
+      setProfileError('Profile not found');
+    } else {
+      setProfileError(null);
+    }
+  }, [user, profile]);
+  
+  if (isLoading || !user) {
     // Show loading state while auth is being checked
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -51,9 +64,19 @@ export function AuthenticatedDashboard() {
     );
   }
   
+  // Determine display name: prefer profile first name, fallback to user email
+  const displayName = profile 
+    ? profile.firstName 
+    : (user.email || 'User');
+  
   return (
     <>
-      <WelcomeHero userName={user.displayName || user.primaryEmail || 'User'} />
+      <WelcomeHero userName={displayName} />
+      {profileError && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4">
+          <p>Profile information could not be loaded. Some features may be limited.</p>
+        </div>
+      )}
       <QuickActions />
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
         <WeightTrendChart

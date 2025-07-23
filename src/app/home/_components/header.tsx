@@ -9,11 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@stackframe/stack";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const user = useUser();
+  const { user, profile, logout } = useAuth();
   const router = useRouter();
 
   // Optimistic navigation for instant SPA feel
@@ -63,19 +63,21 @@ export default function Header() {
                   <AvatarImage src="https://github.com/shadcn.png" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
-                <span className="font-medium text-background">{user?.displayName || user?.primaryEmail || 'User'}</span>
+                <span className="font-medium text-background">
+                  {profile?.firstName || user?.email || "User"}
+                </span>
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 p-2">
               <DropdownMenuItem
                 className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                onSelect={() => handleNavigation('/home/billing')}
+                onSelect={() => handleNavigation("/home/billing")}
               >
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                onSelect={() => handleNavigation('/home/account')}
+                onSelect={() => handleNavigation("/home/account")}
               >
                 Account Settings
               </DropdownMenuItem>
@@ -83,9 +85,8 @@ export default function Header() {
               <DropdownMenuItem
                 variant="destructive"
                 className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
-                onSelect={async () => {
-                  await user?.signOut();
-                  window.location.href = "/handler/sign-in";
+                onSelect={() => {
+                  logout();
                 }}
               >
                 Logout

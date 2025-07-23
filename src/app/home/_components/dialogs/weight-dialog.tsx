@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export function WeightDialogContent({
   lastWeight = 165,
@@ -15,16 +16,56 @@ export function WeightDialogContent({
   min = 100,
   max = 500,
   onSave,
+  onClose,
 }: {
   lastWeight?: number;
   lastDelta?: number;
   min?: number;
   max?: number;
   onSave?: (weight: number) => void;
+  onClose?: () => void;
 }) {
   const [weight, setWeight] = useState(lastWeight);
   const [inputValue, setInputValue] = useState(String(lastWeight));
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const saveWeight = async (weightValue: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/weights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ weight: weightValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save weight');
+      }
+
+      await response.json();
+      
+      toast({
+        title: "Weight saved!",
+        description: `Your weight of ${weightValue} lbs has been recorded.`,
+      });
+      
+      onSave?.(weightValue);
+      onClose?.();
+    } catch (error) {
+      console.error('Error saving weight:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save weight. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Keep input and slider in sync
   useEffect(() => {
@@ -70,7 +111,7 @@ export function WeightDialogContent({
       num = Math.max(min, Math.min(max, num));
       setWeight(num);
       setInputValue(String(num));
-      onSave?.(num);
+      saveWeight(num);
     }
   };
 
@@ -125,16 +166,17 @@ export function WeightDialogContent({
         <Button
           className="w-full"
           size={"lg"}
+          disabled={isLoading}
           onClick={() => {
             let num = parseInt(inputValue, 10);
             if (isNaN(num)) num = lastWeight;
             num = Math.max(min, Math.min(max, num));
             setWeight(num);
             setInputValue(String(num));
-            onSave?.(num);
+            saveWeight(num);
           }}
         >
-          Save Weight
+          {isLoading ? "Saving..." : "Save Weight"}
         </Button>
       </DialogFooter>
     </>

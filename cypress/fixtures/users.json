@@ -1,0 +1,50 @@
+{
+  "validUser": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "password": "TestPassword123!"
+  },
+  "invalidUsers": {
+    "shortFirstName": {
+      "firstName": "J",
+      "lastName": "Doe",
+      "email": "j.doe@example.com",
+      "password": "TestPassword123!"
+    },
+    "shortLastName": {
+      "firstName": "John",
+      "lastName": "D",
+      "email": "john.d@example.com",
+      "password": "TestPassword123!"
+    },
+    "invalidEmail": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "invalid-email",
+      "password": "TestPassword123!"
+    },
+    "weakPassword": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.weak@example.com",
+      "password": "weak"
+    },
+    "passwordNoUppercase": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.lower@example.com",
+      "password": "testpassword123!"
+    },
+    "passwordNoNumber": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.nonum@example.com",
+      "password": "TestPassword!"
+    }
+  },
+  "testEmails": {
+    "existing": "existing@example.com",
+    "duplicate": "duplicate@example.com"
+  }
+}

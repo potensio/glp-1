@@ -4,61 +4,59 @@ import BillingHistory from "@/app/home/billing/_components/billing-history";
 import BillingInfo from "@/app/home/billing/_components/billing-info";
 
 export default function BillingPage() {
-  // Mock data
-  const plan = {
-    name: "Premium Plan",
-    description:
-      "Full access to all health tracking features, advanced analytics, and priority support",
-    price: 9.0,
+  // Mock data for demonstration
+  const planData = {
+    name: "Pro Plan",
+    description: "Advanced features for power users",
+    price: 29.99,
     status: "Active",
-    nextBilling: "July 22, 2025",
-    features: [
-      "Full Journal History ",
-      "Printable & Exportable Graphs ",
-      "Reminder Calendar",
-      "Medication Tracking",
-      "Tips & Tricks Page",
-      "Priority support",
-    ],
+    nextBilling: "2024-02-15",
+    features: ["Advanced Analytics", "Priority Support", "Custom Integrations"],
   };
+
   const paymentMethods = [
-    { id: 1, last4: "4242", exp: "12/27", default: true },
-    { id: 2, last4: "8888", exp: "09/26", default: false },
+    {
+      id: 1,
+      last4: "4242",
+      exp: "12/25",
+      default: true,
+    },
+    {
+      id: 2,
+      last4: "5555",
+      exp: "08/26",
+      default: false,
+    },
   ];
+
   const billingHistory = [
     {
       id: 1,
-      plan: "Premium Plan",
-      date: "Dec 15, 2024",
-      amount: 9.0,
+      plan: "Pro Plan",
+      date: "2024-01-15",
+      amount: 29.99,
       status: "Paid",
     },
     {
       id: 2,
-      plan: "Premium Plan",
-      date: "Nov 15, 2024",
-      amount: 9.0,
+      plan: "Pro Plan",
+      date: "2023-12-15",
+      amount: 29.99,
       status: "Paid",
     },
     {
       id: 3,
-      plan: "Premium Plan",
-      date: "Oct 15, 2024",
-      amount: 9.0,
-      status: "Paid",
-    },
-    {
-      id: 4,
-      plan: "Premium Plan",
-      date: "Sep 15, 2024",
-      amount: 9.0,
+      plan: "Basic Plan",
+      date: "2023-11-15",
+      amount: 9.99,
       status: "Paid",
     },
   ];
+
   const billingInfo = {
     name: "John Doe",
     email: "john.doe@example.com",
-    address: "123 Main Street\nSan Francisco, CA 94105\nUnited States",
+    address: "123 Main St, Anytown, USA 12345",
   };
 
   return (
@@ -73,11 +71,11 @@ export default function BillingPage() {
       </div>
 
       <div className="flex flex-col gap-10">
-        <PlanCard plan={plan} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <PaymentMethods methods={paymentMethods} />
+        <div className="grid gap-6 md:grid-cols-2">
+          <PlanCard plan={planData} />
           <BillingInfo info={billingInfo} />
         </div>
+        <PaymentMethods methods={paymentMethods} />
         <BillingHistory history={billingHistory} />
       </div>
     </>
