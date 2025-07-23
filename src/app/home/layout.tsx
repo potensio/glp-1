@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Header from "@/app/home/_components/header";
 import { Footer } from "@/components/ui/footer";
@@ -7,6 +8,8 @@ export default function DashLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Authentication is now handled by middleware - no client-side checks needed
+
   return (
     <div className="relative min-h-screen bg-background font-sans min-w-[375px]">
       {/* Higher Downward Curved Gradient Background */}
@@ -35,6 +38,7 @@ export default function DashLayout({
       </div>
       {/* Header */}
       <Header />
+
       {/* Content */}
       <div className="relative z-10 flex flex-col w-full max-w-6xl mx-auto justify-start gap-10 px-4 py-10 md:py-20">
         {children}

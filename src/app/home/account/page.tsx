@@ -1,7 +1,8 @@
 import { ProfileInfo } from "@/components/ProfileInfo";
 import { SecurityPrivacy } from "@/components/SecurityPrivacy";
-
 import { DangerZone } from "@/components/DangerZone";
+// import Preferences from "@/components/account/Preferences";
+// import ConnectedApps from "@/components/account/ConnectedApps";
 
 export default function AccountPage() {
   return (
@@ -15,11 +16,13 @@ export default function AccountPage() {
         </p>
       </div>
       <div className="space-y-6">
-        <ProfileInfo />
-        <SecurityPrivacy />
-        {/* <Preferences preferences={preferences} />
-        <ConnectedApps apps={connectedApps} /> */}
-        <DangerZone />
+        <div className="grid gap-6">
+          <ProfileInfo />
+          <SecurityPrivacy />
+          {/* <Preferences /> */}
+          {/* <ConnectedApps /> */}
+          <DangerZone />
+        </div>
       </div>
     </>
   );

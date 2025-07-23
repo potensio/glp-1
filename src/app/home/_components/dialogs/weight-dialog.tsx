@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
+import { useWeight } from "@/hooks/use-weight";
 
 export function WeightDialogContent({
   lastWeight = 165,
@@ -15,16 +16,30 @@ export function WeightDialogContent({
   min = 100,
   max = 500,
   onSave,
+  onClose,
 }: {
   lastWeight?: number;
   lastDelta?: number;
   min?: number;
   max?: number;
   onSave?: (weight: number) => void;
+  onClose?: () => void;
 }) {
   const [weight, setWeight] = useState(lastWeight);
   const [inputValue, setInputValue] = useState(String(lastWeight));
   const inputRef = useRef<HTMLInputElement>(null);
+  const { createWeight, isLoading } = useWeight();
+
+  const saveWeight = async (weightValue: number) => {
+    try {
+      await createWeight({ weight: weightValue });
+      onSave?.(weightValue);
+      onClose?.();
+    } catch (error) {
+      // Error handling is done in the custom hook
+      console.error('Error saving weight:', error);
+    }
+  };
 
   // Keep input and slider in sync
   useEffect(() => {
@@ -70,7 +85,7 @@ export function WeightDialogContent({
       num = Math.max(min, Math.min(max, num));
       setWeight(num);
       setInputValue(String(num));
-      onSave?.(num);
+      saveWeight(num);
     }
   };
 
@@ -85,18 +100,19 @@ export function WeightDialogContent({
           <DialogTitle className="text-lg font-semibold">Weight</DialogTitle>
         </div>
         <DialogDescription>
-          <Slider
-            min={min}
-            max={max}
-            value={[weight]}
-            onValueChange={([val]: number[]) => setWeight(val)}
-            className="mb-2 mt-2"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground px-1">
-            <span>{min}</span>
-            <span>{max}</span>
-          </div>
+          Track your weight progress
         </DialogDescription>
+        <Slider
+          min={min}
+          max={max}
+          value={[weight]}
+          onValueChange={([val]: number[]) => setWeight(val)}
+          className="mb-2 mt-2"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground px-1">
+          <span>{min}</span>
+          <span>{max}</span>
+        </div>
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 mb-4">
         <label className="text-3xl font-bold flex items-baseline">
@@ -125,16 +141,17 @@ export function WeightDialogContent({
         <Button
           className="w-full"
           size={"lg"}
+          disabled={isLoading}
           onClick={() => {
             let num = parseInt(inputValue, 10);
             if (isNaN(num)) num = lastWeight;
             num = Math.max(min, Math.min(max, num));
             setWeight(num);
             setInputValue(String(num));
-            onSave?.(num);
+            saveWeight(num);
           }}
         >
-          Save Weight
+          {isLoading ? "Saving..." : "Save Weight"}
         </Button>
       </DialogFooter>
     </>

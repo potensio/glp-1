@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,7 +30,8 @@ export default function RootLayout({
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         data-theme="light"
       >
-        {children}
+        <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );

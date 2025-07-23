@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { HealthTrends } from "../_components/health-trends";
+import { HealthDashboard } from "../_components/health-dashboard";
 import { Card } from "@/components/ui/card";
 import {
   Scale,
@@ -222,7 +222,7 @@ export default function ProgressPage() {
         </Button>
       </div>
       <ProgressOverview />
-      <HealthTrends />
+      <HealthDashboard showTitle={true} title="Health Trends" />
       <RecentEntries />
     </>
   );

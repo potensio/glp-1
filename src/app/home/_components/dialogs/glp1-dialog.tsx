@@ -6,6 +6,8 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Syringe } from "lucide-react";
+import { useGlp1 } from "@/hooks/use-glp1";
+import { glp1Schema } from "@/lib/services/glp1.service";
 
 const glp1Types = ["Ozempic", "Wegovy", "Mounjaro", "Zepbound"];
 
@@ -16,9 +18,44 @@ export function Glp1DialogContent({
 }) {
   const [type, setType] = useState(glp1Types[0]);
   const [dose, setDose] = useState("");
+  const [errors, setErrors] = useState<{ type?: string; dose?: string }>({});
+  const { createGlp1Entry, isLoading } = useGlp1();
 
-  const handleSave = () => {
-    onSave?.({ type, dose });
+  const handleSave = async () => {
+    try {
+      // Validate the form data
+      const validatedData = glp1Schema.parse({ type, dose });
+      
+      // Clear any previous errors
+      setErrors({});
+      
+      // Create the GLP-1 entry
+      await createGlp1Entry(validatedData);
+      
+      // Call the onSave callback if provided (for closing dialog)
+      onSave?.({ type, dose });
+      
+      // Reset form
+      setType(glp1Types[0]);
+      setDose("");
+    } catch (error) {
+      if (error instanceof Error && error.name === "ZodError") {
+        // Handle validation errors
+        const zodError = error as any;
+        const fieldErrors: { type?: string; dose?: string } = {};
+        
+        zodError.errors?.forEach((err: any) => {
+          if (err.path[0] === "type") {
+            fieldErrors.type = err.message;
+          } else if (err.path[0] === "dose") {
+            fieldErrors.dose = err.message;
+          }
+        });
+        
+        setErrors(fieldErrors);
+      }
+      // Other errors are handled by the hook's toast notifications
+    }
   };
 
   return (
@@ -56,11 +93,15 @@ export function Glp1DialogContent({
               onClick={() => setType(t)}
               title={t}
               aria-label={t}
+              disabled={isLoading}
             >
               {t}
             </button>
           ))}
         </div>
+        {errors.type && (
+          <p className="text-sm text-red-500 mt-1">{errors.type}</p>
+        )}
       </div>
 
       {/* Dosage input like calories */}
@@ -79,18 +120,22 @@ export function Glp1DialogContent({
             className="h-12 w-20 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
             style={{ maxWidth: 120 }}
             aria-label="Dosage in mg"
+            disabled={isLoading}
           />
           <span className="text-base font-medium text-gray-500 ml-1">mg</span>
         </label>
+        {errors.dose && (
+          <p className="text-sm text-red-500 mt-1">{errors.dose}</p>
+        )}
       </div>
       <DialogFooter className="flex flex-col mt-2">
         <Button
           className="w-full"
           size="lg"
           onClick={handleSave}
-          disabled={!dose || !type}
+          disabled={!dose || !type || isLoading}
         >
-          {`Log ${type}`}
+          {isLoading ? "Logging..." : `Log ${type}`}
         </Button>
       </DialogFooter>
     </>

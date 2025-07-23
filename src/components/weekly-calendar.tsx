@@ -313,33 +313,6 @@ export default function WeeklyCalendar({
           </CardContent>
         </Card>
       </div>
-
-      {/* Mobile Event List */}
-      <Card>
-        <CardHeader>
-          <h3 className="font-semibold">Upcoming Events</h3>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {Object.entries(sampleEvents).map(([date, events]) => (
-            <div key={date} className="p-3 bg-muted rounded-lg">
-              <div className="font-medium text-sm mb-1">
-                {new Date(date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </div>
-              {events.map((event, index) => (
-                <div key={index} className="text-sm">
-                  <span className="font-medium">{event.title}</span>
-                  <span className="text-muted-foreground ml-2">
-                    {event.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }
