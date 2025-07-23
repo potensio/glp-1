@@ -19,25 +19,97 @@ model User {
 }
 
 model Profile {
-  id          String   @id
-  firstName   String
-  lastName    String
-  phoneNumber String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  weights     Weight[]
-  user        User     @relation(fields: [id], references: [id], onDelete: Cascade)
+  id              String          @id
+  firstName       String
+  lastName        String
+  phoneNumber     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  weights         Weight[]
+  foodIntakes     FoodIntake[]
+  bloodPressures  BloodPressure[]
+  bloodSugars     BloodSugar[]
+  activities      Activity[]
+  glp1Entries     Glp1Entry[]
+  user            User            @relation(fields: [id], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
 
 model Weight {
-  id        String   @id @default(cuid())
-  weight    Float
-  profileId String
-  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  weight       Float
+  capturedDate DateTime // date when the weight was actually measured
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("weights")
+}
+
+model FoodIntake {
+  id           String   @id @default(cuid())
+  mealType     String
+  food         String
+  calories     Int
+  capturedDate DateTime // date when the food was actually consumed
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("food_intakes")
+}
+
+model BloodPressure {
+  id           String   @id @default(cuid())
+  systolic     Int
+  diastolic    Int
+  capturedDate DateTime // date when the blood pressure was actually measured
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("blood_pressures")
+}
+
+model Activity {
+  id           String   @id @default(cuid())
+  type         String
+  duration     Int      // duration in minutes
+  capturedDate DateTime // date when the activity actually happened
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("activities")
+}
+
+model BloodSugar {
+  id              String   @id @default(cuid())
+  level           Float    // blood sugar level in mg/dL
+  measurementType String   // fasting, before_meal, after_meal, bedtime
+  capturedDate    DateTime // date when the blood sugar was actually measured
+  profileId       String
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("blood_sugars")
+}
+
+model Glp1Entry {
+  id           String   @id @default(cuid())
+  type         String   // Ozempic, Wegovy, Mounjaro, Zepbound
+  dose         Float    // dosage in mg
+  capturedDate DateTime // date when the injection actually happened
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("glp1_entries")
 }

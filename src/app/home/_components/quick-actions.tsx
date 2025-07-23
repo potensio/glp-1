@@ -3,7 +3,7 @@
 import {
   Scale,
   Utensils,
-  Pill,
+  Droplets,
   Heart,
   Syringe,
   Footprints,
@@ -16,6 +16,7 @@ import { BloodPressureDialogContent } from "./dialogs/blood-pressure-dialog";
 import { FoodIntakeDialogContent } from "./dialogs/food-intake-dialog";
 import { Glp1DialogContent } from "./dialogs/glp1-dialog";
 import { ActivityDialogContent } from "./dialogs/activity-dialog";
+import { BloodSugarDialogContent } from "./dialogs/blood-sugar-dialog";
 import { useState } from "react";
 
 const quickLogItems = [
@@ -23,7 +24,7 @@ const quickLogItems = [
   { icon: Utensils, label: "Food", color: "bg-green-500" },
   { icon: Syringe, label: "GLP-1", color: "bg-blue-500" },
   { icon: Heart, label: "Blood Pressure", color: "bg-red-500" },
-  { icon: Pill, label: "Medication", color: "bg-pink-500" },
+  { icon: Droplets, label: "Blood Sugar", color: "bg-pink-500" },
   { icon: Footprints, label: "Activity", color: "bg-teal-500" },
 ];
 
@@ -85,7 +86,7 @@ export const QuickActions = () => {
                 </DialogTrigger>
                 <DialogContent>
                   <BloodPressureDialogContent
-                    onSave={() => setOpenDialog(null)}
+                    onClose={() => setOpenDialog(null)}
                   />
                 </DialogContent>
               </Dialog>
@@ -115,6 +116,7 @@ export const QuickActions = () => {
                   <FoodIntakeDialogContent
                     todayCalories={1450}
                     onSave={() => setOpenDialog(null)}
+                    onClose={() => setOpenDialog(null)}
                   />
                 </DialogContent>
               </Dialog>
@@ -146,6 +148,35 @@ export const QuickActions = () => {
               </Dialog>
             );
           }
+          if (item.label === "Blood Sugar") {
+            return (
+              <Dialog
+                key={index}
+                open={openDialog === item.label}
+                onOpenChange={(open) => setOpenDialog(open ? item.label : null)}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex flex-col items-center justify-center h-28 bg-background rounded-xl border border-gray-200 hover:bg-background transition-all duration-200 hover:shadow-md cursor-pointer"
+                  >
+                    <div className={`${item.color} p-3 rounded-full mb-2`}>
+                      <item.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {item.label}
+                    </span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <BloodSugarDialogContent
+                    onSave={() => setOpenDialog(null)}
+                    onClose={() => setOpenDialog(null)}
+                  />
+                </DialogContent>
+              </Dialog>
+            );
+          }
           if (item.label === "Activity") {
             return (
               <Dialog
@@ -172,6 +203,7 @@ export const QuickActions = () => {
                     minutesActive={45}
                     goalSteps={8000}
                     onSave={() => setOpenDialog(null)}
+                    onClose={() => setOpenDialog(null)}
                   />
                 </DialogContent>
               </Dialog>

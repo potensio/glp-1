@@ -7,24 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Heart } from "lucide-react";
-
-function getSystolicStatus(value: number) {
-  if (value < 90) return "Low";
-  if (value <= 120) return "Normal";
-  return "High";
-}
-
-function getDiastolicStatus(value: number) {
-  if (value < 60) return "Low";
-  if (value <= 80) return "Normal";
-  return "High";
-}
-
-function getBarColor(status: string) {
-  if (status === "Low") return "bg-yellow-400";
-  if (status === "Normal") return "bg-green-500";
-  return "bg-orange-400";
-}
+import { useBloodPressure } from "@/hooks/use-blood-pressure";
 
 export function BloodPressureDialogContent({
   lastSystolic = 120,
@@ -33,7 +16,7 @@ export function BloodPressureDialogContent({
   maxSystolic = 200,
   minDiastolic = 40,
   maxDiastolic = 120,
-  onSave,
+  onClose,
 }: {
   lastSystolic?: number;
   lastDiastolic?: number;
@@ -41,7 +24,7 @@ export function BloodPressureDialogContent({
   maxSystolic?: number;
   minDiastolic?: number;
   maxDiastolic?: number;
-  onSave?: (systolic: number, diastolic: number) => void;
+  onClose?: () => void;
 }) {
   const [systolic, setSystolic] = useState(lastSystolic);
   const [diastolic, setDiastolic] = useState(lastDiastolic);
@@ -49,6 +32,15 @@ export function BloodPressureDialogContent({
   const [diastolicInput, setDiastolicInput] = useState(String(lastDiastolic));
   const systolicRef = useRef<HTMLInputElement>(null);
   const diastolicRef = useRef<HTMLInputElement>(null);
+  
+  const {
+    createBloodPressure,
+    isLoading,
+    getSystolicStatus,
+    getDiastolicStatus,
+    getStatusColor,
+    getBarColor,
+  } = useBloodPressure();
 
   useEffect(() => {
     setSystolicInput(String(systolic));
@@ -105,20 +97,32 @@ export function BloodPressureDialogContent({
     setDiastolicInput(String(num));
   };
 
+  // Save handler
+  const handleSave = async () => {
+    let sys = parseInt(systolicInput, 10);
+    let dia = parseInt(diastolicInput, 10);
+    if (isNaN(sys)) sys = lastSystolic;
+    if (isNaN(dia)) dia = lastDiastolic;
+    sys = Math.max(minSystolic, Math.min(maxSystolic, sys));
+    dia = Math.max(minDiastolic, Math.min(maxDiastolic, dia));
+    setSystolic(sys);
+    setDiastolic(dia);
+    setSystolicInput(String(sys));
+    setDiastolicInput(String(dia));
+    
+    try {
+      await createBloodPressure({ systolic: sys, diastolic: dia });
+      onClose?.();
+    } catch (error) {
+      // Error is handled by the hook
+      console.error('Failed to save blood pressure:', error);
+    }
+  };
+
   // Enter key handler
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      let sys = parseInt(systolicInput, 10);
-      let dia = parseInt(diastolicInput, 10);
-      if (isNaN(sys)) sys = lastSystolic;
-      if (isNaN(dia)) dia = lastDiastolic;
-      sys = Math.max(minSystolic, Math.min(maxSystolic, sys));
-      dia = Math.max(minDiastolic, Math.min(maxDiastolic, dia));
-      setSystolic(sys);
-      setDiastolic(dia);
-      setSystolicInput(String(sys));
-      setDiastolicInput(String(dia));
-      onSave?.(sys, dia);
+      handleSave();
     }
   };
 
@@ -141,94 +145,90 @@ export function BloodPressureDialogContent({
             </DialogTitle>
           </div>
         </div>
-        <DialogDescription>
-          <div className="flex gap-8 mb-2">
-            <div className="flex-1 flex-col">
-              <label className="block text-sm font-medium mb-1 text-gray-600">
-                Systolic
-              </label>
-              <input
-                ref={systolicRef}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={systolicInput}
-                onChange={handleSystolicChange}
-                onBlur={handleSystolicBlur}
-                onKeyDown={handleKeyDown}
-                className="w-full text-foreground text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-2xl font-bold appearance-none transition-colors"
-                aria-label="Systolic"
-              />
-              <div className="mt-4">
-                <div className="w-full h-2 rounded-full bg-gray-200 relative">
-                  <div
-                    className={`h-full rounded-full absolute top-0 left-0 transition-all duration-300 ${getBarColor(
-                      getSystolicStatus(systolic)
-                    )}`}
-                    style={{ width: `${systolicPercent}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Low</span>
-                  <span>Normal</span>
-                  <span>High</span>
-                </div>
+        <DialogDescription className="text-muted-foreground text-sm mb-2">
+          Enter your blood pressure readings below.
+        </DialogDescription>
+        <div className="flex gap-8 mb-2">
+          <div className="flex-1 flex-col">
+            <label className="block text-sm font-medium mb-1 text-gray-600">
+              Systolic
+            </label>
+            <input
+              ref={systolicRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={systolicInput}
+              onChange={handleSystolicChange}
+              onBlur={handleSystolicBlur}
+              onKeyDown={handleKeyDown}
+              className="w-full text-foreground text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-2xl font-bold appearance-none transition-colors"
+              aria-label="Systolic"
+            />
+            <div className="mt-4">
+              <div className="w-full h-2 rounded-full bg-gray-200 relative">
+                <div
+                  className={`h-full rounded-full absolute top-0 left-0 transition-all duration-300 ${getBarColor(
+                    getSystolicStatus(systolic)
+                  )}`}
+                  style={{ width: `${systolicPercent}%` }}
+                />
               </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1 text-gray-600">
-                Diastolic
-              </label>
-              <input
-                ref={diastolicRef}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={diastolicInput}
-                onChange={handleDiastolicChange}
-                onBlur={handleDiastolicBlur}
-                onKeyDown={handleKeyDown}
-                className="text-foreground w-full text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-2xl font-bold appearance-none transition-colors"
-                aria-label="Diastolic"
-              />
-              <div className="mt-4">
-                <div className="w-full h-2 rounded-full bg-gray-200 relative">
-                  <div
-                    className={`h-2 rounded-full absolute top-0 left-0 transition-all duration-300 ${getBarColor(
-                      getDiastolicStatus(diastolic)
-                    )}`}
-                    style={{ width: `${diastolicPercent}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Low</span>
-                  <span>Normal</span>
-                  <span>High</span>
-                </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Low (&lt;100)</span>
+                <span>Normal</span>
+                <span>High (&gt;140)</span>
+              </div>
+              <div className={`text-center text-sm font-medium mt-2 ${getStatusColor(getSystolicStatus(systolic))}`}>
+                {getSystolicStatus(systolic)}
               </div>
             </div>
           </div>
-        </DialogDescription>
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1 text-gray-600">
+              Diastolic
+            </label>
+            <input
+              ref={diastolicRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={diastolicInput}
+              onChange={handleDiastolicChange}
+              onBlur={handleDiastolicBlur}
+              onKeyDown={handleKeyDown}
+              className="text-foreground w-full text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-2xl font-bold appearance-none transition-colors"
+              aria-label="Diastolic"
+            />
+            <div className="mt-4">
+              <div className="w-full h-2 rounded-full bg-gray-200 relative">
+                <div
+                  className={`h-2 rounded-full absolute top-0 left-0 transition-all duration-300 ${getBarColor(
+                    getDiastolicStatus(diastolic)
+                  )}`}
+                  style={{ width: `${diastolicPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Low (&lt;60)</span>
+                <span>Normal</span>
+                <span>High (&gt;90)</span>
+              </div>
+              <div className={`text-center text-sm font-medium mt-2 ${getStatusColor(getDiastolicStatus(diastolic))}`}>
+                {getDiastolicStatus(diastolic)}
+              </div>
+            </div>
+          </div>
+        </div>
       </DialogHeader>
       <DialogFooter className="flex flex-col mt-2">
         <Button
           className="w-full"
           size={"lg"}
-          onClick={() => {
-            let sys = parseInt(systolicInput, 10);
-            let dia = parseInt(diastolicInput, 10);
-            if (isNaN(sys)) sys = lastSystolic;
-            if (isNaN(dia)) dia = lastDiastolic;
-            sys = Math.max(minSystolic, Math.min(maxSystolic, sys));
-            dia = Math.max(minDiastolic, Math.min(maxDiastolic, dia));
-            setSystolic(sys);
-            setDiastolic(dia);
-            setSystolicInput(String(sys));
-            setDiastolicInput(String(dia));
-            onSave?.(sys, dia);
-          }}
+          onClick={handleSave}
+          disabled={isLoading}
         >
-          Save Reading
+          {isLoading ? "Saving..." : "Save Reading"}
         </Button>
       </DialogFooter>
     </>

@@ -4,24 +4,49 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Footprints } from "lucide-react";
+import { useActivity } from "@/hooks/use-activity";
 
 const activityTypes = ["🚶🏻 Walking", "🏃🏻 Running", "🚴 Cycling", "🏊🏻 Swimming"];
 
 export function ActivityDialogContent({
   onSave,
+  onClose,
 }: {
   stepsToday?: number;
   minutesActive?: number;
   goalSteps?: number;
   onSave?: (data: { type: string; duration: string }) => void;
+  onClose?: () => void;
 }) {
   const [type, setType] = useState(activityTypes[0]);
   const [duration, setDuration] = useState("");
+  
+  const { createActivity, isLoading } = useActivity();
 
-  const handleSave = () => {
-    onSave?.({ type, duration });
+  const handleSave = async () => {
+    try {
+      await createActivity({
+        type,
+        duration: parseInt(duration),
+      });
+      
+      // Call the optional onSave callback for backward compatibility
+      onSave?.({ type, duration });
+      
+      // Close the dialog
+      onClose?.();
+      
+      // Reset form
+      setType(activityTypes[0]);
+      setDuration("");
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error("Failed to save activity:", error);
+    }
   };
 
   return (
@@ -51,7 +76,7 @@ export function ActivityDialogContent({
                 type === t
                   ? "bg-primary/10 border-primary ring ring-primary text-foreground"
                   : "bg-background border-border text-secondary hover:border-primary"
-              }`}
+              } cursor-pointer`}
               onClick={() => setType(t)}
               title={t}
               aria-label={t}
@@ -82,14 +107,16 @@ export function ActivityDialogContent({
           </span>
         </label>
       </div>
+      
+
       <DialogFooter className="flex flex-col mt-2">
         <Button
           className="w-full"
           size="lg"
           onClick={handleSave}
-          disabled={!duration || !type}
+          disabled={!duration || !type || isLoading}
         >
-          Log Activity
+          {isLoading ? "Logging..." : "Log Activity"}
         </Button>
       </DialogFooter>
     </>

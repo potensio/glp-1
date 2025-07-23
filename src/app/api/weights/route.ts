@@ -1,46 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getUserFromRequest } from '@/lib/auth';
+import { WeightService } from '@/lib/services/weight.service';
 
 export async function POST(request: NextRequest) {
   try {
-    // Mock user ID since authentication is removed
-    const userId = 'mock-user-id';
+    // Get authenticated user
+    const authUser = await getUserFromRequest(request);
+    if (!authUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
-    const { weight } = await request.json();
+    const { weight, capturedDate } = await request.json();
 
     if (!weight || typeof weight !== 'number') {
       return NextResponse.json({ error: 'Weight is required and must be a number' }, { status: 400 });
     }
 
-    // Create weight entry
-    const weightEntry = await prisma.weight.create({
-      data: {
-        weight,
-        profileId: userId,
-      },
+    // Use current date if capturedDate is not provided
+    const dateToCapture = capturedDate ? new Date(capturedDate) : new Date();
+
+    // Create weight entry using the service
+    const weightEntry = await WeightService.createWeight({
+      weight,
+      capturedDate: dateToCapture,
+      profileId: authUser.id,
     });
 
     return NextResponse.json(weightEntry);
   } catch (error) {
     console.error('Error creating weight entry:', error);
+    
+    if (error instanceof Error && error.message.includes('validation')) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Mock user ID since authentication is removed
-    const userId = 'mock-user-id';
+    // Get authenticated user
+    const authUser = await getUserFromRequest(request);
+    if (!authUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
-    // Get user's weight entries, ordered by creation date (newest first)
-    const weights = await prisma.weight.findMany({
-      where: {
-        profileId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // Get user's weight entries using the service
+    const weights = await WeightService.getWeightsByProfile(authUser.id);
 
     return NextResponse.json(weights);
   } catch (error) {

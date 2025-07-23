@@ -6,7 +6,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Utensils, Sparkles } from "lucide-react";
+import { Utensils, Sparkles, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
+import { foodIntakeSchema } from "@/lib/services/food-intake.service";
 
 const mealTypes = [
   { label: "Breakfast" },
@@ -17,16 +20,80 @@ const mealTypes = [
 
 export function FoodIntakeDialogContent({
   onSave,
+  onClose,
 }: {
   todayCalories?: number;
-  onSave?: (data: { mealType: string; food: string; calories: string }) => void;
+  onSave?: () => void;
+  onClose?: () => void;
 }) {
   const [mealType, setMealType] = useState(mealTypes[0].label);
   const [food, setFood] = useState("");
   const [calories, setCalories] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  const { profile } = useAuth();
 
-  const handleLog = () => {
-    onSave?.({ mealType, food, calories });
+  const handleLog = async () => {
+    if (!profile?.id) return;
+
+    try {
+      setIsLoading(true);
+      setErrors({});
+
+      // Validate input
+      const validatedData = foodIntakeSchema.parse({
+        mealType,
+        food,
+        calories: parseInt(calories) || 0,
+      });
+
+      // API call
+      const response = await fetch("/api/food-intakes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to log food intake");
+      }
+
+      // Success
+      toast({
+        title: "Food logged successfully!",
+        description: `${food} (${calories} cal) added to ${mealType.toLowerCase()}.`,
+      });
+
+      // Reset and close
+      setFood("");
+      setCalories("");
+      setMealType(mealTypes[0].label);
+      onSave?.();
+      onClose?.();
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === "ZodError") {
+          const zodError = error as any;
+          const fieldErrors: Record<string, string> = {};
+          zodError.errors?.forEach((err: any) => {
+            if (err.path?.length > 0) {
+              fieldErrors[err.path[0]] = err.message;
+            }
+          });
+          setErrors(fieldErrors);
+        } else {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,7 +110,13 @@ export function FoodIntakeDialogContent({
           </div>
         </div>
         <DialogDescription>
-          {/* Meal type label */}
+          Log your food intake and track calories for better health monitoring.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-6">
+        {/* Meal type label */}
+        <div>
           <label
             className="block text-sm font-medium mb-2 text-secondary w-full"
             htmlFor="meal-type-toggle"
@@ -51,19 +124,16 @@ export function FoodIntakeDialogContent({
             Select your meal type
           </label>
           {/* Meal time toggle group as 2x2 grid, full width */}
-          <div
-            id="meal-type-toggle"
-            className="grid grid-cols-2 gap-2 mb-6 w-full"
-          >
+          <div id="meal-type-toggle" className="grid grid-cols-2 gap-2 w-full">
             {mealTypes.map((type) => (
               <button
                 key={type.label}
                 type="button"
                 className={`px-4 py-2 rounded-lg border text-base font-semibold transition-colors flex items-center justify-center min-w-[90px] ${
                   mealType === type.label
-                    ? "bg-background border-primary text-foreground"
-                    : "bg-background border-border text-gray-700 hover:border-primary"
-                }`}
+                    ? "bg-primary/10 border-primary ring ring-primary text-foreground"
+                    : "bg-background border-border text-secondary hover:border-primary"
+                } cursor-pointer`}
                 onClick={() => setMealType(type.label)}
                 title={type.label}
                 aria-label={type.label}
@@ -72,61 +142,83 @@ export function FoodIntakeDialogContent({
               </button>
             ))}
           </div>
-          {/* Food input */}
-          <div className="flex flex-col mb-3 gap-2">
-            <label
-              className="block text-sm font-medium text-gray-600"
-              htmlFor="food-input"
-            >
-              What did you eat?
-            </label>
+        </div>
+
+        {/* Food input */}
+        <div className="flex flex-col gap-2">
+          <label
+            className="block text-sm font-medium text-gray-600"
+            htmlFor="food-input"
+          >
+            What did you eat?
+          </label>
+          <input
+            id="food-input"
+            type="text"
+            placeholder="e.g. Grilled chicken salad, oatmeal, etc."
+            value={food}
+            onChange={(e) => setFood(e.target.value)}
+            className={`w-full text-foreground text-center bg-transparent outline-none border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-lg font-medium appearance-none transition-colors ${
+              errors.food ? "border-red-500" : "border-border"
+            }`}
+          />
+          {errors.food && (
+            <span className="text-sm text-red-500">{errors.food}</span>
+          )}
+        </div>
+
+        {/* Calories input like weight dialog */}
+        <div className="flex flex-col items-center gap-4">
+          <label className="text-3xl font-bold flex items-baseline">
             <input
-              id="food-input"
+              id="calories-input"
               type="text"
-              placeholder="e.g. Grilled chicken salad, oatmeal, etc."
-              value={food}
-              onChange={(e) => setFood(e.target.value)}
-              className="w-full text-foreground text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-2 text-lg font-medium appearance-none transition-colors"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="350"
+              value={calories}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) setCalories(e.target.value);
+              }}
+              className={`w-full h-12 text-foreground text-center bg-transparent outline-none border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-semibold appearance-none transition-colors ${
+                errors.calories ? "border-red-500" : "border-border"
+              }`}
+              style={{ maxWidth: 120 }}
+              aria-label="Calories"
             />
-          </div>
-          {/* Calories input like weight dialog */}
-          <div className="flex flex-col items-center gap-4 mb-4">
-            <label className="text-3xl font-bold flex items-baseline">
-              <input
-                id="calories-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="350"
-                value={calories}
-                onChange={(e) => {
-                  if (/^\d*$/.test(e.target.value)) setCalories(e.target.value);
-                }}
-                className="w-full h-12 text-foreground text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-semibold appearance-none transition-colors"
-                style={{ maxWidth: 120 }}
-                aria-label="Calories"
-              />
-              <span className="text-base font-medium text-secondary ml-1">
-                cal
-              </span>
-            </label>
-            <span className="text-sm text-primary font-semibold mx-auto flex items-center gap-1">
-              Estimate calories with AI{" "}
-              <span>
-                <Sparkles className="size-4 text-orange-400" />
-              </span>
+            <span className="text-base font-medium text-secondary ml-1">
+              cal
             </span>
-          </div>
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter className="flex flex-col mt-2">
+          </label>
+          {errors.calories && (
+            <span className="text-sm text-red-500 text-center">
+              {errors.calories}
+            </span>
+          )}
+          <span className="text-sm text-primary font-semibold mx-auto flex items-center gap-1">
+            Estimate calories with AI{" "}
+            <span>
+              <Sparkles className="size-4 text-orange-400" />
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <DialogFooter className="flex flex-col mt-6">
         <Button
           className="w-full"
           size={"lg"}
           onClick={handleLog}
-          disabled={!food}
+          disabled={!food || !calories || isLoading}
         >
-          Log Food
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging...
+            </>
+          ) : (
+            "Log Food"
+          )}
         </Button>
       </DialogFooter>
     </>

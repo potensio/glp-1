@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useWeight } from "@/hooks/use-weight";
 
 export function WeightDialogContent({
   lastWeight = 165,
@@ -27,43 +27,17 @@ export function WeightDialogContent({
 }) {
   const [weight, setWeight] = useState(lastWeight);
   const [inputValue, setInputValue] = useState(String(lastWeight));
-  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
+  const { createWeight, isLoading } = useWeight();
 
   const saveWeight = async (weightValue: number) => {
-    setIsLoading(true);
     try {
-      const response = await fetch('/api/weights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ weight: weightValue }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save weight');
-      }
-
-      await response.json();
-      
-      toast({
-        title: "Weight saved!",
-        description: `Your weight of ${weightValue} lbs has been recorded.`,
-      });
-      
+      await createWeight({ weight: weightValue });
       onSave?.(weightValue);
       onClose?.();
     } catch (error) {
+      // Error handling is done in the custom hook
       console.error('Error saving weight:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save weight. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
