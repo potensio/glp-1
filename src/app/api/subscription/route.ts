@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: authUser.id,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
       include: {
         plan: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const { action, planId, priceId } = await request.json();
 
-    if (action === 'create_checkout') {
+    if (action === "create_checkout") {
       // Create Stripe checkout session for subscription
       if (!planId || !priceId) {
         return NextResponse.json(
@@ -88,13 +88,14 @@ export async function POST(request: NextRequest) {
         where: { id: authUser.id },
       });
 
-      const userName = userProfile 
-        ? `${userProfile.firstName} ${userProfile.lastName}` 
+      const userName = userProfile
+        ? `${userProfile.firstName} ${userProfile.lastName}`
         : undefined;
 
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
         const session = await StripeService.createCheckoutSession({
           userId: authUser.id,
           planId,
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (error) {
-        console.error('Stripe checkout error:', error);
+        console.error("Stripe checkout error:", error);
         return NextResponse.json(
           { success: false, error: "Failed to create checkout session" },
           { status: 500 }
@@ -121,12 +122,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (action === 'cancel') {
+    if (action === "cancel") {
       // Find user's active subscription
       const subscription = await prisma.subscription.findFirst({
         where: {
           userId: authUser.id,
-          status: 'ACTIVE',
+          status: "ACTIVE",
         },
       });
 
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
           message: "Subscription has been cancelled",
         });
       } catch (error) {
-        console.error('Cancel subscription error:', error);
+        console.error("Cancel subscription error:", error);
         return NextResponse.json(
           { success: false, error: "Failed to cancel subscription" },
           { status: 500 }
