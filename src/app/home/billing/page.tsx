@@ -5,14 +5,6 @@ import BillingInfo from "@/app/home/billing/_components/billing-info";
 
 export default function BillingPage() {
   // Mock data for demonstration
-  const planData = {
-    name: "Pro Plan",
-    description: "Advanced features for power users",
-    price: 29.99,
-    status: "Active",
-    nextBilling: "2024-02-15",
-    features: ["Advanced Analytics", "Priority Support", "Custom Integrations"],
-  };
 
   const paymentMethods = [
     {
@@ -71,10 +63,10 @@ export default function BillingPage() {
       </div>
 
       <div className="flex flex-col gap-10">
-        <div className="grid gap-6 md:grid-cols-2">
-          <PlanCard plan={planData} />
+        <PlanCard />
+        {/* <div className="grid gap-6 md:grid-cols-2">
           <BillingInfo info={billingInfo} />
-        </div>
+        </div> */}
         <PaymentMethods methods={paymentMethods} />
         <BillingHistory history={billingHistory} />
       </div>

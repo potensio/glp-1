@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile   Profile?
+  id               String        @id @default(cuid())
+  email            String        @unique
+  password         String
+  stripeCustomerId String?       @unique // Stripe customer ID
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  profile          Profile?
+  subscription     Subscription?
 
   @@map("users")
 }
@@ -112,4 +114,107 @@ model Glp1Entry {
   updatedAt    DateTime @updatedAt
 
   @@map("glp1_entries")
+}
+
+// Plan subscription yang tersedia
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         // "Basic", "Premium", "Pro"
+  description   String?
+  price         Decimal        // Harga per bulan/tahun
+  currency      String         @default("USD")
+  interval      String         // "month" atau "year"
+  stripePriceId String?        // Stripe Price ID for checkout
+  features      Json?          // Features dalam format JSON
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+// Subscription utama user
+model Subscription {
+  id                 String               @id @default(cuid())
+  userId             String               @unique
+  planId             String
+  status             SubscriptionStatus   @default(PENDING)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  // Relations
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               Plan                 @relation(fields: [planId], references: [id])
+  paymentMethods     PaymentMethod[]
+  payments           Payment[]
+
+  @@map("subscriptions")
+}
+
+// Payment method untuk menyimpan info dari gateway
+model PaymentMethod {
+  id             String         @id @default(cuid())
+  subscriptionId String
+  gateway        PaymentGateway
+  gatewayId      String         // Customer ID dari Stripe/PayPal
+  gatewaySubId   String?        // Subscription ID dari gateway
+  isDefault      Boolean        @default(false)
+  isActive       Boolean        @default(true)
+  metadata       Json?          // Data tambahan dari gateway
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  // Relations
+  subscription   Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  payments       Payment[]
+
+  @@unique([subscriptionId, gateway]) // Satu user hanya bisa punya 1 method per gateway
+  @@map("payment_methods")
+}
+
+// Record semua pembayaran
+model Payment {
+  id               String        @id @default(cuid())
+  subscriptionId   String
+  paymentMethodId  String
+  amount           Decimal
+  currency         String        @default("USD")
+  status           PaymentStatus @default(PENDING)
+  gatewayPaymentId String?       // Payment ID dari gateway
+  failureReason    String?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relations
+  subscription     Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  paymentMethod    PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@map("payments")
+}
+
+// ENUMS
+enum SubscriptionStatus {
+  PENDING    // Baru dibuat, belum bayar
+  ACTIVE     // Sedang aktif
+  CANCELED   // Dibatalkan user
+  EXPIRED    // Kedaluwarsa
+  SUSPENDED  // Disuspend karena gagal bayar
+}
+
+enum PaymentGateway {
+  STRIPE
+  PAYPAL
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELED
 }

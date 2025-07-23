@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import {
   hashPassword,
   generateToken,
@@ -56,8 +55,23 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user and profile in a transaction
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Find the Free plan first
+    const freePlan = await prisma.plan.findFirst({
+      where: {
+        name: 'Free',
+        isActive: true,
+      },
+    });
+
+    if (!freePlan) {
+      return NextResponse.json(
+        { success: false, error: "Free plan not available" },
+        { status: 500 }
+      );
+    }
+
+    // Create user, profile, and free subscription in a transaction
+    const result = await prisma.$transaction(async (tx) => {
       // Create user
       const user = await tx.user.create({
         data: {
@@ -75,7 +89,19 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return { user, profile };
+      // Create subscription with Free plan
+      const subscription = await tx.subscription.create({
+        data: {
+          userId: user.id,
+          planId: freePlan.id,
+          status: 'ACTIVE',
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          cancelAtPeriodEnd: false,
+        },
+      });
+
+      return { user, profile, subscription };
     });
 
     // Generate JWT token
@@ -93,6 +119,11 @@ export async function POST(request: NextRequest) {
         email: result.user.email,
       },
       profile: result.profile,
+      subscription: {
+        id: result.subscription.id,
+        planName: 'Free',
+        status: result.subscription.status,
+      },
       token,
     });
 

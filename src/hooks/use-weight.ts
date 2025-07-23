@@ -98,19 +98,13 @@ export function useWeight(): UseWeightReturn {
       const errorMessage = err instanceof Error ? err.message : "Failed to load weight data";
       setError(errorMessage);
       console.error("Error fetching weights:", err);
-      
-      toast({
-        title: "Error",
-        description: "Failed to load weight data. Please try again.",
-        variant: "destructive",
-      });
       return [];
     } finally {
       if (showLoading) {
         setIsLoading(false);
       }
     }
-  }, [profile, toast]);
+  }, [profile]);
 
   const createWeight = async (data: WeightInput) => {
     if (!profile) {
