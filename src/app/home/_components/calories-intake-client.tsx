@@ -52,7 +52,7 @@ export const CaloriesIntakeClient: React.FC<CaloriesIntakeClientProps> = ({
 
   useEffect(() => {
     fetchFoodIntakes(true); // Show loading state on initial fetch
-  }, []);
+  }, [fetchFoodIntakes]);
 
   if (isLoading) {
     return (

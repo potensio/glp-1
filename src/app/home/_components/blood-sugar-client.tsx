@@ -53,7 +53,7 @@ export const BloodSugarClient: React.FC<BloodSugarClientProps> = ({
 
   useEffect(() => {
     fetchBloodSugars(true); // Show loading state on initial fetch
-  }, []);
+  }, [fetchBloodSugars]);
 
   if (isLoading) {
     return (

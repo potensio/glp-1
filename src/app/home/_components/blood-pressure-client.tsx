@@ -66,7 +66,7 @@ export const BloodPressureClient: React.FC<BloodPressureClientProps> = ({
 
   useEffect(() => {
     fetchBloodPressures(true); // Show loading state on initial fetch
-  }, []);
+  }, [fetchBloodPressures]);
 
   if (isLoading) {
     return (

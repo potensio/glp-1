@@ -1,4 +1,4 @@
-// import WeeklyCalendar from "@/components/weekly-calendar";
+import WeeklyCalendar from "@/components/weekly-calendar";
 import { Button } from "@/components/ui/button";
 
 export default function CalendarPage() {
@@ -23,7 +23,7 @@ export default function CalendarPage() {
           Add reminder
         </Button>
       </div>
-      {/* <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" /> */}
+      <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" />
       <div className="p-8">
         <p>Calendar component coming soon...</p>
       </div>

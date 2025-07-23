@@ -71,7 +71,7 @@ export function useWeight(): UseWeightReturn {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const fetchWeights = async (showLoading = false): Promise<WeightData[]> => {
+  const fetchWeights = useCallback(async (showLoading = false): Promise<WeightData[]> => {
     if (!profile) {
       setWeights([]);
       return [];
@@ -110,7 +110,7 @@ export function useWeight(): UseWeightReturn {
         setIsLoading(false);
       }
     }
-  };
+  }, [profile, toast]);
 
   const createWeight = async (data: WeightInput) => {
     if (!profile) {
@@ -196,12 +196,12 @@ export function useWeight(): UseWeightReturn {
 
   const refetch = useCallback(async () => {
     await fetchWeights(true); // Show loading state for manual refetch
-  }, [profile]);
+  }, [fetchWeights]);
 
   // Initial data fetch
   useEffect(() => {
     fetchWeights(true); // Show loading state for initial fetch
-  }, [profile]);
+  }, [fetchWeights]);
 
   // Prepare chart data
   const chartData = transformWeightDataForChart(weights);
