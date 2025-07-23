@@ -93,14 +93,16 @@ export async function POST(request: NextRequest) {
         : undefined;
 
       try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        
         const session = await StripeService.createCheckoutSession({
           userId: authUser.id,
           planId,
           priceId,
           email: authUser.email,
           name: userName,
-          successUrl: `${process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_URL || 'http://localhost:3000'}/home/billing?success=true`,
-        cancelUrl: `${process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_URL || 'http://localhost:3000'}/home/billing?canceled=true`,
+          successUrl: `${baseUrl}/home/billing?success=true`,
+          cancelUrl: `${baseUrl}/home/billing?canceled=true`,
         });
 
         return NextResponse.json({

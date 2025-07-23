@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { PaymentGateway, SubscriptionStatus, PaymentStatus } from '@prisma/client';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
@@ -34,12 +33,11 @@ export class StripeService {
     // Check if user already has a Stripe customer ID
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { stripeCustomerId: true },
+      select: { id: true, email: true },
     });
 
-    if (user?.stripeCustomerId) {
-      return user.stripeCustomerId;
-    }
+    // For now, create a new customer each time
+    // TODO: Add stripeCustomerId field to User model in schema
 
     // Create new Stripe customer
     const customer = await stripe.customers.create({
@@ -48,11 +46,11 @@ export class StripeService {
       metadata: { userId },
     });
 
-    // Save customer ID to user record
-    await prisma.user.update({
-      where: { id: userId },
-      data: { stripeCustomerId: customer.id },
-    });
+    // TODO: Save customer ID to user record when stripeCustomerId field is added
+    // await prisma.user.update({
+    //   where: { id: userId },
+    //   data: { stripeCustomerId: customer.id },
+    // });
 
     return customer.id;
   }
@@ -102,7 +100,7 @@ export class StripeService {
       where: {
         id: validated.subscriptionId,
         userId: validated.userId,
-        status: SubscriptionStatus.ACTIVE,
+        status: 'ACTIVE',
       },
       include: {
         paymentMethods: true,
@@ -115,7 +113,7 @@ export class StripeService {
 
     // Find Stripe payment method
     const stripePaymentMethod = subscription.paymentMethods.find(
-      (pm: any) => pm.gateway === PaymentGateway.STRIPE && pm.gatewaySubId
+      (pm: any) => pm.gateway === 'STRIPE' && pm.gatewaySubId
     );
 
     if (!stripePaymentMethod?.gatewaySubId) {
@@ -129,7 +127,7 @@ export class StripeService {
     await prisma.subscription.update({
       where: { id: validated.subscriptionId },
       data: {
-        status: SubscriptionStatus.CANCELED,
+        status: 'CANCELED',
       },
     });
 
@@ -147,6 +145,10 @@ export class StripeService {
       
       case 'invoice.payment_succeeded':
         await this.handlePaymentSucceeded(event.data.object as Stripe.Invoice);
+        break;
+      
+      case 'invoice.payment_failed':
+        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       
       case 'customer.subscription.updated':
@@ -186,23 +188,47 @@ export class StripeService {
       return;
     }
 
-    // Create subscription in database
-    const newSubscription = await prisma.subscription.create({
-      data: {
-        userId,
-        planId,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
-        currentPeriodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
-      },
+    // Check if user already has a subscription (e.g., free plan from signup)
+    const existingSubscription = await prisma.subscription.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }, // Get the most recent subscription
     });
+
+    let subscription;
+    
+    if (existingSubscription) {
+      // Update existing subscription to the new paid plan
+      subscription = await prisma.subscription.update({
+        where: { id: existingSubscription.id },
+        data: {
+          planId,
+          status: 'ACTIVE',
+          currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
+          currentPeriodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
+          cancelAtPeriodEnd: false,
+        },
+      });
+      console.log(`Updated existing subscription ${existingSubscription.id} for user ${userId} to plan ${planId}`);
+    } else {
+      // Create new subscription if none exists
+      subscription = await prisma.subscription.create({
+        data: {
+          userId,
+          planId,
+          status: 'ACTIVE',
+          currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
+          currentPeriodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
+        },
+      });
+      console.log(`Created new subscription ${subscription.id} for user ${userId} with plan ${planId}`);
+    }
 
     // Create payment method record
     if (session.payment_method_types.includes('card')) {
       await prisma.paymentMethod.create({
         data: {
-          subscriptionId: newSubscription.id,
-          gateway: PaymentGateway.STRIPE,
+          subscriptionId: subscription.id,
+          gateway: 'STRIPE',
           gatewayId: session.customer as string || '',
           gatewaySubId: stripeSubscription.id,
           isDefault: true,
@@ -220,7 +246,7 @@ export class StripeService {
     // Find subscription by Stripe subscription ID
     const paymentMethod = await prisma.paymentMethod.findFirst({
       where: {
-        gateway: PaymentGateway.STRIPE,
+        gateway: 'STRIPE',
         gatewaySubId: (invoice as any).subscription as string,
       },
       include: {
@@ -240,11 +266,86 @@ export class StripeService {
         paymentMethodId: paymentMethod.id,
         amount: invoice.amount_paid / 100, // Convert from cents
         currency: invoice.currency.toUpperCase(),
-        status: PaymentStatus.COMPLETED,
+        status: 'COMPLETED',
         gatewayPaymentId: (invoice as any).payment_intent as string || invoice.id,
         paidAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Handle failed payment
+   */
+  private static async handlePaymentFailed(invoice: Stripe.Invoice) {
+    if (!(invoice as any).subscription) return;
+
+    // Find subscription by Stripe subscription ID
+    const paymentMethod = await prisma.paymentMethod.findFirst({
+      where: {
+        gateway: 'STRIPE',
+        gatewaySubId: (invoice as any).subscription as string,
+      },
+      include: {
+        subscription: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!paymentMethod?.subscription) {
+      console.error('Subscription not found for failed invoice:', invoice.id);
+      return;
+    }
+
+    // Create failed payment record
+    await prisma.payment.create({
+      data: {
+        subscriptionId: paymentMethod.subscription.id,
+        paymentMethodId: paymentMethod.id,
+        amount: invoice.amount_due / 100, // Convert from cents
+        currency: invoice.currency.toUpperCase(),
+        status: 'FAILED',
+        gatewayPaymentId: (invoice as any).payment_intent as string || invoice.id,
+        failureReason: 'Payment failed - insufficient funds or card declined',
+      },
+    });
+
+    // Downgrade to free plan after payment failure
+    await this.downgradeToFreePlan(paymentMethod.subscription.userId);
+  }
+
+  /**
+   * Downgrade user to free plan
+   */
+  private static async downgradeToFreePlan(userId: string) {
+    // Find the free plan
+    const freePlan = await prisma.plan.findFirst({
+      where: {
+        name: 'Free',
+        isActive: true,
+      },
+    });
+
+    if (!freePlan) {
+      console.error('Free plan not found for downgrade');
+      return;
+    }
+
+    // Update user's subscription to free plan
+    await prisma.subscription.update({
+      where: { userId },
+      data: {
+        planId: freePlan.id,
+        status: 'ACTIVE',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        cancelAtPeriodEnd: false,
+      },
+    });
+
+    console.log(`User ${userId} downgraded to free plan due to payment failure`);
   }
 
   /**
@@ -254,7 +355,7 @@ export class StripeService {
     // Find payment method with this Stripe subscription ID
     const paymentMethod = await prisma.paymentMethod.findFirst({
       where: {
-        gateway: PaymentGateway.STRIPE,
+        gateway: 'STRIPE',
         gatewaySubId: stripeSubscription.id,
       },
     });
@@ -267,7 +368,7 @@ export class StripeService {
     await prisma.subscription.update({
       where: { id: paymentMethod.subscriptionId },
       data: {
-        status: stripeSubscription.status === 'active' ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELED,
+        status: stripeSubscription.status === 'active' ? 'ACTIVE' : 'CANCELED',
         currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
         currentPeriodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
       },
@@ -281,7 +382,7 @@ export class StripeService {
     // Find payment method with this Stripe subscription ID
     const paymentMethod = await prisma.paymentMethod.findFirst({
       where: {
-        gateway: PaymentGateway.STRIPE,
+        gateway: 'STRIPE',
         gatewaySubId: stripeSubscription.id,
       },
     });
@@ -294,7 +395,7 @@ export class StripeService {
     await prisma.subscription.update({
       where: { id: paymentMethod.subscriptionId },
       data: {
-        status: SubscriptionStatus.CANCELED,
+        status: 'CANCELED',
       },
     });
   }

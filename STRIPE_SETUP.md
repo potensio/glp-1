@@ -5,6 +5,7 @@ This document outlines the Stripe payment integration for the GLP-1 tracking app
 ## Overview
 
 The application now supports Stripe payments for subscription management with the following features:
+
 - Stripe Checkout for subscription creation
 - Webhook handling for payment events
 - Subscription cancellation
@@ -20,20 +21,20 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='pk_test_your_stripe_publishable_key_here'
 STRIPE_SECRET_KEY='sk_test_your_stripe_secret_key_here'
 STRIPE_WEBHOOK_SECRET='whsec_your_webhook_secret_here'
 
-# App URL for Stripe redirects
-NEXT_PUBLIC_STRIPE_WEBHOOK_URL='http://localhost:3000'
 ```
 
 ## Setup Steps
 
 1. **Create Stripe Account**: Sign up at [stripe.com](https://stripe.com)
 
-2. **Get API Keys**: 
+2. **Get API Keys**:
+
    - Go to Stripe Dashboard > Developers > API keys
    - Copy your publishable key and secret key
    - Replace the placeholder values in `.env`
 
 3. **Create Products in Stripe**:
+
    - Go to Stripe Dashboard > Products
    - Create a product for your Premium plan
    - Note the Price ID (starts with `price_`)
@@ -48,6 +49,7 @@ NEXT_PUBLIC_STRIPE_WEBHOOK_URL='http://localhost:3000'
 ## Database Schema
 
 The integration uses the existing subscription system with these key models:
+
 - `User` - now includes `stripeCustomerId`
 - `Subscription` - manages subscription state
 - `PaymentMethod` - stores gateway information
@@ -56,6 +58,7 @@ The integration uses the existing subscription system with these key models:
 ## API Endpoints
 
 ### Create Checkout Session
+
 ```http
 POST /api/subscription
 Content-Type: application/json
@@ -68,6 +71,7 @@ Content-Type: application/json
 ```
 
 ### Cancel Subscription
+
 ```http
 POST /api/subscription
 Content-Type: application/json
@@ -78,6 +82,7 @@ Content-Type: application/json
 ```
 
 ### Webhook Endpoint
+
 ```http
 POST /api/stripe/webhooks
 ```
@@ -85,6 +90,7 @@ POST /api/stripe/webhooks
 ## Frontend Integration
 
 The integration includes:
+
 - `StripeClientService` for client-side operations
 - Enhanced `useSubscription` hook with checkout functionality
 - Updated `PlanCard` component with upgrade button
@@ -101,10 +107,12 @@ The integration includes:
 ## Testing
 
 Use Stripe's test card numbers:
+
 - Success: `4242 4242 4242 4242`
 - Decline: `4000 0000 0000 0002`
 
 For webhook testing, use Stripe CLI:
+
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhooks
 ```
