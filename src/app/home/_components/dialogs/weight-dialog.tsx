@@ -126,18 +126,19 @@ export function WeightDialogContent({
           <DialogTitle className="text-lg font-semibold">Weight</DialogTitle>
         </div>
         <DialogDescription>
-          <Slider
-            min={min}
-            max={max}
-            value={[weight]}
-            onValueChange={([val]: number[]) => setWeight(val)}
-            className="mb-2 mt-2"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground px-1">
-            <span>{min}</span>
-            <span>{max}</span>
-          </div>
+          Track your weight progress
         </DialogDescription>
+        <Slider
+          min={min}
+          max={max}
+          value={[weight]}
+          onValueChange={([val]: number[]) => setWeight(val)}
+          className="mb-2 mt-2"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground px-1">
+          <span>{min}</span>
+          <span>{max}</span>
+        </div>
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 mb-4">
         <label className="text-3xl font-bold flex items-baseline">
