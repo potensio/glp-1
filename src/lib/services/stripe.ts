@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { db as prisma } from "@/lib/db";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");
@@ -234,12 +234,12 @@ export class StripeService {
         data: {
           planId,
           status: "ACTIVE",
-          currentPeriodStart: new Date(
-            (stripeSubscription as any).current_period_start * 1000
-          ),
-          currentPeriodEnd: new Date(
-            (stripeSubscription as any).current_period_end * 1000
-          ),
+          currentPeriodStart: (stripeSubscription as any).current_period_start
+            ? new Date((stripeSubscription as any).current_period_start * 1000)
+            : new Date(),
+          currentPeriodEnd: (stripeSubscription as any).current_period_end
+            ? new Date((stripeSubscription as any).current_period_end * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           cancelAtPeriodEnd: false,
         },
       });
@@ -253,12 +253,12 @@ export class StripeService {
           userId,
           planId,
           status: "ACTIVE",
-          currentPeriodStart: new Date(
-            (stripeSubscription as any).current_period_start * 1000
-          ),
-          currentPeriodEnd: new Date(
-            (stripeSubscription as any).current_period_end * 1000
-          ),
+          currentPeriodStart: (stripeSubscription as any).current_period_start
+            ? new Date((stripeSubscription as any).current_period_start * 1000)
+            : new Date(),
+          currentPeriodEnd: (stripeSubscription as any).current_period_end
+            ? new Date((stripeSubscription as any).current_period_end * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         },
       });
       console.log(
@@ -421,12 +421,12 @@ export class StripeService {
       where: { id: paymentMethod.subscriptionId },
       data: {
         status: stripeSubscription.status === "active" ? "ACTIVE" : "CANCELED",
-        currentPeriodStart: new Date(
-          (stripeSubscription as any).current_period_start * 1000
-        ),
-        currentPeriodEnd: new Date(
-          (stripeSubscription as any).current_period_end * 1000
-        ),
+        currentPeriodStart: (stripeSubscription as any).current_period_start
+          ? new Date((stripeSubscription as any).current_period_start * 1000)
+          : new Date(),
+        currentPeriodEnd: (stripeSubscription as any).current_period_end
+          ? new Date((stripeSubscription as any).current_period_end * 1000)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       },
     });
   }
