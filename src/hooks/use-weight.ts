@@ -15,7 +15,7 @@
 import {
   useMutation,
   useQueryClient,
-  useQuery,
+  useSuspenseQuery,
 } from "@tanstack/react-query";
 // Tool for showing success/error messages
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,7 @@ interface ChartData {
  * Provides all weight-related data and statistics
  */
 interface UseWeightReturn {
-  // Chart data with loading/error states
+  // Chart data - no loading/error states needed with Suspense
   chartData: ChartData[];
   currentWeight: number;
   entries: WeightData[];
@@ -60,8 +60,6 @@ interface UseWeightReturn {
     totalEntries: number;
     lastUpdated?: string;
   };
-  isLoading: boolean;
-  error: Error | null;
 }
 
 /**
@@ -179,24 +177,28 @@ export function useCreateWeightEntry() {
  * Main hook for working with weight data
  *
  * This hook gets your weight data and prepares it for use.
- * It uses something called "Suspense" which means:
+ * It uses React Suspense which means:
  *
  * Good things:
- * - You don't need to worry about loading states
- * - Errors are handled automatically
+ * - No loading states needed - components suspend until data loads
+ * - Errors are handled by error boundaries
  * - Your code stays simple and clean
  * - Data is cached so it loads faster
- * - Easy to use with less complicated code
+ * - Instant navigation with streaming content
  */
 export function useWeight(): UseWeightReturn {
   const { profile } = useAuth();
 
-  const { data: entries = [], isLoading, error } = useQuery({
-    queryKey: weightKeys.list(profile?.id || 'no-profile'),
+  // Throw error if no profile - this will be caught by error boundary
+  if (!profile?.id) {
+    throw new Error("Profile not available");
+  }
+
+  const entries = useSuspenseQuery({
+    queryKey: weightKeys.list(profile.id),
     queryFn: fetchWeightEntries,
-    enabled: !!profile?.id, // Only run query when profile is available
     staleTime: 5 * 60 * 1000,
-  });
+  }).data;
 
   const chartData = transformWeightDataForChart(entries);
 
@@ -212,7 +214,5 @@ export function useWeight(): UseWeightReturn {
     chartData,
     currentWeight: stats.currentWeight,
     stats,
-    isLoading,
-    error,
   };
 }

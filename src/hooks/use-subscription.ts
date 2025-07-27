@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import StripeClientService from "@/lib/services/stripe-client";
+import { useAuth } from "@/contexts/auth-context";
 
 interface Plan {
   id: string;
@@ -23,50 +27,19 @@ interface Subscription {
   plan: Plan;
 }
 
+// Query key factory for potential future use
+const QUERY_KEYS = {
+  subscription: () => ["subscription"] as const,
+} as const;
+
 export function useSubscription() {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
 
-  const fetchSubscription = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await fetch("/api/subscription", {
-        credentials: "include",
-      });
-
-      if (response.status === 404) {
-        // No subscription found - user might be on free plan
-        setSubscription(null);
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch subscription");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setSubscription(data.data);
-      } else {
-        throw new Error(data.error || "Failed to fetch subscription");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch subscription";
-      setError(errorMessage);
-      console.error("Subscription fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const cancelSubscription = async () => {
-    try {
-      setIsLoading(true);
-      
+  // Cancel subscription mutation
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch("/api/subscription", {
         method: "POST",
         headers: {
@@ -81,60 +54,73 @@ export function useSubscription() {
       }
 
       const data = await response.json();
-      if (data.success) {
-        // Refresh subscription data after cancellation
-        await fetchSubscription();
-        toast({
-          title: "Subscription Canceled",
-          description: data.message || "Your subscription has been canceled.",
-        });
-      } else {
+      if (!data.success) {
         throw new Error(data.error || "Failed to cancel subscription");
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to cancel subscription";
-      setError(errorMessage);
+      return data;
+    },
+    onSuccess: (data) => {
+      // Refresh auth context to update subscription data
+      refreshUser();
+      toast({
+        title: "Subscription Canceled",
+        description: data.message || "Your subscription has been canceled.",
+      });
+    },
+    onError: (err) => {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to cancel subscription";
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       console.error("Subscription cancel error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+  });
 
-  const createCheckout = async (planId: string, priceId: string) => {
-    try {
-      setIsLoading(true);
+  // Create checkout mutation
+  const checkoutMutation = useMutation({
+    mutationFn: async ({
+      planId,
+      priceId,
+    }: {
+      planId: string;
+      priceId: string;
+    }) => {
       await StripeClientService.redirectToCheckout({ planId, priceId });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create checkout";
-      setError(errorMessage);
+    },
+    onSuccess: () => {
+      // Refresh auth context when user returns from successful checkout
+      // This ensures subscription data is updated immediately
+      refreshUser();
+    },
+    onError: (err) => {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create checkout";
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       console.error("Checkout error:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const createCheckout = (planId: string, priceId: string) => {
+    checkoutMutation.mutate({ planId, priceId });
+  };
+
+  const cancelSubscription = () => {
+    cancelMutation.mutate();
   };
 
   const refetch = () => {
-    fetchSubscription();
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.subscription() });
   };
 
-  useEffect(() => {
-    fetchSubscription();
-  }, []);
-
   return {
-    subscription,
-    isLoading,
-    error,
+    isLoading: cancelMutation.isPending || checkoutMutation.isPending,
     cancelSubscription,
     createCheckout,
     refetch,

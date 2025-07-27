@@ -16,13 +16,34 @@ interface Profile {
   phoneNumber?: string;
 }
 
+interface Plan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  interval: string;
+  features: any;
+}
+
+interface Subscription {
+  id: string;
+  status: string;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  plan: Plan;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  subscription: Subscription | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  hasPremiumSubscription: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +67,7 @@ async function fetchCurrentUser() {
   }
 
   const data = await response.json();
-  return data.success ? { user: data.user, profile: data.profile } : null;
+  return data.success ? { user: data.user, profile: data.profile, subscription: data.subscription } : null;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -61,8 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   } = useQuery({
     queryKey: authKeys.me,
     queryFn: fetchCurrentUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes - don't refetch for 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
+    staleTime: 60 * 60 * 1000, // 1 hour - don't refetch for 1 hour
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in cache for 24 hours
     retry: (failureCount, error: any) => {
       // Don't retry on 401 (unauthorized)
       if (error?.message?.includes('401') || error?.status === 401) {
@@ -98,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error || 'Login failed');
       }
 
-      return { user: data.user, profile: data.profile };
+      return { user: data.user, profile: data.profile, subscription: data.subscription };
     },
     onSuccess: (data) => {
       // Update the auth cache with new user data
@@ -127,9 +148,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
-  // Extract user and profile from auth data
+  // Extract user, profile, and subscription from auth data
   const user = authData?.user || null;
   const profile = authData?.profile || null;
+  const subscription = authData?.subscription || null;
+  
+  // Determine if user has premium subscription
+  const hasPremiumSubscription = subscription && subscription.plan.name.toLowerCase() !== "free";
 
   // Auth functions
   const login = async (email: string, password: string) => {
@@ -147,10 +172,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     profile,
+    subscription,
     isLoading,
     login,
     logout,
     refreshUser,
+    hasPremiumSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -266,17 +266,41 @@ export class StripeService {
       );
     }
 
-    // Create payment method record
+    // Create or update payment method record
     if (session.payment_method_types.includes("card")) {
-      await prisma.paymentMethod.create({
-        data: {
+      // Check if payment method already exists for this subscription and gateway
+      const existingPaymentMethod = await prisma.paymentMethod.findFirst({
+        where: {
           subscriptionId: subscription.id,
           gateway: "STRIPE",
-          gatewayId: (session.customer as string) || "",
-          gatewaySubId: stripeSubscription.id,
-          isDefault: true,
         },
       });
+
+      if (existingPaymentMethod) {
+        // Update existing payment method
+        await prisma.paymentMethod.update({
+          where: { id: existingPaymentMethod.id },
+          data: {
+            gatewayId: (session.customer as string) || "",
+            gatewaySubId: stripeSubscription.id,
+            isDefault: true,
+            isActive: true,
+          },
+        });
+        console.log(`Updated existing payment method ${existingPaymentMethod.id} for subscription ${subscription.id}`);
+      } else {
+        // Create new payment method
+        await prisma.paymentMethod.create({
+          data: {
+            subscriptionId: subscription.id,
+            gateway: "STRIPE",
+            gatewayId: (session.customer as string) || "",
+            gatewaySubId: stripeSubscription.id,
+            isDefault: true,
+          },
+        });
+        console.log(`Created new payment method for subscription ${subscription.id}`);
+      }
     }
   }
 

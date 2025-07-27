@@ -1,7 +1,7 @@
 import {
   useMutation,
   useQueryClient,
-  useQuery,
+  useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
@@ -150,12 +150,16 @@ export function useBloodPressure() {
   const { profile } = useAuth();
   const { toast } = useToast();
 
-  const { data: entries = [], isLoading, error } = useQuery({
-    queryKey: bloodPressureKeys.list(profile?.id || 'no-profile'),
+  // Throw error if no profile - this will be caught by error boundary
+  if (!profile?.id) {
+    throw new Error("Profile not available");
+  }
+
+  const entries = useSuspenseQuery({
+    queryKey: bloodPressureKeys.list(profile.id),
     queryFn: fetchBloodPressureEntries,
-    enabled: !!profile?.id, // Only run query when profile is available
     staleTime: 5 * 60 * 1000,
-  });
+  }).data;
 
   const chartData = transformBloodPressureDataForChart(entries);
 
@@ -257,8 +261,6 @@ export function useBloodPressure() {
     chartData,
     createBloodPressure: createBloodPressureMutation.mutate,
     isCreating: createBloodPressureMutation.isPending,
-    isLoading,
-    error,
     // Helper functions
     getSystolicStatus,
     getDiastolicStatus,
