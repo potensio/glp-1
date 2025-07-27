@@ -1,4 +1,4 @@
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityInput } from "@/lib/services/activity.service";
 
@@ -57,13 +57,15 @@ const deleteActivityEntry = async (id: string): Promise<void> => {
 };
 
 export function useActivity(startDate?: Date, endDate?: Date) {
-  const { data: activities } = useSuspenseQuery({
+  const { data: activities = [], isLoading, error } = useQuery({
     queryKey: ["activities", startDate, endDate],
     queryFn: () => fetchActivities(startDate, endDate),
   });
 
   return {
     activities,
+    isLoading,
+    error,
   };
 }
 

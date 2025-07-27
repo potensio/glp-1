@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { HealthCharts } from "@/components/dashboard/health-charts";
 import { ProgressOverview } from "@/components/progress/progress-overview";
 import { Card } from "@/components/ui/card";
-import { Suspense } from "react";
 import {
   Scale,
   Utensils,
@@ -166,21 +165,7 @@ export default function ProgressPage() {
           <Printer />
         </Button>
       </div>
-      <Suspense
-        fallback={
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="rounded-2xl gap-3 p-5 md:p-6">
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
-              </Card>
-            ))}
-          </div>
-        }
-      >
-        <ProgressOverview />
-      </Suspense>
+      <ProgressOverview />
       <HealthCharts />
       <RecentEntries />
     </>

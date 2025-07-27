@@ -15,7 +15,7 @@
 import {
   useMutation,
   useQueryClient,
-  useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 // Tool for showing success/error messages
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,7 @@ interface ChartData {
  * Provides all weight-related data and statistics
  */
 interface UseWeightReturn {
-  // Chart data (no loading/error states in Suspense)
+  // Chart data with loading/error states
   chartData: ChartData[];
   currentWeight: number;
   entries: WeightData[];
@@ -60,6 +60,8 @@ interface UseWeightReturn {
     totalEntries: number;
     lastUpdated?: string;
   };
+  isLoading: boolean;
+  error: Error | null;
 }
 
 /**
@@ -189,14 +191,10 @@ export function useCreateWeightEntry() {
 export function useWeight(): UseWeightReturn {
   const { profile } = useAuth();
 
-  // Ensure we have a profile before running the query
-  if (!profile?.id) {
-    throw new Promise(() => {}); // Suspend until profile is available
-  }
-
-  const { data: entries = [] } = useSuspenseQuery({
-    queryKey: weightKeys.list(profile.id),
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: weightKeys.list(profile?.id || 'no-profile'),
     queryFn: fetchWeightEntries,
+    enabled: !!profile?.id, // Only run query when profile is available
     staleTime: 5 * 60 * 1000,
   });
 
@@ -214,5 +212,7 @@ export function useWeight(): UseWeightReturn {
     chartData,
     currentWeight: stats.currentWeight,
     stats,
+    isLoading,
+    error,
   };
 }
