@@ -1,14 +1,16 @@
 "use client";
 
 import { Suspense } from "react";
-import { WeightTrendClient } from "./weight-trend-client";
-import { BloodPressureClient } from "./blood-pressure-client";
-import { CaloriesIntakeClient } from "./calories-intake-client";
-import { BloodSugarClient } from "./blood-sugar-client";
-
-
-
-
+import { WeightTrendChart } from "./weight-trend-chart";
+import { BloodPressureChart } from "./blood-pressure-chart";
+import { CaloriesIntakeChart } from "./calories-intake-chart";
+import { BloodSugarChart } from "./blood-sugar-chart";
+import {
+  WeightChartSkeleton,
+  BloodPressureChartSkeleton,
+  CaloriesChartSkeleton,
+  BloodSugarChartSkeleton,
+} from "@/components/ui/chart-skeleton";
 
 interface HealthDashboardProps {
   className?: string;
@@ -16,35 +18,33 @@ interface HealthDashboardProps {
   title?: string;
 }
 
-export function HealthDashboard({ 
-  className = "", 
-  showTitle = false, 
-  title = "Health Trends" 
+export function HealthDashboard({
+  className = "",
+  showTitle = false,
+  title = "Health Trends",
 }: HealthDashboardProps) {
   return (
     <div className={className}>
-      {showTitle && (
-        <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      )}
+      {showTitle && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        {/* Weight Trend Chart */}
-        <Suspense fallback={<div>Loading weight trends...</div>}>
-          <WeightTrendClient />
+        {/* Weight Trend Chart - Using TanStack Query with Suspense */}
+        <Suspense fallback={<WeightChartSkeleton />}>
+          <WeightTrendChart />
         </Suspense>
-        
+
         {/* Blood Pressure Chart */}
-        <Suspense fallback={<div>Loading blood pressure...</div>}>
-          <BloodPressureClient />
+        <Suspense fallback={<BloodPressureChartSkeleton />}>
+          <BloodPressureChart />
         </Suspense>
-        
+
         {/* Calories Intake Chart */}
-        <Suspense fallback={<div>Loading calories intake...</div>}>
-          <CaloriesIntakeClient />
+        <Suspense fallback={<CaloriesChartSkeleton />}>
+          <CaloriesIntakeChart />
         </Suspense>
-        
+
         {/* Blood Sugar Chart */}
-        <Suspense fallback={<div>Loading blood sugar...</div>}>
-          <BloodSugarClient />
+        <Suspense fallback={<BloodSugarChartSkeleton />}>
+          <BloodSugarChart />
         </Suspense>
       </div>
     </div>

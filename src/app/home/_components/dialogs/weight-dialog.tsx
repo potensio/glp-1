@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
-import { useWeight } from "@/hooks/use-weight";
+import { useCreateWeightEntry } from "@/hooks/use-weight";
 
 export function WeightDialogContent({
   lastWeight = 165,
@@ -28,17 +28,18 @@ export function WeightDialogContent({
   const [weight, setWeight] = useState(lastWeight);
   const [inputValue, setInputValue] = useState(String(lastWeight));
   const inputRef = useRef<HTMLInputElement>(null);
-  const { createWeight, isLoading } = useWeight();
+  const { mutate: createWeight, isPending: isLoading } = useCreateWeightEntry();
 
-  const saveWeight = async (weightValue: number) => {
-    try {
-      await createWeight({ weight: weightValue });
-      onSave?.(weightValue);
-      onClose?.();
-    } catch (error) {
-      // Error handling is done in the custom hook
-      console.error('Error saving weight:', error);
-    }
+  const saveWeight = (weightValue: number) => {
+    createWeight({ weight: weightValue }, {
+      onSuccess: () => {
+        onSave?.(weightValue);
+        onClose?.();
+      },
+      onError: (error: Error) => {
+         console.error('Error saving weight:', error);
+       }
+    });
   };
 
   // Keep input and slider in sync

@@ -1,16 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { LogOut } from "lucide-react";
 
 interface WelcomeHeroProps {
   userName: string;
 }
 
 export const WelcomeHero = ({ userName }: WelcomeHeroProps) => {
-  const { logout } = useAuth();
-
   // Get the time of day to display appropriate greeting
   const getGreeting = () => {
     const hour = new Date().getHours();

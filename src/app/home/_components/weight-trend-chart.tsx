@@ -1,5 +1,6 @@
 "use client";
 
+import { useWeight } from "@/hooks/use-weight";
 import { Scale, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
@@ -14,9 +15,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 
 interface WeightTrendChartProps {
-  data: { name: string; value: number }[];
-  currentWeight: number;
-  targetWeight: number;
+  print?: boolean;
 }
 
 // Define a local type for the custom tooltip props
@@ -26,10 +25,17 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
+
+
+// Chart display component
+const WeightTrendDisplay = ({
   data,
   currentWeight,
-  targetWeight,
+  showPrint = false,
+}: {
+  data: { name: string; value: number }[];
+  currentWeight: number;
+  showPrint?: boolean;
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
     const active = props?.active;
@@ -57,9 +63,11 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
           </div>
           <h3 className="text-lg font-semibold text-gray-800">Weight Trend</h3>
         </div>
-        <Button variant={"outline"} className="cursor-pointer">
-          <Printer />
-        </Button>
+        {showPrint && (
+          <Button variant={"outline"} className="cursor-pointer">
+            <Printer />
+          </Button>
+        )}
       </div>
       <div className="h-40 ">
         <ResponsiveContainer width="100%" height="100%">
@@ -97,10 +105,24 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
         <span className="text-gray-600">
           Current: <span className="font-semibold">{currentWeight} lbs</span>
         </span>
-        <span className="text-gray-600">
-          Target: <span className="font-semibold">{targetWeight} lbs</span>
-        </span>
       </div>
     </Card>
   );
 };
+
+// Main weight trend chart component using Suspense
+export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
+  print = false,
+}) => {
+  const { chartData, currentWeight } = useWeight();
+
+  return (
+    <WeightTrendDisplay
+      data={chartData}
+      currentWeight={currentWeight}
+      showPrint={print}
+    />
+  );
+};
+
+// Legacy component removed - use WeightTrendChart with useSuspense prop instead

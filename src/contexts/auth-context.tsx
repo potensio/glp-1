@@ -3,6 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Promise cache for Suspense
+let authPromise: Promise<void> | null = null;
+let authData: { user: User | null; profile: Profile | null } | null = null;
+
 interface User {
   id: string;
   email: string;
@@ -30,11 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   // Check if user is authenticated on mount
   useEffect(() => {
-    checkAuth();
+    if (!authPromise) {
+      authPromise = checkAuth();
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -46,14 +53,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          authData = { user: data.user, profile: data.profile };
           setUser(data.user);
           setProfile(data.profile);
+        } else {
+          authData = { user: null, profile: null };
         }
+      } else {
+        authData = { user: null, profile: null };
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      authData = { user: null, profile: null };
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
+      authPromise = null; // Clear the promise cache
     }
   };
 
@@ -77,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || 'Login failed');
     }
 
+    authData = { user: data.user, profile: data.profile };
     setUser(data.user);
     setProfile(data.profile);
   };
@@ -90,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      authData = { user: null, profile: null };
       setUser(null);
       setProfile(null);
       router.push('/login');
@@ -117,6 +134,12 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
+  // Throw promise for Suspense if still loading and no cached data
+  if (context.isLoading && authPromise && !authData) {
+    throw authPromise;
+  }
+  
   return context;
 }
 
