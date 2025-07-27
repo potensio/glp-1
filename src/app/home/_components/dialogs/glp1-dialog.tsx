@@ -21,41 +21,34 @@ export function Glp1DialogContent({
   const [errors, setErrors] = useState<{ type?: string; dose?: string }>({});
   const { createGlp1Entry, isLoading } = useGlp1();
 
-  const handleSave = async () => {
-    try {
-      // Validate the form data
-      const validatedData = glp1Schema.parse({ type, dose });
-      
-      // Clear any previous errors
-      setErrors({});
-      
-      // Create the GLP-1 entry
-      await createGlp1Entry(validatedData);
-      
-      // Call the onSave callback if provided (for closing dialog)
-      onSave?.({ type, dose });
-      
-      // Reset form
+  const handleSave = () => {
+    setErrors({});
+
+    // Basic validation
+    if (!dose || !type) {
+      setErrors({
+        dose: "Please fill in all required fields.",
+      });
+      return;
+    }
+
+    const doseValue = parseFloat(dose);
+    if (isNaN(doseValue)) {
+      setErrors({
+        dose: "Please enter a valid number.",
+      });
+      return;
+    }
+
+    createGlp1Entry({
+       type: type as "Ozempic" | "Wegovy" | "Mounjaro" | "Zepbound",
+       dose: doseValue,
+     });
+
+    // Reset and close
       setType(glp1Types[0]);
       setDose("");
-    } catch (error) {
-      if (error instanceof Error && error.name === "ZodError") {
-        // Handle validation errors
-        const zodError = error as any;
-        const fieldErrors: { type?: string; dose?: string } = {};
-        
-        zodError.errors?.forEach((err: any) => {
-          if (err.path[0] === "type") {
-            fieldErrors.type = err.message;
-          } else if (err.path[0] === "dose") {
-            fieldErrors.dose = err.message;
-          }
-        });
-        
-        setErrors(fieldErrors);
-      }
-      // Other errors are handled by the hook's toast notifications
-    }
+      onSave?.({ type, dose });
   };
 
   return (

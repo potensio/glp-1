@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Footprints } from "lucide-react";
-import { useActivity } from "@/hooks/use-activity";
+import { useCreateActivity } from "@/hooks/use-activity";
 
 const activityTypes = ["🚶🏻 Walking", "🏃🏻 Running", "🚴 Cycling", "🏊🏻 Swimming"];
 
@@ -25,28 +25,26 @@ export function ActivityDialogContent({
   const [type, setType] = useState(activityTypes[0]);
   const [duration, setDuration] = useState("");
   
-  const { createActivity, isLoading } = useActivity();
+  const { mutate: createActivity, isPending: isCreating } = useCreateActivity();
 
-  const handleSave = async () => {
-    try {
-      await createActivity({
+  const handleSave = () => {
+    if (!type || !duration) return;
+
+    const durationMinutes = parseInt(duration);
+    if (isNaN(durationMinutes)) return;
+
+    createActivity(
+      {
         type,
-        duration: parseInt(duration),
-      });
-      
-      // Call the optional onSave callback for backward compatibility
-      onSave?.({ type, duration });
-      
-      // Close the dialog
-      onClose?.();
-      
-      // Reset form
-      setType(activityTypes[0]);
-      setDuration("");
-    } catch (error) {
-      // Error handling is done in the hook
-      console.error("Failed to save activity:", error);
-    }
+        duration: durationMinutes,
+      },
+      {
+        onSuccess: () => {
+          onSave?.({ type, duration });
+          onClose?.();
+        },
+      }
+    );
   };
 
   return (
@@ -114,9 +112,9 @@ export function ActivityDialogContent({
           className="w-full"
           size="lg"
           onClick={handleSave}
-          disabled={!duration || !type || isLoading}
+          disabled={!duration || !type || isCreating}
         >
-          {isLoading ? "Logging..." : "Log Activity"}
+          {isCreating ? "Logging..." : "Log Activity"}
         </Button>
       </DialogFooter>
     </>

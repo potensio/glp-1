@@ -1,3 +1,5 @@
+"use client";
+
 import PlanCard from "@/app/home/billing/_components/plan-card";
 import PaymentMethods from "@/app/home/billing/_components/payment-methods";
 import BillingHistory from "@/app/home/billing/_components/billing-history";

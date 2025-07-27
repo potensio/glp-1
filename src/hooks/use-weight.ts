@@ -1,9 +1,9 @@
 /**
  * Weight Management Hook
- * 
+ *
  * This file helps you work with weight data in your app.
  * It's designed to be simple and easy to use for beginners.
- * 
+ *
  * What it does:
  * - Gets weight data from your database
  * - Prepares data for charts and graphs
@@ -141,8 +141,6 @@ function transformWeightDataForChart(weights: WeightData[]): ChartData[] {
     };
   });
 }
-
-
 
 /**
  * Hook for adding new weight entries

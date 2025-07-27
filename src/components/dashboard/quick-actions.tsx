@@ -11,12 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
-import { WeightDialogContent } from "./dialogs/weight-dialog";
-import { BloodPressureDialogContent } from "./dialogs/blood-pressure-dialog";
-import { FoodIntakeDialogContent } from "./dialogs/food-intake-dialog";
-import { Glp1DialogContent } from "./dialogs/glp1-dialog";
-import { ActivityDialogContent } from "./dialogs/activity-dialog";
-import { BloodSugarDialogContent } from "./dialogs/blood-sugar-dialog";
+import { WeightDialogContent } from "../../app/home/_components/dialogs/weight-dialog";
+import { BloodPressureDialogContent } from "../../app/home/_components/dialogs/blood-pressure-dialog";
+import { FoodIntakeDialogContent } from "../../app/home/_components/dialogs/food-intake-dialog";
+import { Glp1DialogContent } from "../../app/home/_components/dialogs/glp1-dialog";
+import { ActivityDialogContent } from "../../app/home/_components/dialogs/activity-dialog";
+import { BloodSugarDialogContent } from "../../app/home/_components/dialogs/blood-sugar-dialog";
 import { useState } from "react";
 
 const quickLogItems = [

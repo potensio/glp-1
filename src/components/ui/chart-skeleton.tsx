@@ -36,7 +36,7 @@ export function ChartSkeleton({
       </div>
 
       {/* Chart Area */}
-      <div className="h-40 mb-4">
+      <div className="h-32 mb-4">
         <div className="w-full h-full bg-gray-200 rounded animate-pulse" />
       </div>
 
@@ -44,7 +44,10 @@ export function ChartSkeleton({
       {showStats && (
         <div className="flex justify-between">
           {Array.from({ length: statsCount }).map((_, index) => (
-            <div key={index} className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            <div
+              key={index}
+              className="h-4 w-24 bg-gray-200 rounded animate-pulse"
+            />
           ))}
         </div>
       )}

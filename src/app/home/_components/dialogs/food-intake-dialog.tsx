@@ -7,9 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Utensils, Sparkles, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/auth-context";
-import { foodIntakeSchema } from "@/lib/services/food-intake.service";
+import { useFoodIntake } from "@/hooks/use-food-intake";
 
 const mealTypes = [
   { label: "Breakfast" },
@@ -29,71 +27,40 @@ export function FoodIntakeDialogContent({
   const [mealType, setMealType] = useState(mealTypes[0].label);
   const [food, setFood] = useState("");
   const [calories, setCalories] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
-  const { profile } = useAuth();
+  const { createFoodIntake, isCreating } = useFoodIntake();
 
-  const handleLog = async () => {
-    if (!profile?.id) return;
+  const handleLog = () => {
+    setErrors({});
 
-    try {
-      setIsLoading(true);
-      setErrors({});
-
-      // Validate input
-      const validatedData = foodIntakeSchema.parse({
-        mealType,
-        food,
-        calories: parseInt(calories) || 0,
+    // Basic validation
+    if (!mealType || !food || !calories) {
+      setErrors({
+        general: "Please fill in all fields.",
       });
-
-      // API call
-      const response = await fetch("/api/food-intakes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validatedData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to log food intake");
-      }
-
-      // Success
-      toast({
-        title: "Food logged successfully!",
-        description: `${food} (${calories} cal) added to ${mealType.toLowerCase()}.`,
-      });
-
-      // Reset and close
-      setFood("");
-      setCalories("");
-      setMealType(mealTypes[0].label);
-      onSave?.();
-      onClose?.();
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === "ZodError") {
-          const zodError = error as any;
-          const fieldErrors: Record<string, string> = {};
-          zodError.errors?.forEach((err: any) => {
-            if (err.path?.length > 0) {
-              fieldErrors[err.path[0]] = err.message;
-            }
-          });
-          setErrors(fieldErrors);
-        } else {
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      }
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    const caloriesValue = parseInt(calories);
+    if (isNaN(caloriesValue)) {
+      setErrors({
+        calories: "Please enter a valid number.",
+      });
+      return;
+    }
+
+    createFoodIntake({
+      mealType,
+      food,
+      calories: caloriesValue,
+    });
+
+    // Reset and close
+    setFood("");
+    setCalories("");
+    setMealType(mealTypes[0].label);
+    onSave?.();
+    onClose?.();
   };
 
   return (
@@ -209,9 +176,9 @@ export function FoodIntakeDialogContent({
           className="w-full"
           size={"lg"}
           onClick={handleLog}
-          disabled={!food || !calories || isLoading}
+          disabled={!food || !calories || isCreating}
         >
-          {isLoading ? (
+          {isCreating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Logging...

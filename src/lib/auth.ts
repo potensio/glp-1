@@ -108,6 +108,53 @@ export async function getUserWithProfile(userId: string) {
   });
 }
 
+// Optimized function to get user with profile from request in a single query
+export async function getUserWithProfileFromRequest(request: NextRequest) {
+  let token: string | undefined;
+
+  // Try to get token from Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  }
+
+  // If no token in header, try to get from cookie
+  if (!token) {
+    token = request.cookies.get('auth-token')?.value;
+  }
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = await verifyToken(token);
+    // Single database query to get user with profile
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        profile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 // Validate email format
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

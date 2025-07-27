@@ -1,9 +1,10 @@
 "use client";
 
-import { WelcomeHero } from "./_components/welcome-hero";
-import { QuickActions } from "./_components/quick-actions";
-import WeeklyCalendar from "@/components/weekly-calendar";
-import { HealthDashboard } from "./_components/health-dashboard";
+import { WelcomeHero } from "@/components/dashboard/welcome-hero";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { HealthCharts } from "@/components/dashboard/health-charts";
+import WeeklyCalendar from "@/components/dashboard/weekly-calendar";
+
 import { useAuth } from "@/contexts/auth-context";
 
 export default function DashPage() {
@@ -25,9 +26,8 @@ export default function DashPage() {
         </div>
       )}
       <QuickActions />
-      <HealthDashboard />
+      <HealthCharts />
       <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" />
-      {/* <MedicationList /> */}
     </>
   );
 }

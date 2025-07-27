@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Heart } from "lucide-react";
-import { useBloodPressure } from "@/hooks/use-blood-pressure";
+import { useBloodPressure, useCreateBloodPressureEntry } from "@/hooks/use-blood-pressure";
 
 export function BloodPressureDialogContent({
   lastSystolic = 120,
@@ -32,10 +32,9 @@ export function BloodPressureDialogContent({
   const [diastolicInput, setDiastolicInput] = useState(String(lastDiastolic));
   const systolicRef = useRef<HTMLInputElement>(null);
   const diastolicRef = useRef<HTMLInputElement>(null);
-  
+
+  const { mutate: createBloodPressure, isPending: isCreating } = useCreateBloodPressureEntry();
   const {
-    createBloodPressure,
-    isLoading,
     getSystolicStatus,
     getDiastolicStatus,
     getStatusColor,
@@ -98,7 +97,7 @@ export function BloodPressureDialogContent({
   };
 
   // Save handler
-  const handleSave = async () => {
+  const handleSave = () => {
     let sys = parseInt(systolicInput, 10);
     let dia = parseInt(diastolicInput, 10);
     if (isNaN(sys)) sys = lastSystolic;
@@ -109,14 +108,15 @@ export function BloodPressureDialogContent({
     setDiastolic(dia);
     setSystolicInput(String(sys));
     setDiastolicInput(String(dia));
-    
-    try {
-      await createBloodPressure({ systolic: sys, diastolic: dia });
-      onClose?.();
-    } catch (error) {
-      // Error is handled by the hook
-      console.error('Failed to save blood pressure:', error);
-    }
+
+    createBloodPressure({ systolic: sys, diastolic: dia }, {
+      onSuccess: () => {
+        onClose?.();
+      },
+      onError: (error: Error) => {
+        console.error('Error saving blood pressure:', error);
+      }
+    });
   };
 
   // Enter key handler
@@ -179,7 +179,11 @@ export function BloodPressureDialogContent({
                 <span>Normal</span>
                 <span>High (&gt;140)</span>
               </div>
-              <div className={`text-center text-sm font-medium mt-2 ${getStatusColor(getSystolicStatus(systolic))}`}>
+              <div
+                className={`text-center text-sm font-medium mt-2 ${getStatusColor(
+                  getSystolicStatus(systolic)
+                )}`}
+              >
                 {getSystolicStatus(systolic)}
               </div>
             </div>
@@ -214,7 +218,11 @@ export function BloodPressureDialogContent({
                 <span>Normal</span>
                 <span>High (&gt;90)</span>
               </div>
-              <div className={`text-center text-sm font-medium mt-2 ${getStatusColor(getDiastolicStatus(diastolic))}`}>
+              <div
+                className={`text-center text-sm font-medium mt-2 ${getStatusColor(
+                  getDiastolicStatus(diastolic)
+                )}`}
+              >
                 {getDiastolicStatus(diastolic)}
               </div>
             </div>
@@ -226,9 +234,9 @@ export function BloodPressureDialogContent({
           className="w-full"
           size={"lg"}
           onClick={handleSave}
-          disabled={isLoading}
+          disabled={isCreating}
         >
-          {isLoading ? "Saving..." : "Save Reading"}
+          {isCreating ? "Saving..." : "Save Reading"}
         </Button>
       </DialogFooter>
     </>

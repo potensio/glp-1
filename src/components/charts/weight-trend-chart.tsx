@@ -25,8 +25,6 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-
-
 // Chart display component
 const WeightTrendDisplay = ({
   data,
@@ -70,36 +68,42 @@ const WeightTrendDisplay = ({
         )}
       </div>
       <div className="h-40 ">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <defs>
-              <linearGradient
-                id="weightBarGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.7} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
-              </linearGradient>
-            </defs>
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              className="text-xs"
-            />
-            <YAxis hide />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar
-              dataKey="value"
-              fill="url(#weightBarGradient)"
-              radius={[4, 4, 0, 0]}
-              barSize={24}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        {data.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+            No weight data available
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <defs>
+                <linearGradient
+                  id="weightBarGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.7} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                className="text-xs"
+              />
+              <YAxis hide />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="value"
+                fill="url(#weightBarGradient)"
+                radius={[4, 4, 0, 0]}
+                barSize={24}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
       <div className="flex justify-between text-sm">
         <span className="text-gray-600">

@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest, getUserWithProfile } from "@/lib/auth";
+import { getUserWithProfileFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("GET /api/me - Getting current user");
-
-    // Get user from request (token)
-    const authUser = await getUserFromRequest(request);
-    if (!authUser) {
+    // Get user with profile in a single optimized query
+    const user = await getUserWithProfileFromRequest(request);
+    if (!user) {
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }
-      );
-    }
-
-    // Get full user data with profile
-    const user = await getUserWithProfile(authUser.id);
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
       );
     }
 

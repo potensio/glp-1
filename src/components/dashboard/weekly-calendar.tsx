@@ -216,7 +216,7 @@ export default function WeeklyCalendar({
       />
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
         {/* Calendar Grid */}
-        <Card className="lg:col-span-4 gap-0">
+        <Card className="lg:col-span-4 gap-0 rounded-2xl shadow-xl">
           {/* Header */}
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center space-x-2">

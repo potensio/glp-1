@@ -1,11 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-
-// Promise cache for Suspense
-let authPromise: Promise<void> | null = null;
-let authData: { user: User | null; profile: Profile | null } | null = null;
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 interface User {
   id: string;
@@ -30,91 +27,121 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const router = useRouter();
+// Auth query keys for consistent caching
+const authKeys = {
+  me: ['auth', 'me'] as const,
+};
 
-  // Check if user is authenticated on mount
-  useEffect(() => {
-    if (!authPromise) {
-      authPromise = checkAuth();
+// Fetch current user function
+async function fetchCurrentUser() {
+  const response = await fetch('/api/me', {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      return null; // Not authenticated
     }
-  }, []);
+    throw new Error('Failed to fetch user data');
+  }
 
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/me', {
+  const data = await response.json();
+  return data.success ? { user: data.user, profile: data.profile } : null;
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Use React Query for auth state management with instant navigation
+  const {
+    data: authData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: authKeys.me,
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes - don't refetch for 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry on 401 (unauthorized)
+      if (error?.message?.includes('401') || error?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    placeholderData: (previousData) => previousData, // Keep previous data during refetch
+    networkMode: 'offlineFirst', // Use cache first for instant navigation
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          authData = { user: data.user, profile: data.profile };
-          setUser(data.user);
-          setProfile(data.profile);
-        } else {
-          authData = { user: null, profile: null };
-        }
-      } else {
-        authData = { user: null, profile: null };
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      authData = { user: null, profile: null };
-    } finally {
-      setIsLoading(false);
-      setIsInitialized(true);
-      authPromise = null; // Clear the promise cache
-    }
-  };
 
-  const login = async (email: string, password: string) => {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include',
-    });
+      if (!data.success) {
+        throw new Error(data.error || 'Login failed');
+      }
 
-    const data = await response.json();
+      return { user: data.user, profile: data.profile };
+    },
+    onSuccess: (data) => {
+      // Update the auth cache with new user data
+      queryClient.setQueryData(authKeys.me, data);
+    },
+  });
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-
-    if (!data.success) {
-      throw new Error(data.error || 'Login failed');
-    }
-
-    authData = { user: data.user, profile: data.profile };
-    setUser(data.user);
-    setProfile(data.profile);
-  };
-
-  const logout = async () => {
-    try {
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
       await fetch('/api/logout', {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      authData = { user: null, profile: null };
-      setUser(null);
-      setProfile(null);
+    },
+    onSuccess: () => {
+      // Clear auth cache and redirect
+      queryClient.setQueryData(authKeys.me, null);
       router.push('/login');
-    }
+    },
+    onError: (error) => {
+      console.error('Logout error:', error);
+      // Even if logout fails, clear local state and redirect
+      queryClient.setQueryData(authKeys.me, null);
+      router.push('/login');
+    },
+  });
+
+  // Extract user and profile from auth data
+  const user = authData?.user || null;
+  const profile = authData?.profile || null;
+
+  // Auth functions
+  const login = async (email: string, password: string) => {
+    await loginMutation.mutateAsync({ email, password });
+  };
+
+  const logout = async () => {
+    await logoutMutation.mutateAsync();
   };
 
   const refreshUser = async () => {
-    await checkAuth();
+    await queryClient.invalidateQueries({ queryKey: authKeys.me });
   };
 
   const value = {
@@ -135,11 +162,6 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   
-  // Throw promise for Suspense if still loading and no cached data
-  if (context.isLoading && authPromise && !authData) {
-    throw authPromise;
-  }
-  
   return context;
 }
 
@@ -148,7 +170,7 @@ export function useRequireAuth() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login');
     }

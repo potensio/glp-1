@@ -1,74 +1,19 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { HealthDashboard } from "../_components/health-dashboard";
+import { HealthCharts } from "@/components/dashboard/health-charts";
+import { ProgressOverview } from "@/components/progress/progress-overview";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 import {
   Scale,
-  TrendingDown,
-  Heart,
-  Footprints,
   Utensils,
   Pill,
   Smile,
   Printer,
+  Heart,
+  Footprints,
 } from "lucide-react";
-
-function ProgressOverview() {
-  return (
-    <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {/* Current Weight */}
-        <Card className="rounded-2xl gap-3 p-5 md:p-6">
-          <h3 className="text-xs font-medium text-muted-foreground">
-            Current Weight
-          </h3>
-          <p className="text-3xl font-bold">
-            165.2 <span className="text-2xl font-semibold">lbs</span>
-          </p>
-          <p className="text-xs">Updated: Today</p>
-        </Card>
-        {/* Weight Change */}
-        <Card className="rounded-2xl gap-3 p-5 md:p-6">
-          <div className="flex items-center gap-1">
-            <h3 className="text-xs font-medium text-muted-foreground">
-              Weight Change
-            </h3>
-            <TrendingDown className="size-4" />
-          </div>
-          <p className="text-3xl font-bold text-green-500">
-            -8.3 <span className="text-2xl font-semibold">lbs</span>
-          </p>
-          <p className="text-xs text-secondary">Since Dec 1, 2024</p>
-        </Card>
-
-        {/* Latest BP */}
-        <Card className="rounded-2xl gap-3 p-5 md:p-6">
-          <div className="flex items-center gap-1">
-            <h3 className="text-xs font-medium text-muted-foreground">
-              Latest BP
-            </h3>
-            <Heart className="size-4 text-red-500 fill-red-500" />
-          </div>
-          <p className="text-3xl font-bold">118/76</p>
-          <p className="text-xs text-secondary">Normal range</p>
-        </Card>
-
-        {/* Activity Streak */}
-        <Card className="rounded-2xl gap-3 p-5 md:p-6">
-          <div className="flex items-center gap-1">
-            <h3 className="text-xs font-medium text-muted-foreground">
-              Activity Streak
-            </h3>
-            <Footprints className="size-4 text-teal-500 fill-teal-500" />
-          </div>
-          <p className="text-3xl font-bold">
-            12 <span className="text-2xl font-semibold">days</span>
-          </p>
-          <p className="text-xs text-secondary">Keep it up!</p>
-        </Card>
-      </div>
-    </>
-  );
-}
 
 // Grouped by date for daily logs
 const dailyEntries = [
@@ -221,8 +166,22 @@ export default function ProgressPage() {
           <Printer />
         </Button>
       </div>
-      <ProgressOverview />
-      <HealthDashboard showTitle={true} title="Health Trends" />
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="rounded-2xl gap-3 p-5 md:p-6">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+              </Card>
+            ))}
+          </div>
+        }
+      >
+        <ProgressOverview />
+      </Suspense>
+      <HealthCharts />
       <RecentEntries />
     </>
   );

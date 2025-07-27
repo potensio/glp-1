@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DialogHeader,
@@ -8,7 +10,6 @@ import {
 import { useState } from "react";
 import { Droplets } from "lucide-react";
 import { useBloodSugar } from "@/hooks/use-blood-sugar";
-import { bloodSugarSchema } from "@/lib/services/blood-sugar.service";
 
 const measurementTypes = [
   { label: "Fasting", value: "fasting" },
@@ -24,14 +25,20 @@ export function BloodSugarDialogContent({
   onSave?: (data: { level: number; type: string }) => void;
   onClose?: () => void;
 }) {
-  const [measurementType, setMeasurementType] = useState(measurementTypes[0].value);
+  const [measurementType, setMeasurementType] = useState(
+    measurementTypes[0].value
+  );
   const [bloodSugar, setBloodSugar] = useState("");
-  const [errors, setErrors] = useState<{ level?: string; measurementType?: string; general?: string }>({});
-  const { createBloodSugarEntry, isLoading } = useBloodSugar();
+  const [errors, setErrors] = useState<{
+    level?: string;
+    measurementType?: string;
+    general?: string;
+  }>({});
+  const { createBloodSugar, isCreating } = useBloodSugar();
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setErrors({});
-    
+
     // Basic validation
     if (!measurementType || !bloodSugar) {
       setErrors({
@@ -48,34 +55,13 @@ export function BloodSugarDialogContent({
       return;
     }
 
-    try {
-      // Validate with schema
-      const validatedData = bloodSugarSchema.parse({
-        level: bloodSugarValue,
-        measurementType: measurementType as any,
-      });
+    createBloodSugar({
+      level: bloodSugarValue,
+      measurementType: measurementType as any,
+    });
 
-      // Save to database
-      await createBloodSugarEntry(validatedData);
-      
-      onSave?.({ level: bloodSugarValue, type: measurementType });
-      onClose?.();
-    } catch (error: any) {
-      if (error.errors) {
-        // Zod validation errors
-        const fieldErrors: { [key: string]: string } = {};
-        error.errors.forEach((err: any) => {
-          if (err.path.length > 0) {
-            fieldErrors[err.path[0]] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-      } else {
-        setErrors({
-          general: "Failed to save blood sugar entry. Please try again.",
-        });
-      }
-    }
+    onSave?.({ level: bloodSugarValue, type: measurementType });
+    onClose?.();
   };
 
   return (
@@ -85,7 +71,9 @@ export function BloodSugarDialogContent({
           <div className="bg-red-100 p-3 rounded-full">
             <Droplets className="size-5 text-red-600" />
           </div>
-          <DialogTitle className="text-lg font-semibold">Blood Sugar</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Blood Sugar
+          </DialogTitle>
         </div>
         <DialogDescription>
           Track your blood glucose levels throughout the day
@@ -118,14 +106,16 @@ export function BloodSugarDialogContent({
                 onClick={() => setMeasurementType(type.value)}
                 title={type.label}
                 aria-label={type.label}
-                disabled={isLoading}
+                disabled={isCreating}
               >
                 {type.label}
               </button>
             ))}
           </div>
           {errors.measurementType && (
-            <p className="text-sm text-red-500 mt-1">{errors.measurementType}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {errors.measurementType}
+            </p>
           )}
         </div>
 
@@ -140,21 +130,24 @@ export function BloodSugarDialogContent({
               placeholder="120"
               value={bloodSugar}
               onChange={(e) => {
-                if (/^\d*\.?\d*$/.test(e.target.value)) setBloodSugar(e.target.value);
+                if (/^\d*\.?\d*$/.test(e.target.value))
+                  setBloodSugar(e.target.value);
               }}
               className={`h-12 w-24 text-center bg-transparent outline-none border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors ${
                 errors.level ? "border-red-500" : "border-border"
               }`}
               style={{ maxWidth: 120 }}
               aria-label="Blood sugar level in mg/dL"
-              disabled={isLoading}
+              disabled={isCreating}
             />
-            <span className="text-base font-medium text-gray-500 ml-1">mg/dL</span>
+            <span className="text-base font-medium text-gray-500 ml-1">
+              mg/dL
+            </span>
           </label>
           {errors.level && (
             <p className="text-sm text-red-500 mt-1">{errors.level}</p>
           )}
-          
+
           {/* Reference ranges */}
           <div className="text-xs text-secondary text-center space-y-1">
             <div>Normal: 80-130 mg/dL (fasting)</div>
@@ -171,9 +164,9 @@ export function BloodSugarDialogContent({
           className="w-full"
           size="lg"
           onClick={handleSave}
-          disabled={!bloodSugar || isLoading}
+          disabled={!bloodSugar || isCreating}
         >
-          {isLoading ? "Logging..." : "Log Blood Sugar"}
+          {isCreating ? "Logging..." : "Log Blood Sugar"}
         </Button>
       </DialogFooter>
     </>

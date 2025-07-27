@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense } from "react";
-import { WeightTrendChart } from "./weight-trend-chart";
-import { BloodPressureChart } from "./blood-pressure-chart";
-import { CaloriesIntakeChart } from "./calories-intake-chart";
-import { BloodSugarChart } from "./blood-sugar-chart";
+import { WeightTrendChart } from "../charts/weight-trend-chart";
+import { BloodPressureChart } from "../charts/blood-pressure-chart";
+import { CaloriesIntakeChart } from "../charts/calories-intake-chart";
+import { BloodSugarChart } from "../charts/blood-sugar-chart";
 import {
   WeightChartSkeleton,
   BloodPressureChartSkeleton,
@@ -12,20 +12,15 @@ import {
   BloodSugarChartSkeleton,
 } from "@/components/ui/chart-skeleton";
 
-interface HealthDashboardProps {
+interface HealthChartsProps {
   className?: string;
   showTitle?: boolean;
   title?: string;
 }
 
-export function HealthDashboard({
-  className = "",
-  showTitle = false,
-  title = "Health Trends",
-}: HealthDashboardProps) {
+export function HealthCharts({ className = "" }: HealthChartsProps) {
   return (
     <div className={className}>
-      {showTitle && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         {/* Weight Trend Chart - Using TanStack Query with Suspense */}
         <Suspense fallback={<WeightChartSkeleton />}>
