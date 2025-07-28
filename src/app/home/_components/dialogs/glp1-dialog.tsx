@@ -1,12 +1,16 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Syringe } from "lucide-react";
 import { useGlp1 } from "@/hooks/use-glp1";
+import { toast } from "sonner";
 import { glp1Schema } from "@/lib/services/glp1.service";
 
 const glp1Types = ["Ozempic", "Wegovy", "Mounjaro", "Zepbound"];
@@ -21,7 +25,7 @@ export function Glp1DialogContent({
   const [errors, setErrors] = useState<{ type?: string; dose?: string }>({});
   const { createGlp1Entry, isLoading } = useGlp1();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setErrors({});
 
     // Basic validation
@@ -40,15 +44,20 @@ export function Glp1DialogContent({
       return;
     }
 
-    createGlp1Entry({
-       type: type as "Ozempic" | "Wegovy" | "Mounjaro" | "Zepbound",
-       dose: doseValue,
-     });
-
-    // Reset and close
+    try {
+      await createGlp1Entry({
+        type: type as "Ozempic" | "Wegovy" | "Mounjaro" | "Zepbound",
+        dose: doseValue,
+      });
+      
+      toast.success(`${type} logged: ${doseValue} mg`);
+      // Reset and close
       setType(glp1Types[0]);
       setDose("");
       onSave?.({ type, dose });
+    } catch (error) {
+      toast.error('Failed to log GLP-1 injection. Please try again.');
+    }
   };
 
   return (

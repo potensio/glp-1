@@ -8,6 +8,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useBloodPressure, useCreateBloodPressureEntry } from "@/hooks/use-blood-pressure";
+import { toast } from "sonner";
 
 export function BloodPressureDialogContent({
   lastSystolic = 120,
@@ -111,10 +112,12 @@ export function BloodPressureDialogContent({
 
     createBloodPressure({ systolic: sys, diastolic: dia }, {
       onSuccess: () => {
+        toast.success(`Blood pressure logged: ${sys}/${dia} mmHg`);
         onClose?.();
       },
       onError: (error: Error) => {
         console.error('Error saving blood pressure:', error);
+        toast.error('Failed to log blood pressure. Please try again.');
       }
     });
   };

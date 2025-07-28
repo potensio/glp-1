@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Footprints } from "lucide-react";
 import { useCreateActivity } from "@/hooks/use-activity";
+import { toast } from "sonner";
 
 const activityTypes = ["🚶🏻 Walking", "🏃🏻 Running", "🚴 Cycling", "🏊🏻 Swimming"];
 
@@ -40,9 +41,13 @@ export function ActivityDialogContent({
       },
       {
         onSuccess: () => {
+          toast.success(`${type} logged: ${durationMinutes} minutes`);
           onSave?.({ type, duration });
           onClose?.();
         },
+        onError: () => {
+          toast.error('Failed to log activity. Please try again.');
+        }
       }
     );
   };

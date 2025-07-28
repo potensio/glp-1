@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { Droplets } from "lucide-react";
 import { useBloodSugar } from "@/hooks/use-blood-sugar";
+import { toast } from "sonner";
 
 const measurementTypes = [
   { label: "Fasting", value: "fasting" },
@@ -55,13 +56,22 @@ export function BloodSugarDialogContent({
       return;
     }
 
-    createBloodSugar({
-      level: bloodSugarValue,
-      measurementType: measurementType as any,
-    });
-
-    onSave?.({ level: bloodSugarValue, type: measurementType });
-    onClose?.();
+    createBloodSugar(
+      {
+        level: bloodSugarValue,
+        measurementType: measurementType as any,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Blood sugar logged: ${bloodSugarValue} mg/dL (${measurementType})`);
+          onSave?.({ level: bloodSugarValue, type: measurementType });
+          onClose?.();
+        },
+        onError: () => {
+          toast.error('Failed to log blood sugar. Please try again.');
+        }
+      }
+    );
   };
 
   return (
