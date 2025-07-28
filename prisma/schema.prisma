@@ -33,6 +33,8 @@ model Profile {
   bloodSugars     BloodSugar[]
   activities      Activity[]
   glp1Entries     Glp1Entry[]
+  medications     Medication[]
+  doctorNote      DoctorNote?
   user            User            @relation(fields: [id], references: [id], onDelete: Cascade)
 
   @@map("profiles")
@@ -114,6 +116,47 @@ model Glp1Entry {
   updatedAt    DateTime @updatedAt
 
   @@map("glp1_entries")
+}
+
+model Medication {
+  id                String       @id @default(cuid())
+  name              String       // medication name
+  dosage            Float        // dosage amount (e.g., 10)
+  dosageUnit        DosageUnit   @default(MG) // dosage unit (mg, g, ml, etc.)
+  description       String?      // optional description
+  prescribingDoctor String?      // prescribing doctor
+  status            String       @default("active") // active, paused, inactive
+  startDate         DateTime     // when to start taking the medication
+  repeatEvery       Int          @default(1) // repeat frequency number
+  repeatUnit        String       @default("Day(s)") // Day(s), Week(s)
+  enableReminders   Boolean      @default(false) // whether reminders are enabled
+  profileId         String
+  profile           Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@map("medications")
+}
+
+model DoctorNote {
+  id        String   @id @default(cuid())
+  content   String   // the note content
+  profileId String   @unique
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("doctor_notes")
+}
+
+enum DosageUnit {
+  MG    // milligrams
+  G     // grams
+  ML    // milliliters
+  L     // liters
+  IU    // international units
+  MCG   // micrograms
+  UNITS // units
 }
 
 // Plan subscription yang tersedia

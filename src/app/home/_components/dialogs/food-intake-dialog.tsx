@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DialogHeader,
@@ -8,6 +10,7 @@ import {
 import { useState } from "react";
 import { Utensils, Sparkles, Loader2 } from "lucide-react";
 import { useFoodIntake } from "@/hooks/use-food-intake";
+import { toast } from "sonner";
 
 const mealTypes = [
   { label: "Breakfast" },
@@ -53,14 +56,20 @@ export function FoodIntakeDialogContent({
       mealType,
       food,
       calories: caloriesValue,
+    }, {
+      onSuccess: () => {
+        toast.success(`${mealType} logged: ${food} (${caloriesValue} cal)`);
+        // Reset and close
+        setFood("");
+        setCalories("");
+        setMealType(mealTypes[0].label);
+        onSave?.();
+        onClose?.();
+      },
+      onError: () => {
+        toast.error('Failed to log food intake. Please try again.');
+      }
     });
-
-    // Reset and close
-    setFood("");
-    setCalories("");
-    setMealType(mealTypes[0].label);
-    onSave?.();
-    onClose?.();
   };
 
   return (

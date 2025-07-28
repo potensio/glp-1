@@ -9,6 +9,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
 import { useCreateWeightEntry } from "@/hooks/use-weight";
+import { toast } from "sonner";
 
 export function WeightDialogContent({
   lastWeight = 165,
@@ -33,11 +34,13 @@ export function WeightDialogContent({
   const saveWeight = (weightValue: number) => {
     createWeight({ weight: weightValue }, {
       onSuccess: () => {
+        toast.success(`Weight logged: ${weightValue} lbs`);
         onSave?.(weightValue);
         onClose?.();
       },
       onError: (error: Error) => {
-         console.error('Error saving weight:', error);
+        toast.error('Failed to log weight. Please try again.');
+        console.error('Error saving weight:', error);
        }
     });
   };
