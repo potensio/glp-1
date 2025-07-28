@@ -62,10 +62,12 @@ export default function MedicationManagement() {
       <div className="flex flex-col sm:flex-row justify-between">
         <div className="flex flex-col">
           <h1 className="text-background text-3xl leading-tight font-semibold mb-2">
-            Progress Overview
+            {" "}
+            Medication Management
           </h1>
           <p className="text-background text-lg mb-6">
-            Track your health journey and see how far you’ve come
+            {" "}
+            Keep track of your medications and ensure you&apos;re always on schedule.
           </p>
         </div>{" "}
         <Button

@@ -16,6 +16,15 @@ export default function ProgressPage() {
         <div className="flex flex-col">
           <h1 className="text-background text-3xl leading-tight font-semibold mb-2">
             Progress Overview
+            <span className="ml-3">
+              <Button
+                size={"sm"}
+                variant={"outline"}
+                className=" md:hidden size-11 bg-transparent text-background hover:bg-background/10 hover:text-background cursor-pointer"
+              >
+                <Printer />
+              </Button>
+            </span>
           </h1>
           <p className="text-background text-lg mb-6">
             Track your health journey and see how far you&apos;ve come
@@ -24,7 +33,7 @@ export default function ProgressPage() {
         <Button
           size={"lg"}
           variant={"outline"}
-          className="md:w-36 bg-transparent text-background hover:bg-background/10 hover:text-background"
+          className="md:w-36 hidden md:flex bg-transparent text-background hover:bg-background/10 hover:text-background cursor-pointer"
         >
           Print
           <Printer />
