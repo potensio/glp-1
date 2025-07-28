@@ -5,7 +5,7 @@ import { getUserFromRequest } from "@/lib/auth";
 // DELETE /api/payment-methods/[id] - Delete a payment method
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authUser = await getUserFromRequest(request);
@@ -16,7 +16,8 @@ export async function DELETE(
       );
     }
 
-    const paymentMethodId = params.id;
+    const resolvedParams = await params;
+    const paymentMethodId = resolvedParams.id;
 
     if (!paymentMethodId) {
       return NextResponse.json(

@@ -21,11 +21,14 @@ interface BillingHistoryItem {
 
 // Query key factory
 const QUERY_KEYS = {
-  billingHistory: (profileId?: string) => ["billing-history", profileId] as const,
+  billingHistory: (profileId?: string) =>
+    ["billing-history", profileId] as const,
 } as const;
 
 // Fetch function
-const fetchBillingHistory = async (profileId: string): Promise<BillingHistoryItem[]> => {
+const fetchBillingHistory = async (
+  profileId: string
+): Promise<BillingHistoryItem[]> => {
   const response = await fetch(`/api/billing-history?profileId=${profileId}`, {
     credentials: "include",
   });
@@ -54,7 +57,7 @@ export function useBillingHistory(profileId?: string) {
   });
 
   if (!profileId) {
-    throw new Error('Profile ID is required to fetch billing history');
+    throw new Error("Profile ID is required to fetch billing history");
   }
 
   return {

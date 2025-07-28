@@ -47,8 +47,8 @@ export async function middleware(request: NextRequest) {
 
   // Authentication check already done above for auth routes
   
-  // Protect /home routes - redirect to custom login if not authenticated
-  if (request.nextUrl.pathname.startsWith('/home')) {
+  // Protect /home and /billing routes - redirect to custom login if not authenticated
+  if (request.nextUrl.pathname.startsWith('/home') || request.nextUrl.pathname.startsWith('/billing')) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
@@ -71,6 +71,7 @@ export const config = {
   matcher: [
     "/",
     "/home/:path*",
+    "/billing/:path*",
     "/login",
     "/register",
     "/forgot-password",

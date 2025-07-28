@@ -7,8 +7,6 @@ import { Printer } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth-context";
 
-
-
 export default function ProgressPage() {
   const { profile } = useAuth();
 
@@ -20,7 +18,7 @@ export default function ProgressPage() {
             Progress Overview
           </h1>
           <p className="text-background text-lg mb-6">
-            Track your health journey and see how far you've come
+            Track your health journey and see how far you&apos;ve come
           </p>
         </div>{" "}
         <Button

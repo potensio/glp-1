@@ -6,9 +6,7 @@ import BillingHistory from "@/components/billing/billing-history";
 import { usePaymentMethods } from "@/hooks/use-payment-methods";
 import { useBillingHistory } from "@/hooks/use-billing-history";
 import { useAuth } from "@/contexts/auth-context";
-import { Suspense, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { Suspense } from "react";
 
 // Component-specific types to match existing component interfaces
 type ComponentPaymentMethod = {
@@ -56,7 +54,7 @@ function BillingHistorySkeleton() {
 function PaymentMethodsSection({ profileId }: { profileId: string }) {
   const { data: paymentMethods } = usePaymentMethods(profileId);
 
-  // Transform data to match existing component props or use fallback mock data
+  // Transform data to match existing component props
   const transformedPaymentMethods: ComponentPaymentMethod[] =
     paymentMethods?.length > 0
       ? paymentMethods.map((method, index) => ({
@@ -65,20 +63,7 @@ function PaymentMethodsSection({ profileId }: { profileId: string }) {
           exp: method.exp || "**/**",
           default: method.isDefault,
         }))
-      : [
-          {
-            id: 1,
-            last4: "4242",
-            exp: "12/25",
-            default: true,
-          },
-          {
-            id: 2,
-            last4: "5555",
-            exp: "08/26",
-            default: false,
-          },
-        ];
+      : [];
 
   return <PaymentMethods methods={transformedPaymentMethods} />;
 }
@@ -123,29 +108,10 @@ function BillingHistorySection({ profileId }: { profileId: string }) {
   return <BillingHistory history={transformedBillingHistory} />;
 }
 
-export default function BillingPage() {
-  // Get profile data for user ID
-  const { profile, refreshUser } = useAuth();
-  const searchParams = useSearchParams();
+function BillingPageContent() {
+  const { profile } = useAuth();
 
-  // Check for success parameter and show toast
-  useEffect(() => {
-    const success = searchParams.get('success');
-    if (success === 'true') {
-      // Immediately refresh user data to get updated subscription
-      refreshUser();
-      
-      toast.success('Subscription successful!', {
-        description: 'Your premium subscription has been activated successfully.',
-        duration: 5000,
-      });
-      
-      // Clean up the URL by removing the success parameter
-      const url = new URL(window.location.href);
-      url.searchParams.delete('success');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [searchParams, refreshUser]);
+  // Handle successful return from Stripe checkout - now handled by direct redirect to pending page
 
   if (!profile?.id) {
     return (
@@ -191,5 +157,13 @@ export default function BillingPage() {
         </Suspense> */}
       </div>
     </>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BillingPageContent />
+    </Suspense>
   );
 }

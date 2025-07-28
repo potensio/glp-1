@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserWithProfileFromRequest } from "@/lib/auth";
 
 // GET /api/payment-methods - Fetch payment methods for a user
 export async function GET(request: NextRequest) {
   try {
-    const authUser = await getUserFromRequest(request);
-    if (!authUser) {
+    const authUser = await getUserWithProfileFromRequest(request);
+    if (!authUser || !authUser.profile) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const profileId = searchParams.get("profileId");
 
-    if (!profileId || profileId !== authUser.id) {
+    if (!profileId || profileId !== authUser.profile.id) {
       return NextResponse.json(
         { success: false, error: "Invalid profile ID" },
         { status: 400 }
@@ -55,8 +55,11 @@ export async function GET(request: NextRequest) {
         updatedAt: pm.updatedAt.toISOString(),
         // Add UI-friendly fields if available in metadata
         last4: (pm.metadata as any)?.last4 || undefined,
-        exp: (pm.metadata as any)?.exp || undefined,
+        exp: (pm.metadata as any)?.exp_month && (pm.metadata as any)?.exp_year 
+          ? `${String((pm.metadata as any).exp_month).padStart(2, '0')}/${String((pm.metadata as any).exp_year).slice(-2)}` 
+          : undefined,
         brand: (pm.metadata as any)?.brand || undefined,
+        funding: (pm.metadata as any)?.funding || undefined,
       }))
     );
 
@@ -76,8 +79,8 @@ export async function GET(request: NextRequest) {
 // POST /api/payment-methods - Add a new payment method
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await getUserFromRequest(request);
-    if (!authUser) {
+    const authUser = await getUserWithProfileFromRequest(request);
+    if (!authUser || !authUser.profile) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }

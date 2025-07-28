@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import React, { createContext, useContext } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface User {
   id: string;
@@ -50,24 +50,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth query keys for consistent caching
 const authKeys = {
-  me: ['auth', 'me'] as const,
+  me: ["auth", "me"] as const,
 };
 
 // Fetch current user function
 async function fetchCurrentUser() {
-  const response = await fetch('/api/me', {
-    credentials: 'include',
+  const response = await fetch("/api/me", {
+    credentials: "include",
   });
 
   if (!response.ok) {
     if (response.status === 401) {
       return null; // Not authenticated
     }
-    throw new Error('Failed to fetch user data');
+    throw new Error("Failed to fetch user data");
   }
 
   const data = await response.json();
-  return data.success ? { user: data.user, profile: data.profile, subscription: data.subscription } : null;
+  return data.success
+    ? {
+        user: data.user,
+        profile: data.profile,
+        subscription: data.subscription,
+      }
+    : null;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -86,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in cache for 24 hours
     retry: (failureCount, error: any) => {
       // Don't retry on 401 (unauthorized)
-      if (error?.message?.includes('401') || error?.status === 401) {
+      if (error?.message?.includes("401") || error?.status === 401) {
         return false;
       }
       return failureCount < 2;
@@ -94,32 +100,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
     refetchOnMount: false, // Don't refetch on component mount if data exists
     placeholderData: (previousData) => previousData, // Keep previous data during refetch
-    networkMode: 'offlineFirst', // Use cache first for instant navigation
+    networkMode: "offlineFirst", // Use cache first for instant navigation
   });
 
   // Login mutation
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+    mutationFn: async ({
+      email,
+      password,
+    }: {
+      email: string;
+      password: string;
+    }) => {
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include',
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || "Login failed");
       }
 
       if (!data.success) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || "Login failed");
       }
 
-      return { user: data.user, profile: data.profile, subscription: data.subscription };
+      return {
+        user: data.user,
+        profile: data.profile,
+        subscription: data.subscription,
+      };
     },
     onSuccess: (data) => {
       // Update the auth cache with new user data
@@ -130,21 +146,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
       });
     },
     onSuccess: () => {
       // Clear auth cache and redirect
       queryClient.setQueryData(authKeys.me, null);
-      router.push('/login');
+      router.push("/login");
     },
     onError: (error) => {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Even if logout fails, clear local state and redirect
       queryClient.setQueryData(authKeys.me, null);
-      router.push('/login');
+      router.push("/login");
     },
   });
 
@@ -152,9 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const user = authData?.user || null;
   const profile = authData?.profile || null;
   const subscription = authData?.subscription || null;
-  
+
   // Determine if user has premium subscription
-  const hasPremiumSubscription = subscription && subscription.plan.name.toLowerCase() !== "free";
+  const hasPremiumSubscription =
+    subscription && subscription.plan.name.toLowerCase() !== "free";
 
   // Auth functions
   const login = async (email: string, password: string) => {
@@ -186,9 +203,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  
+
   return context;
 }
 
@@ -199,7 +216,7 @@ export function useRequireAuth() {
 
   React.useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, isLoading, router]);
 

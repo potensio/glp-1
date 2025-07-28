@@ -7,7 +7,7 @@
 - **Purpose**: Pure presentation and user interaction
 - **Rules**: No API calls, no business logic, use custom hooks for data
 - **Files**: `*-chart.tsx`, `*-display.tsx`, `*-skeleton.tsx`
-- **Loading Pattern**: Always destructure `{ data, isLoading, error }` from hooks
+- **Loading Pattern**: Prefer `useSuspenseQuery` for SPA behavior, use `useQuery` when explicit loading states are needed
 
 ### Layer 2: Custom Hooks (`src/hooks/`)
 
@@ -24,10 +24,35 @@
 
 ## TanStack Query Patterns
 
-### 1. Query Hook Pattern
+### 1. Query Hook Pattern (Preferred: useSuspenseQuery)
 
 ```typescript
-// Standard query hook structure
+// Preferred: useSuspenseQuery for better SPA behavior
+export function useFeature(profileId?: string) {
+  if (!profileId) {
+    throw new Error('Profile ID is required');
+  }
+
+  const { data } = useSuspenseQuery({
+    queryKey: ["feature", profileId],
+    queryFn: () => fetchFeatureData(profileId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  return {
+    data: data || [],
+    // Computed values
+    stats: computeStats(data),
+    latest: getLatest(data),
+  };
+}
+```
+
+### 1b. Alternative Query Hook Pattern (useQuery)
+
+```typescript
+// Alternative: useQuery when you need explicit loading states
 export function useFeature(profileId?: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["feature", profileId],
@@ -99,10 +124,32 @@ const QUERY_KEYS = {
 
 ## Loading State Patterns
 
-### 1. Component-Level Loading
+### 1. Component-Level Loading (useSuspenseQuery)
 
 ```typescript
-// Individual component loading states
+// Preferred: useSuspenseQuery with Suspense boundaries
+export function FeatureChart() {
+  const { data } = useFeature(profileId); // useSuspenseQuery
+
+  return <ActualChart data={data} />;
+}
+
+// Wrap with Suspense and ErrorBoundary at page level
+export function FeaturePage() {
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>
+      <Suspense fallback={<ChartSkeleton />}>
+        <FeatureChart />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+### 1b. Alternative Component-Level Loading (useQuery)
+
+```typescript
+// Alternative: useQuery when you need explicit loading states
 export function FeatureChart() {
   const { data, isLoading, error } = useFeature(profileId);
 
@@ -405,23 +452,25 @@ const { data } = useQuery({
 ❌ **Avoid These Patterns:**
 
 - Direct API calls in components
-- `useSuspenseQuery` (causes build timeouts)
 - Global loading states for independent data
 - Separate validation files (merge into services)
 - Mixed responsibilities across layers
 - Too many abstraction layers
 - Conditional hook calls
 - Missing error boundaries
+- Using `useQuery` when `useSuspenseQuery` would provide better UX
 
 ✅ **Follow These Patterns:**
 
-- Use `useQuery` with proper loading/error handling
-- Component-level or granular loading states
+- Prefer `useSuspenseQuery` for better SPA behavior and instant page transitions
+- Use `useQuery` only when you need explicit loading/error states in components
+- Wrap pages with Suspense boundaries for loading states
+- Use ErrorBoundary components for error handling
+- Component-level or granular loading states when using `useQuery`
 - Optimistic updates for better UX
 - Consistent query key naming
 - Strategic cache invalidation
 - Parallel data fetching where possible
-- Proper error boundaries and fallbacks
 
 ## Testing Patterns
 

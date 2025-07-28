@@ -17,7 +17,7 @@ import {
 
 export default function PlanCard() {
   const { subscription, hasPremiumSubscription, isLoading: authLoading } = useAuth();
-  const { createCheckout, cancelSubscription } = useSubscription();
+  const { createCheckout, cancelSubscription, isLoading: subscriptionLoading } = useSubscription();
   const { plans, isLoading: plansLoading, error: plansError, getPremiumPlan } = usePlans();
   const [mounted, setMounted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -173,6 +173,7 @@ export default function PlanCard() {
           <Button
             size={"sm"}
             className="h-11 text-sm cursor-pointer"
+            disabled={subscriptionLoading}
             onClick={() =>
               createCheckout(
                 premiumPlan.id,
@@ -180,7 +181,7 @@ export default function PlanCard() {
               )
             }
           >
-            Upgrade to {premiumPlan.name}
+            {subscriptionLoading ? "Processing..." : `Upgrade to ${premiumPlan.name}`}
           </Button>
         )}
       </div>
@@ -191,7 +192,7 @@ export default function PlanCard() {
           <DialogHeader>
             <DialogTitle>Cancel Subscription</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your subscription? You'll continue to have access to premium features until the end of your current billing period.
+              Are you sure you want to cancel your subscription? You&apos;ll continue to have access to premium features until the end of your current billing period.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
