@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserWithProfileFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get user's current subscription with plan details
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId: user.id,
+        status: "ACTIVE",
+      },
+      include: {
+        plan: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const subscriptionData = subscription ? {
+      id: subscription.id,
+      status: subscription.status,
+      currentPeriodStart: subscription.currentPeriodStart,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      plan: {
+        id: subscription.plan.id,
+        name: subscription.plan.name,
+        description: subscription.plan.description,
+        price: subscription.plan.price,
+        currency: subscription.plan.currency,
+        interval: subscription.plan.interval,
+        features: subscription.plan.features,
+      },
+    } : null;
+
     return NextResponse.json({
       success: true,
       user: {
@@ -19,6 +51,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
       },
       profile: user.profile,
+      subscription: subscriptionData,
     });
   } catch (error: unknown) {
     console.error("Get current user error:", error);

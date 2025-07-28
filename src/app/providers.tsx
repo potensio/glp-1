@@ -12,8 +12,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
-            gcTime: 10 * 60 * 1000, // 10 minutes
+            staleTime: 30 * 60 * 1000, // 30 minutes
+            gcTime: 60 * 60 * 1000, // 1 hour
             retry: 1,
             refetchOnWindowFocus: false,
             refetchOnMount: false, // Don't refetch on mount if data exists
@@ -27,7 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [persister] = useState(() => {
     if (typeof window !== 'undefined') {
       return createSyncStoragePersister({
-        storage: window.sessionStorage,
+        storage: window.localStorage,
         key: 'glp1-cache',
       });
     }
@@ -40,7 +40,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         client={queryClient}
         persistOptions={{
           persister,
-          maxAge: 10 * 60 * 1000, // 10 minutes
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
           buster: '1.0', // Change this to invalidate all cached data
         }}
       >

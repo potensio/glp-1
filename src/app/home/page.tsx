@@ -26,7 +26,8 @@ export default function DashPage() {
         </div>
       )}
       <QuickActions />
-      <HealthCharts />
+
+      {profile && <HealthCharts />}
       <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" />
     </>
   );

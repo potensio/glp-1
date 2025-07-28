@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { BloodSugarInput } from '@/lib/services/blood-sugar.service';
@@ -42,12 +42,16 @@ export function useBloodSugar() {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const { data: entries = [], isLoading, error } = useQuery({
-    queryKey: ['blood-sugars', profile?.id || 'no-profile'],
+  // Throw error if no profile - this will be caught by error boundary
+  if (!profile?.id) {
+    throw new Error("Profile not available");
+  }
+
+  const entries = useSuspenseQuery({
+    queryKey: ['blood-sugars', profile.id],
     queryFn: fetchBloodSugarEntries,
-    enabled: !!profile?.id, // Only run query when profile is available
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  }).data;
 
   const chartData = transformBloodSugarDataForChart(entries);
 
@@ -97,7 +101,5 @@ export function useBloodSugar() {
     chartData,
     createBloodSugar: createBloodSugarMutation.mutate,
     isCreating: createBloodSugarMutation.isPending,
-    isLoading,
-    error,
   };
 }

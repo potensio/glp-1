@@ -1,4 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityInput } from "@/lib/services/activity.service";
 
@@ -12,13 +16,16 @@ interface Activity {
   updatedAt: string;
 }
 
-const fetchActivities = async (startDate?: Date, endDate?: Date): Promise<Activity[]> => {
+const fetchActivities = async (
+  startDate?: Date,
+  endDate?: Date
+): Promise<Activity[]> => {
   const params = new URLSearchParams();
   if (startDate) params.append("startDate", startDate.toISOString());
   if (endDate) params.append("endDate", endDate.toISOString());
 
   const response = await fetch(`/api/activities?${params.toString()}`);
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch activities");
   }
@@ -57,22 +64,21 @@ const deleteActivityEntry = async (id: string): Promise<void> => {
 };
 
 export function useActivity(startDate?: Date, endDate?: Date) {
-  const { data: activities = [], isLoading, error } = useQuery({
+  const activities = useSuspenseQuery({
     queryKey: ["activities", startDate, endDate],
     queryFn: () => fetchActivities(startDate, endDate),
-  });
+    staleTime: 5 * 60 * 1000,
+  }).data;
 
   return {
     activities,
-    isLoading,
-    error,
   };
 }
 
 export function useCreateActivity() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   return useMutation({
     mutationFn: createActivityEntry,
     onSuccess: (newActivity, data) => {
@@ -86,7 +92,8 @@ export function useCreateActivity() {
       console.error("Error creating activity:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to log activity",
+        description:
+          error instanceof Error ? error.message : "Failed to log activity",
         variant: "destructive",
       });
     },
@@ -96,7 +103,7 @@ export function useCreateActivity() {
 export function useDeleteActivity() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   return useMutation({
     mutationFn: deleteActivityEntry,
     onSuccess: () => {

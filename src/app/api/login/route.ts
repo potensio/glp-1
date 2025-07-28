@@ -56,6 +56,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get user's current subscription with plan details
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId: user.id,
+        status: "ACTIVE",
+      },
+      include: {
+        plan: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const subscriptionData = subscription ? {
+      id: subscription.id,
+      status: subscription.status,
+      currentPeriodStart: subscription.currentPeriodStart,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      plan: {
+        id: subscription.plan.id,
+        name: subscription.plan.name,
+        description: subscription.plan.description,
+        price: subscription.plan.price,
+        currency: subscription.plan.currency,
+        interval: subscription.plan.interval,
+        features: subscription.plan.features,
+      },
+    } : null;
+
     // Generate JWT token
     const token = await generateToken({
       userId: user.id,
@@ -71,6 +102,7 @@ export async function POST(request: NextRequest) {
         email: user.email,
       },
       profile: user.profile,
+      subscription: subscriptionData,
       token,
     });
 

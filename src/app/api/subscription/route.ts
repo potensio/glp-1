@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           priceId,
           email: authUser.email,
           name: userName,
-          successUrl: `${baseUrl}/home/billing?success=true`,
+          successUrl: `${baseUrl}/billing/pending`,
           cancelUrl: `${baseUrl}/home/billing?canceled=true`,
         });
 

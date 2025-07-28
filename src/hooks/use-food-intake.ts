@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { FoodIntakeInput } from '@/lib/services/food-intake.service';
@@ -42,12 +42,16 @@ export function useFoodIntake() {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const { data: entries = [], isLoading, error } = useQuery({
-    queryKey: ['food-intakes', profile?.id || 'no-profile'],
+  // Throw error if no profile - this will be caught by error boundary
+  if (!profile?.id) {
+    throw new Error("Profile not available");
+  }
+
+  const entries = useSuspenseQuery({
+    queryKey: ['food-intakes', profile.id],
     queryFn: fetchFoodIntakeEntries,
-    enabled: !!profile?.id, // Only run query when profile is available
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  }).data;
 
   const chartData = transformFoodIntakeDataForChart(entries);
 
@@ -103,7 +107,5 @@ export function useFoodIntake() {
     chartData,
     createFoodIntake: createFoodIntakeMutation.mutate,
     isCreating: createFoodIntakeMutation.isPending,
-    isLoading,
-    error,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 interface Plan {
@@ -14,56 +14,48 @@ interface Plan {
   features: any;
 }
 
+// Query key factory
+const QUERY_KEYS = {
+  plans: () => ["plans"] as const,
+} as const;
+
+// Fetch function
+const fetchPlans = async (): Promise<Plan[]> => {
+  const response = await fetch("/api/plans", {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch plans");
+  }
+
+  const data = await response.json();
+  if (data.success) {
+    return data.data || [];
+  } else {
+    throw new Error(data.error || "Failed to fetch plans");
+  }
+};
+
 export function usePlans() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchPlans = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch("/api/plans", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch plans");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setPlans(data.data || []);
-      } else {
-        throw new Error(data.error || "Failed to fetch plans");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to fetch plans";
-      setError(errorMessage);
-      console.error("Plans fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Query for plans data
+  const { data: plans = [], isLoading, error, refetch } = useQuery({
+    queryKey: QUERY_KEYS.plans(),
+    queryFn: fetchPlans,
+    staleTime: 10 * 60 * 1000, // 10 minutes (plans don't change often)
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+  });
 
   const getPremiumPlan = () => {
-    return plans?.find((plan) => plan.name.toLowerCase() === "premium");
+    return plans?.find((plan: Plan) => plan.name.toLowerCase() === "premium");
   };
 
   const getFreePlan = () => {
-    return plans?.find((plan) => plan.name.toLowerCase() === "free");
+    return plans?.find((plan: Plan) => plan.name.toLowerCase() === "free");
   };
-
-  const refetch = () => {
-    fetchPlans();
-  };
-
-  useEffect(() => {
-    fetchPlans();
-  }, []);
 
   return {
     plans,

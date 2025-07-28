@@ -204,9 +204,12 @@ export class StripeService {
       return;
     }
 
-    // Get the subscription from Stripe
+    // Get the subscription from Stripe with expanded payment method
     const stripeSubscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
+      session.subscription as string,
+      {
+        expand: ['default_payment_method']
+      }
     );
 
     // Get plan details
@@ -266,17 +269,62 @@ export class StripeService {
       );
     }
 
-    // Create payment method record
+    // Create or update payment method record with card details
     if (session.payment_method_types.includes("card")) {
-      await prisma.paymentMethod.create({
-        data: {
+      // Extract payment method details from Stripe subscription
+      let cardMetadata = {};
+      
+      if (stripeSubscription.default_payment_method && 
+          typeof stripeSubscription.default_payment_method === 'object' &&
+          'card' in stripeSubscription.default_payment_method) {
+        const paymentMethod = stripeSubscription.default_payment_method as Stripe.PaymentMethod;
+        if (paymentMethod.card) {
+          cardMetadata = {
+            last4: paymentMethod.card.last4,
+            brand: paymentMethod.card.brand,
+            exp_month: paymentMethod.card.exp_month,
+            exp_year: paymentMethod.card.exp_year,
+            funding: paymentMethod.card.funding,
+          };
+          console.log('💳 Card details extracted:', cardMetadata);
+        }
+      }
+
+      // Check if payment method already exists for this subscription and gateway
+      const existingPaymentMethod = await prisma.paymentMethod.findFirst({
+        where: {
           subscriptionId: subscription.id,
           gateway: "STRIPE",
-          gatewayId: (session.customer as string) || "",
-          gatewaySubId: stripeSubscription.id,
-          isDefault: true,
         },
       });
+
+      if (existingPaymentMethod) {
+        // Update existing payment method with card details
+        await prisma.paymentMethod.update({
+          where: { id: existingPaymentMethod.id },
+          data: {
+            gatewayId: (session.customer as string) || "",
+            gatewaySubId: stripeSubscription.id,
+            isDefault: true,
+            isActive: true,
+            metadata: cardMetadata,
+          },
+        });
+        console.log(`Updated existing payment method ${existingPaymentMethod.id} for subscription ${subscription.id} with card details`);
+      } else {
+        // Create new payment method with card details
+        await prisma.paymentMethod.create({
+          data: {
+            subscriptionId: subscription.id,
+            gateway: "STRIPE",
+            gatewayId: (session.customer as string) || "",
+            gatewaySubId: stripeSubscription.id,
+            isDefault: true,
+            metadata: cardMetadata,
+          },
+        });
+        console.log(`Created new payment method for subscription ${subscription.id} with card details`);
+      }
     }
   }
 
