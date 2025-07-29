@@ -41,7 +41,7 @@ export default function ProgressPage() {
       </div>
       <div className="space-y-6">
         {profile && <ProgressOverview />}
-        {profile && <HealthCharts />}
+        {profile && <HealthCharts showPrintButtons={true} />}
       </div>
     </>
   );

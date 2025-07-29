@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -107,10 +108,19 @@ function JournalContent() {
 
   if (!journals || journals.length === 0) {
     return (
-      <Card className="flex flex-col items-center justify-center min-h-[200px] text-center">
+      <Card className="flex w-fit flex-col items-center justify-center min-h-[200px] text-center max-w-sm mx-auto p-6">
+        <Image
+          src="/illustration/journal.webp"
+          alt="Empty Journal"
+          width={300}
+          height={240}
+          className="aspect-[4/3] rounded-lg object-cover mb-2"
+        />
         <p className="text-muted-foreground mb-4">No journal entries yet</p>
         <Link href="/home/journal/create">
-          <Button>Create your first entry</Button>
+          <Button variant={"outline"} className="h-12 cursor-pointer">
+            Create your first entry
+          </Button>
         </Link>
       </Card>
     );
@@ -149,7 +159,9 @@ function JournalContent() {
                     Edit Entry
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onSelect={() => handleDelete(journal.id, formattedDate)}>
+                  <DropdownMenuItem
+                    onSelect={() => handleDelete(journal.id, formattedDate)}
+                  >
                     Delete Entry
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -172,17 +184,17 @@ function JournalContent() {
         );
       })}
       <ConfirmationDialog
-         open={confirmDialog.open}
-         onOpenChange={(open) => {
-           if (!open) handleCancelDelete();
-         }}
-         onConfirm={handleConfirmDelete}
-         title="Delete Journal Entry"
-         description={`Are you sure you want to delete "${confirmDialog.title}"? This action cannot be undone.`}
-         confirmText="Delete"
-         cancelText="Cancel"
-         variant="destructive"
-       />
+        open={confirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) handleCancelDelete();
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Journal Entry"
+        description={`Are you sure you want to delete "${confirmDialog.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }

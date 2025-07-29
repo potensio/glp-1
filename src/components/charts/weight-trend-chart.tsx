@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 
 interface WeightTrendChartProps {
-  print?: boolean;
+  showPrintButton?: boolean;
 }
 
 // Define a local type for the custom tooltip props
@@ -116,7 +116,7 @@ const WeightTrendDisplay = ({
 
 // Main weight trend chart component
 export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
-  print = false,
+  showPrintButton = false,
 }) => {
   const { chartData, currentWeight } = useWeight();
 
@@ -124,7 +124,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
     <WeightTrendDisplay
       data={chartData}
       currentWeight={currentWeight}
-      showPrint={print}
+      showPrint={showPrintButton}
     />
   );
 };

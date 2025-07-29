@@ -14,11 +14,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { CheckCheck, ArrowRight } from "lucide-react";
 
 export default function PlanCard() {
-  const { subscription, hasPremiumSubscription, isLoading: authLoading } = useAuth();
-  const { createCheckout, cancelSubscription, isLoading: subscriptionLoading } = useSubscription();
-  const { plans, isLoading: plansLoading, error: plansError, getPremiumPlan } = usePlans();
+  const {
+    subscription,
+    hasPremiumSubscription,
+    isLoading: authLoading,
+  } = useAuth();
+  const {
+    createCheckout,
+    cancelSubscription,
+    isLoading: subscriptionLoading,
+  } = useSubscription();
+  const {
+    plans,
+    isLoading: plansLoading,
+    error: plansError,
+    getPremiumPlan,
+  } = usePlans();
   const [mounted, setMounted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -31,7 +45,7 @@ export default function PlanCard() {
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted || isLoading) {
     return (
-      <Card className="px-6">
+      <Card className="rounded-2xl p-5 md:p-6 shadow-xl">
         <div className="flex justify-between items-start">
           <div className="space-y-2">
             <h3 className="text-2xl font-semibold flex items-center gap-1">
@@ -83,6 +97,16 @@ export default function PlanCard() {
   // Always show premium plan card
   const premiumPlan = getPremiumPlan();
 
+  // Define features for the premium plan
+  const premiumFeatures = [
+    "Advance health tracking",
+    "Interactive daily journal",
+    "Google Calendar Integration",
+    "Medication Management",
+    "Tips & Trick",
+    "Health analytics export",
+  ];
+
   if (!premiumPlan) {
     return (
       <Card className="px-6">
@@ -96,11 +120,11 @@ export default function PlanCard() {
   // hasPremiumSubscription is now provided by auth context
 
   return (
-    <Card className="px-6">
+    <Card className="rounded-2xl p-5 md:p-6 shadow-xl">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <h3 className="text-2xl font-semibold flex items-center gap-1">
-            {premiumPlan.name}
+            Unlock {premiumPlan.name} Features!
             {hasPremiumSubscription ? (
               <span
                 className={`ml-2 px-2 py-0.5 text-xs rounded ${getStatusColor(
@@ -115,22 +139,30 @@ export default function PlanCard() {
               </span>
             )}
           </h3>
-          <div className="text-muted-foreground text-sm mb-2">
+          <div className="text-muted-foreground text-sm mb-7">
             {premiumPlan.description ||
               "Upgrade to premium for advanced features"}
           </div>
+
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+            {premiumFeatures.map((feature, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <CheckCheck className="w-5 h-5 text-green-500" />
+                </div>
+                <span className="text-secondary text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+
           {hasPremiumSubscription && subscription!.cancelAtPeriodEnd && (
             <div className="text-sm text-orange-600">
               ⚠️ Subscription will be canceled at the end of the current period
             </div>
           )}
-          {!hasPremiumSubscription && (
-            <div className="text-sm text-blue-600">
-              💡 Unlock advanced features and priority support
-            </div>
-          )}
         </div>
-        <div className="text-right">
+        <div className="text-right hidden md:block">
           <div className="text-2xl font-semibold">
             ${Number(premiumPlan.price).toFixed(2)}
             <span className="font-medium text-base text-muted-foreground">
@@ -172,7 +204,7 @@ export default function PlanCard() {
           // Free user - show upgrade option
           <Button
             size={"sm"}
-            className="h-11 text-sm cursor-pointer"
+            className="h-11 w-full md:w-40 cursor-pointer"
             disabled={subscriptionLoading}
             onClick={() =>
               createCheckout(
@@ -181,7 +213,17 @@ export default function PlanCard() {
               )
             }
           >
-            {subscriptionLoading ? "Processing..." : `Upgrade to ${premiumPlan.name}`}
+            {subscriptionLoading ? (
+              "Processing..."
+            ) : (
+              <span className="flex items-center gap-1">
+                <span>Subscribe</span>
+                <span className="md:hidden">
+                  - ${Number(premiumPlan.price).toFixed(2)}/
+                  {premiumPlan.interval === "month" ? "mo" : "yr"}
+                </span>
+              </span>
+            )}
           </Button>
         )}
       </div>
@@ -192,7 +234,9 @@ export default function PlanCard() {
           <DialogHeader>
             <DialogTitle>Cancel Subscription</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your subscription? You&apos;ll continue to have access to premium features until the end of your current billing period.
+              Are you sure you want to cancel your subscription? You&apos;ll
+              continue to have access to premium features until the end of your
+              current billing period.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">

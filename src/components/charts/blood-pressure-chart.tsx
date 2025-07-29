@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 
 interface BloodPressureChartProps {
-  print?: boolean;
+  showPrintButton?: boolean;
 }
 
 // Define a local type for the custom tooltip props
@@ -131,7 +131,7 @@ const BloodPressureDisplay = ({
 
 // Main blood pressure chart component
 export const BloodPressureChart: React.FC<BloodPressureChartProps> = ({
-  print = false,
+  showPrintButton = false,
 }) => {
   const { chartData } = useBloodPressure();
   
@@ -149,7 +149,7 @@ export const BloodPressureChart: React.FC<BloodPressureChartProps> = ({
     <BloodPressureDisplay
       data={chartData}
       latestReading={latestReading}
-      showPrint={print}
+      showPrint={showPrintButton}
     />
   );
 };

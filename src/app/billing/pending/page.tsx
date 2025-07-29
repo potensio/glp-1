@@ -59,15 +59,18 @@ export default function PendingPage() {
 
         // Check if user now has premium subscription
         if (hasPremiumSubscription) {
-          setState("success");
-          toast.success("Subscription activated!", {
-            description: "Your premium subscription is now active.",
-          });
-
-          // Redirect after a short delay to show success state
+          // Add a small delay before showing success to prevent jarring instant transitions
           setTimeout(() => {
-            router.push("/home/billing?success=true");
-          }, 2000);
+            setState("success");
+            toast.success("Subscription activated!", {
+              description: "Your premium subscription is now active.",
+            });
+
+            // Redirect after showing success state
+            setTimeout(() => {
+              router.push("/home/billing?success=true");
+            }, 2000);
+          }, 4000); // 1.5 second delay before showing success
         }
       } catch (error) {
         console.error("Error checking subscription:", error);
@@ -112,12 +115,10 @@ export default function PendingPage() {
               className="aspect-[4/3] rounded-lg object-cover mb-2"
             />
             <div>
-              <h1 className="text-2xl font-semibold mb-2">
-                Processing Your Subscription{dots}
-              </h1>
+              <h1 className="text-2xl font-semibold mb-2">Please wait{dots}</h1>
               <p className="text-muted-foreground">
-                We&apos;re confirming your payment with Stripe. This usually takes
-                just a few seconds.
+                We&apos;re confirming your payment with Stripe. This usually
+                takes just a few seconds.
               </p>
             </div>
 

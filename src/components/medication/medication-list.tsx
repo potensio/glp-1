@@ -170,13 +170,15 @@ export function MedicationList({
             filteredMedications.map((medication) => (
               <div
                 key={medication.id}
-                className="border rounded-2xl p-4 hover:bg-gray-50 transition-colors cursor-pointer shadow-lg hover:shadow-xl"
+                className="border rounded-2xl p-4 bg-background duration-200 transition-all cursor-pointer hover:shadow-xl"
                 onClick={() => handleMedicationCardClick(medication)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-100 p-2 rounded-lg">
-                      <span className="text-lg text-green-600">{medication.icon}</span>
+                    <div className=" p-2 rounded-lg">
+                      <span className="text-lg text-green-600">
+                        {medication.icon}
+                      </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">

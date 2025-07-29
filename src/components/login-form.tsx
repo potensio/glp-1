@@ -47,7 +47,11 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
       router.push("/home");
     } catch (error: unknown) {
       console.error("Login error:", error);
-      setError(error instanceof Error ? error.message : "An error occurred during login");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during login"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +84,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             type="email"
             placeholder="john@example.com"
             {...register("email")}
-            className={errors.email ? "border-red-500" : ""}
+            className={`${errors.email ? "border-red-500" : ""} min-h-11`}
           />
           {errors.email && (
             <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -101,7 +105,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             id="password"
             type="password"
             {...register("password")}
-            className={errors.password ? "border-red-500" : ""}
+            className={`${errors.password ? "border-red-500" : ""} min-h-11`}
           />
           {errors.password && (
             <p className="text-sm text-red-500">{errors.password.message}</p>

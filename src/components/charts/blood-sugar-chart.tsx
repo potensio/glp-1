@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 
 interface BloodSugarChartProps {
-  print?: boolean;
+  showPrintButton?: boolean;
 }
 
 // Define a local type for the custom tooltip props
@@ -107,7 +107,7 @@ const BloodSugarDisplay = ({
 
 // Main blood sugar chart component
 export const BloodSugarChart: React.FC<BloodSugarChartProps> = ({
-  print = false,
+  showPrintButton = false,
 }) => {
   const { chartData } = useBloodSugar();
   
@@ -120,7 +120,7 @@ export const BloodSugarChart: React.FC<BloodSugarChartProps> = ({
     <BloodSugarDisplay
       data={chartData}
       latestReading={latestReading}
-      showPrint={print}
+      showPrint={showPrintButton}
     />
   );
 };

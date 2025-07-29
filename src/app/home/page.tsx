@@ -4,12 +4,13 @@ import { WelcomeHero } from "@/components/dashboard/welcome-hero";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { HealthCharts } from "@/components/dashboard/health-charts";
 import WeeklyCalendar from "@/components/dashboard/weekly-calendar";
+import PlanCard from "@/components/billing/plan-card";
 
 import { useAuth } from "@/contexts/auth-context";
 
 export default function DashPage() {
   // Get the current user from our custom auth context
-  const { user, profile } = useAuth();
+  const { user, profile, hasPremiumSubscription } = useAuth();
 
   // Determine display name: prefer profile first name, fallback to user email, or default
   const displayName = profile?.firstName || user?.email || "User";
@@ -28,7 +29,13 @@ export default function DashPage() {
       <QuickActions />
 
       {profile && <HealthCharts />}
-      <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" />
+      
+      {/* Show plan card for free users, calendar for premium users */}
+      {!hasPremiumSubscription ? (
+        <PlanCard />
+      ) : (
+        <WeeklyCalendar headerButtonId="calendar-add-reminder-btn" />
+      )}
     </>
   );
 }
