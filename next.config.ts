@@ -1,6 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  experimental: {
+    // Ini aman, cuma optimize import bundling
+    optimizePackageImports: ["recharts", "zod"],
+  },
 };
 
 export default nextConfig;

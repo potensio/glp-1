@@ -1,3 +1,5 @@
+"use client";
+
 import { ProfileInfo } from "@/components/ProfileInfo";
 import { SecurityPrivacy } from "@/components/SecurityPrivacy";
 import { DangerZone } from "@/components/DangerZone";
