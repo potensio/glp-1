@@ -12,8 +12,7 @@ export default function AuthLayout({
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
-            <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md"></div>
-            Acme Inc.
+            Logo
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -22,7 +21,7 @@ export default function AuthLayout({
       </div>
       <div className="bg-muted relative hidden lg:block">
         <Image
-          src="/welcome.webp"
+          src="/illustration/login.webp"
           alt="Image"
           fill
           className="object-cover dark:brightness-[0.2] dark:grayscale"

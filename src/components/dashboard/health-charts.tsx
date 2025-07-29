@@ -11,6 +11,7 @@ interface HealthChartsProps {
   className?: string;
   showTitle?: boolean;
   title?: string;
+  showPrintButtons?: boolean;
 }
 
 function HealthChartsSkeleton() {
@@ -30,22 +31,22 @@ function HealthChartsSkeleton() {
   );
 }
 
-export function HealthCharts({ className = "" }: HealthChartsProps) {
+export function HealthCharts({ className = "", showPrintButtons = false }: HealthChartsProps) {
   return (
     <Suspense fallback={<HealthChartsSkeleton />}>
       <div className={className}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           {/* Weight Trend Chart */}
-          <WeightTrendChart />
+          <WeightTrendChart showPrintButton={showPrintButtons} />
 
           {/* Blood Pressure Chart */}
-          <BloodPressureChart />
+          <BloodPressureChart showPrintButton={showPrintButtons} />
 
           {/* Calories Intake Chart */}
-          <CaloriesIntakeChart />
+          <CaloriesIntakeChart showPrintButton={showPrintButtons} />
 
           {/* Blood Sugar Chart */}
-          <BloodSugarChart />
+          <BloodSugarChart showPrintButton={showPrintButtons} />
         </div>
       </div>
     </Suspense>

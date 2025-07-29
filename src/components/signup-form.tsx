@@ -73,16 +73,20 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
 
       // After successful signup, automatically log the user in
       await login(data.email, data.password);
-      
+
       console.log("Signup successful, redirecting to home...");
       router.push("/home");
     } catch (error: unknown) {
       console.error("Signup error:", error);
-      setError(error instanceof Error ? error.message : "An error occurred during signup");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during signup"
+      );
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form
@@ -111,7 +115,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
               id="firstName"
               placeholder="John"
               {...register("firstName")}
-              className={errors.firstName ? "border-red-500" : ""}
+              className={`${errors.firstName ? "border-red-500" : ""} min-h-11`}
             />
             {errors.firstName && (
               <p className="text-sm text-red-500">{errors.firstName.message}</p>
@@ -124,7 +128,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
               id="lastName"
               placeholder="Doe"
               {...register("lastName")}
-              className={errors.lastName ? "border-red-500" : ""}
+              className={`${errors.lastName ? "border-red-500" : ""} min-h-11`}
             />
             {errors.lastName && (
               <p className="text-sm text-red-500">{errors.lastName.message}</p>
@@ -139,7 +143,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
             type="email"
             placeholder="john@example.com"
             {...register("email")}
-            className={errors.email ? "border-red-500" : ""}
+            className={`${errors.email ? "border-red-500" : ""} min-h-11`}
           />
           {errors.email && (
             <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -152,7 +156,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
             id="password"
             type="password"
             {...register("password")}
-            className={errors.password ? "border-red-500" : ""}
+            className={`${errors.password ? "border-red-500" : ""} min-h-11`}
           />
           {errors.password && (
             <p className="text-sm text-red-500">{errors.password.message}</p>

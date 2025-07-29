@@ -36,7 +36,7 @@ export const QuickActions = () => {
         Quick Action
       </h3>
 
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
         {quickLogItems.map((item, index) => {
           if (item.label === "Weight") {
             return (

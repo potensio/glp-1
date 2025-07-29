@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 
 interface CaloriesIntakeChartProps {
-  print?: boolean;
+  showPrintButton?: boolean;
 }
 
 // Define a local type for the custom tooltip props
@@ -120,7 +120,7 @@ const CaloriesIntakeDisplay = ({
 
 // Main component
 export const CaloriesIntakeChart: React.FC<CaloriesIntakeChartProps> = ({
-  print = false,
+  showPrintButton = false,
 }) => {
   const { chartData } = useFoodIntake();
 
@@ -131,7 +131,7 @@ export const CaloriesIntakeChart: React.FC<CaloriesIntakeChartProps> = ({
     <CaloriesIntakeDisplay
       data={chartData}
       latestIntake={latestIntake}
-      showPrint={print}
+      showPrint={showPrintButton}
     />
   );
 };
