@@ -12,7 +12,7 @@ import {
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useJournals, useDeleteJournal } from "@/hooks/use-journal";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -48,11 +48,16 @@ function JournalContent() {
   const { data: journals, isLoading, error } = useJournals();
   const deleteJournal = useDeleteJournal();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     journalId: string | null;
     title: string;
   }>({ open: false, journalId: null, title: "" });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleEdit = (journalId: string) => {
     router.push(`/home/journal/edit/${journalId}`);
@@ -123,7 +128,7 @@ function JournalContent() {
         });
 
         const lastUpdated = new Date(journal.updatedAt || journal.createdAt);
-        const relativeTime = getRelativeTime(lastUpdated);
+        const relativeTime = isMounted ? getRelativeTime(lastUpdated) : null;
 
         return (
           <Card key={journal.id} className="p-0">
@@ -152,9 +157,11 @@ function JournalContent() {
             </div>
             <CardContent className="pt-0 pb-4">
               <div className="mb-2">
-                <div className="italic text-muted-foreground text-sm mb-2">
-                  {relativeTime && `Last updated ${relativeTime}`}
-                </div>
+                {isMounted && relativeTime && (
+                  <div className="italic text-muted-foreground text-sm mb-2">
+                    Last updated {relativeTime}
+                  </div>
+                )}
                 <div
                   className="whitespace-pre-line text-base text-foreground prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: journal.content }}

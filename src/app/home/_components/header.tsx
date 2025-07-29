@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +18,33 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, profile, logout } = useAuth();
   const router = useRouter();
+
+  const menuItems = [
+    { label: "Home", href: "/home" },
+    { label: "Progress", href: "/home/progress" },
+    { label: "Medication", href: "/home/medication" },
+    { label: "Journal", href: "/home/journal" },
+  ];
+
+  // Prefetch all navigation pages for instant transitions
+  useEffect(() => {
+    console.log('Prefetching navigation pages...');
+    menuItems.forEach((item) => {
+      console.log('Prefetching:', item.href);
+      router.prefetch(item.href);
+    });
+  }, [router]);
+
+  // Aggressive prefetching with invisible Link components
+  const PrefetchLinks = () => (
+    <div style={{ display: 'none' }}>
+      {menuItems.map((item) => (
+        <Link key={`prefetch-${item.href}`} href={item.href} prefetch={true}>
+          {item.label}
+        </Link>
+      ))}
+    </div>
+  );
 
   // Optimistic navigation for instant SPA feel
   const handleNavigation = (href: string) => {
@@ -52,15 +80,9 @@ export default function Header() {
   //   localStorage.setItem("theme", "light");
   // }, []);
 
-  const menuItems = [
-    { label: "Home", href: "/home" },
-    { label: "Progress", href: "/home/progress" },
-    { label: "Medication", href: "/home/medication" },
-    { label: "Journal", href: "/home/journal" },
-  ];
-
   return (
     <header className="relative z-20 w-full backdrop-blur">
+      <PrefetchLinks />
       <nav className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-6 max-w-6xl mx-auto">
         {/* Logo */}
         <div className="flex items-center gap-2 min-w-0">
@@ -73,12 +95,14 @@ export default function Header() {
         <ul className="hidden lg:flex items-center gap-8 xl:gap-12 text-background font-medium">
           {menuItems.map((item) => (
             <li key={item.label}>
-              <button
-                onClick={() => handleNavigation(item.href)}
+              <Link
+                href={item.href}
+                prefetch={true}
+                onClick={() => setMenuOpen(false)}
                 className="hover:underline transition-all duration-200 cursor-pointer bg-transparent border-none text-background font-medium py-2 px-1"
               >
                 {item.label}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
@@ -236,16 +260,18 @@ export default function Header() {
               {/* Navigation Links */}
               <div className="py-6">
                 {menuItems.map((item, index) => (
-                  <button
+                  <Link
                     key={item.label}
-                    onClick={() => handleNavigation(item.href)}
+                    href={item.href}
+                    prefetch={true}
+                    onClick={() => setMenuOpen(false)}
                     className="flex items-center w-full px-6 py-3 text-left font-medium hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
                     style={{
                       animationDelay: `${index * 50}ms`,
                     }}
                   >
                     <span className="text-base">{item.label}</span>
-                  </button>
+                  </Link>
                 ))}
               </div>
 
