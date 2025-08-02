@@ -1,54 +1,65 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Scale } from "lucide-react";
 import { useCreateWeightEntry } from "@/hooks/use-weight";
 import { toast } from "sonner";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { weightSchema, type WeightInput } from "@/lib/services/weight.service";
 
 export function WeightDialogContent({
-  lastWeight = 165,
-  lastDelta = -2.5,
-  min = 100,
-  max = 500,
+  defaultWeight = 165,
+  min = 50,
+  max = 1000,
   onSave,
   onClose,
 }: {
-  lastWeight?: number;
-  lastDelta?: number;
+  defaultWeight?: number;
   min?: number;
   max?: number;
   onSave?: (weight: number) => void;
   onClose?: () => void;
 }) {
-  const [weight, setWeight] = useState(lastWeight);
-  const [inputValue, setInputValue] = useState(String(lastWeight));
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: createWeight, isPending: isLoading } = useCreateWeightEntry();
 
-  const saveWeight = (weightValue: number) => {
-    createWeight({ weight: weightValue }, {
+  const form = useForm<WeightInput>({
+    resolver: zodResolver(weightSchema),
+    defaultValues: {
+      weight: defaultWeight,
+    },
+    mode: "onChange",
+  });
+
+  const {
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = form;
+  const currentWeight = watch("weight");
+
+  const onSubmit: SubmitHandler<WeightInput> = (data) => {
+    createWeight(data, {
       onSuccess: () => {
-        toast.success(`Weight logged: ${weightValue} lbs`);
-        onSave?.(weightValue);
+        toast.success(`Weight logged: ${data.weight} lbs`);
+        onSave?.(data.weight);
         onClose?.();
       },
       onError: (error: Error) => {
-        toast.error('Failed to log weight. Please try again.');
-        console.error('Error saving weight:', error);
-       }
+        toast.error("Failed to log weight. Please try again.");
+        console.error("Error saving weight:", error);
+      },
     });
   };
-
-  // Keep input and slider in sync
-  useEffect(() => {
-    setInputValue(String(weight));
-  }, [weight]);
 
   // Autofocus input on mount
   useEffect(() => {
@@ -56,40 +67,26 @@ export function WeightDialogContent({
     inputRef.current?.select();
   }, []);
 
+  // Handle slider change
+  const handleSliderChange = ([value]: number[]) => {
+    setValue("weight", value, { shouldValidate: true, shouldDirty: true });
+  };
+
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // Allow any string for typing
-    if (/^\d*$/.test(val)) {
-      setInputValue(val);
-      // Only update slider if valid number
-      if (val !== "" && !isNaN(Number(val))) {
-        const num = Number(val);
-        if (num >= min && num <= max) {
-          setWeight(num);
-        }
-      }
+    const value = e.target.value;
+    // Allow empty string or valid numbers
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      const numValue = value === "" ? 0 : parseFloat(value);
+      setValue("weight", numValue, { shouldValidate: true, shouldDirty: true });
     }
   };
 
-  // On blur, clamp and sync
-  const handleInputBlur = () => {
-    let num = parseInt(inputValue, 10);
-    if (isNaN(num)) num = lastWeight;
-    num = Math.max(min, Math.min(max, num));
-    setWeight(num);
-    setInputValue(String(num));
-  };
-
-  // On Enter, save
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Handle Enter key to submit
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      let num = parseInt(inputValue, 10);
-      if (isNaN(num)) num = lastWeight;
-      num = Math.max(min, Math.min(max, num));
-      setWeight(num);
-      setInputValue(String(num));
-      saveWeight(num);
+      e.preventDefault();
+      handleSubmit(onSubmit)();
     }
   };
 
@@ -103,14 +100,12 @@ export function WeightDialogContent({
           </div>
           <DialogTitle className="text-lg font-semibold">Weight</DialogTitle>
         </div>
-        <DialogDescription>
-          Track your weight progress
-        </DialogDescription>
+        <DialogDescription>Track your weight progress</DialogDescription>
         <Slider
           min={min}
           max={max}
-          value={[weight]}
-          onValueChange={([val]: number[]) => setWeight(val)}
+          value={[currentWeight]}
+          onValueChange={handleSliderChange}
           className="mb-2 mt-2"
         />
         <div className="flex justify-between text-xs text-muted-foreground px-1">
@@ -119,26 +114,27 @@ export function WeightDialogContent({
         </div>
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 mb-4">
-        <label className="text-3xl font-bold flex items-baseline">
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            onKeyDown={handleInputKeyDown}
-            className="h-12 w-20 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
-            style={{ maxWidth: 80 }}
-            aria-label="Weight in pounds"
-          />
-          <span className="text-base font-medium text-gray-500 ml-1">lbs</span>
-        </label>
-        <span className="text-sm text-secondary mx-auto flex items-center gap-1">
-          <span className="text-blue-600">↓</span> {Math.abs(lastDelta)} lbs
-          from last entry
-        </span>
+        <div className="flex flex-col items-center gap-2">
+          <label className="text-3xl font-bold flex items-baseline">
+            <Input
+              ref={inputRef}
+              type="text"
+              value={currentWeight || ""}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              className="h-12 w-20 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
+              style={{ maxWidth: 80 }}
+              aria-label="Weight in pounds"
+              placeholder="0"
+            />
+            <span className="text-base font-medium text-gray-500 ml-1">
+              lbs
+            </span>
+          </label>
+          {errors.weight && (
+            <p className="text-sm text-red-500 mt-1">{errors.weight.message}</p>
+          )}
+        </div>
       </div>
 
       <DialogFooter className="flex flex-col">
@@ -146,14 +142,8 @@ export function WeightDialogContent({
           className="w-full"
           size={"lg"}
           disabled={isLoading}
-          onClick={() => {
-            let num = parseInt(inputValue, 10);
-            if (isNaN(num)) num = lastWeight;
-            num = Math.max(min, Math.min(max, num));
-            setWeight(num);
-            setInputValue(String(num));
-            saveWeight(num);
-          }}
+          onClick={handleSubmit(onSubmit)}
+          type="button"
         >
           {isLoading ? "Saving..." : "Save Weight"}
         </Button>

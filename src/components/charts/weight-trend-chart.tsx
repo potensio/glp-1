@@ -7,8 +7,8 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   Tooltip,
 } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -74,10 +74,10 @@ const WeightTrendDisplay = ({
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <AreaChart data={data}>
               <defs>
                 <linearGradient
-                  id="weightBarGradient"
+                  id="weightAreaGradient"
                   x1="0"
                   y1="0"
                   x2="0"
@@ -93,15 +93,20 @@ const WeightTrendDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis hide />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar
-                dataKey="value"
-                fill="url(#weightBarGradient)"
-                radius={[4, 4, 0, 0]}
-                barSize={24}
+              <YAxis 
+                hide 
+                domain={['dataMin - 5', 'dataMax + 5']}
               />
-            </BarChart>
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#8b5cf6"
+                fill="url(#weightAreaGradient)"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

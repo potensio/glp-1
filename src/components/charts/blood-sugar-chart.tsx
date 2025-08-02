@@ -31,7 +31,7 @@ const BloodSugarDisplay = ({
   latestReading,
   showPrint = false,
 }: {
-  data: { name: string; sugar: number }[];
+  data: { name: string; value: number }[];
   latestReading: number;
   showPrint?: boolean;
 }) => {
@@ -82,11 +82,14 @@ const BloodSugarDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis hide />
+              <YAxis 
+                hide 
+                domain={['dataMin - 10', 'dataMax + 10']}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Line
                 type="monotone"
-                dataKey="sugar"
+                dataKey="value"
                 stroke="#14b8a6"
                 strokeWidth={3}
                 dot={{ r: 4, fill: "#14b8a6" }}
@@ -114,7 +117,7 @@ export const BloodSugarChart: React.FC<BloodSugarChartProps> = ({
 
 
   const latestReading =
-    chartData.length > 0 ? chartData[chartData.length - 1].sugar : 0;
+    chartData.length > 0 ? chartData[chartData.length - 1].value : 0;
 
   return (
     <BloodSugarDisplay

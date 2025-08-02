@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id               String        @id @default(cuid())
-  email            String        @unique
+  id               String             @id @default(cuid())
+  email            String             @unique
   password         String
-  stripeCustomerId String?       @unique // Stripe customer ID
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  stripeCustomerId String?            @unique // Stripe customer ID
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   profile          Profile?
   subscription     Subscription?
+  googleIntegration GoogleIntegration?
 
   @@map("users")
 }
@@ -274,4 +275,43 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELED
+}
+
+// Google Calendar Integration Models
+model GoogleIntegration {
+  id           String          @id @default(cuid())
+  userId       String          @unique
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+  calendarId   String?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  // Relations
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events       CalendarEvent[]
+
+  @@map("google_integrations")
+}
+
+model CalendarEvent {
+  id                  String            @id @default(cuid())
+  googleIntegrationId String
+  googleEventId       String            @unique
+  title               String
+  description         String?
+  startTime           DateTime
+  endTime             DateTime
+  isAllDay            Boolean           @default(false)
+  location            String?
+  attendees           String[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  
+  // Relations
+  googleIntegration   GoogleIntegration @relation(fields: [googleIntegrationId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_events")
 }

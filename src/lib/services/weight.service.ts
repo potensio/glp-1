@@ -3,7 +3,7 @@ import { z } from "zod";
 
 // Client-side validation schema (for forms)
 export const weightSchema = z.object({
-  weight: z.coerce
+  weight: z
     .number()
     .min(50, "Weight must be at least 50 lbs")
     .max(1000, "Weight must be less than 1000 lbs"),

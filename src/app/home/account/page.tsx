@@ -3,8 +3,8 @@
 import { ProfileInfo } from "@/components/ProfileInfo";
 import { SecurityPrivacy } from "@/components/SecurityPrivacy";
 import { DangerZone } from "@/components/DangerZone";
+import { ConnectedApps } from "@/components/account/ConnectedApps";
 // import Preferences from "@/components/account/Preferences";
-// import ConnectedApps from "@/components/account/ConnectedApps";
 
 export default function AccountPage() {
   return (
@@ -21,8 +21,8 @@ export default function AccountPage() {
         <div className="grid gap-6">
           <ProfileInfo />
           <SecurityPrivacy />
+          <ConnectedApps />
           {/* <Preferences /> */}
-          {/* <ConnectedApps /> */}
           <DangerZone />
         </div>
       </div>

@@ -95,7 +95,10 @@ const CaloriesIntakeDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis hide />
+              <YAxis 
+                hide 
+                domain={['dataMin - 50', 'dataMax + 50']}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"

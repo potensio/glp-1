@@ -90,7 +90,10 @@ const BloodPressureDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis hide />
+              <YAxis 
+                hide 
+                domain={['dataMin - 10', 'dataMax + 10']}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="systolic"

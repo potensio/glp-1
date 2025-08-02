@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Scale,
-  Utensils,
-  Droplets,
-  Heart,
-  Syringe,
-  Footprints,
-} from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
@@ -17,7 +10,14 @@ import { FoodIntakeDialogContent } from "../../app/home/_components/dialogs/food
 import { Glp1DialogContent } from "../../app/home/_components/dialogs/glp1-dialog";
 import { ActivityDialogContent } from "../../app/home/_components/dialogs/activity-dialog";
 import { BloodSugarDialogContent } from "../../app/home/_components/dialogs/blood-sugar-dialog";
-import { useState } from "react";
+import {
+  Scale,
+  Utensils,
+  Droplets,
+  Heart,
+  Syringe,
+  Footprints,
+} from "lucide-react";
 
 const quickLogItems = [
   { icon: Scale, label: "Weight", color: "bg-purple-500" },

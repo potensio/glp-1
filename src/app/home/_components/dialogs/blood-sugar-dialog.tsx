@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Droplets } from "lucide-react";
-import { useBloodSugar } from "@/hooks/use-blood-sugar";
+import { useCreateBloodSugarEntry } from "@/hooks/use-blood-sugar";
 import { toast } from "sonner";
 
 const measurementTypes = [
@@ -35,7 +35,7 @@ export function BloodSugarDialogContent({
     measurementType?: string;
     general?: string;
   }>({});
-  const { createBloodSugar, isCreating } = useBloodSugar();
+  const createBloodSugarMutation = useCreateBloodSugarEntry();
 
   const handleSave = () => {
     setErrors({});
@@ -56,7 +56,7 @@ export function BloodSugarDialogContent({
       return;
     }
 
-    createBloodSugar(
+    createBloodSugarMutation.mutate(
       {
         level: bloodSugarValue,
         measurementType: measurementType as any,
@@ -116,7 +116,7 @@ export function BloodSugarDialogContent({
                 onClick={() => setMeasurementType(type.value)}
                 title={type.label}
                 aria-label={type.label}
-                disabled={isCreating}
+                disabled={createBloodSugarMutation.isPending}
               >
                 {type.label}
               </button>
@@ -148,7 +148,7 @@ export function BloodSugarDialogContent({
               }`}
               style={{ maxWidth: 120 }}
               aria-label="Blood sugar level in mg/dL"
-              disabled={isCreating}
+              disabled={createBloodSugarMutation.isPending}
             />
             <span className="text-base font-medium text-gray-500 ml-1">
               mg/dL
@@ -174,9 +174,9 @@ export function BloodSugarDialogContent({
           className="w-full"
           size="lg"
           onClick={handleSave}
-          disabled={!bloodSugar || isCreating}
+          disabled={!bloodSugar || createBloodSugarMutation.isPending}
         >
-          {isCreating ? "Logging..." : "Log Blood Sugar"}
+          {createBloodSugarMutation.isPending ? "Logging..." : "Log Blood Sugar"}
         </Button>
       </DialogFooter>
     </>

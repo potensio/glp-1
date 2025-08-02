@@ -62,16 +62,16 @@ function transformBloodPressureDataForChart(
       new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
   );
 
-  // Take last 6 entries for the chart
-  const recentReadings = sortedReadings.slice(-6);
+  // Take last 14 entries for the chart
+  const recentReadings = sortedReadings.slice(-14);
 
   return recentReadings.map((reading) => {
     const date = new Date(reading.capturedDate);
-    const monthName = date.toLocaleDateString("en-US", { month: "short" });
+    const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
 
     return {
-      name: `${monthName} ${day}`,
+      name: `${month}/${day}`,
       systolic: reading.systolic,
       diastolic: reading.diastolic,
     };
