@@ -127,16 +127,16 @@ function transformWeightDataForChart(weights: WeightData[]): ChartData[] {
       new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
   );
 
-  // Take last 6 entries for the chart
-  const recentWeights = sortedWeights.slice(-6);
+  // Take last 14 entries for the chart
+  const recentWeights = sortedWeights.slice(-14);
 
   return recentWeights.map((weight) => {
     const date = new Date(weight.capturedDate);
-    const monthName = date.toLocaleDateString("en-US", { month: "short" });
+    const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
 
     return {
-      name: `${monthName} ${day}`,
+      name: `${month}/${day}`,
       value: weight.weight,
     };
   });
@@ -149,7 +149,6 @@ function transformWeightDataForChart(weights: WeightData[]): ChartData[] {
  */
 export function useCreateWeightEntry() {
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
   const { toast } = useToast();
 
   return useMutation({

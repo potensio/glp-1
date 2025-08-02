@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MedicalReminderDialog } from "@/app/home/_components/dialogs/medical-reminder-dialog";
+import { useGoogleCalendar } from "@/hooks/use-google-calendar";
+import { useGoogleAuth } from "@/hooks/use-google-auth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -23,20 +27,20 @@ const MONTHS = [
   "December",
 ];
 
-// Sample events data
-const sampleEvents = {
-  "2025-07-02": [
+// Sample events data for medical reminders
+const sampleMedicalEvents = {
+  "2025-01-02": [
     { title: "Injection Reminder", time: "7:00 AM" },
     { title: "Weight Check-in", time: "8:00 AM" },
   ],
-  "2025-07-05": [{ title: "Doctor Appointment", time: "3:00 PM" }],
-  "2025-07-10": [{ title: "Blood Sugar Log", time: "9:00 AM" }],
-  "2025-07-15": [
+  "2025-01-05": [{ title: "Doctor Appointment", time: "3:00 PM" }],
+  "2025-01-10": [{ title: "Blood Sugar Log", time: "9:00 AM" }],
+  "2025-01-15": [
     { title: "Injection Reminder", time: "7:00 AM" },
     { title: "Food Log Review", time: "6:00 PM" },
   ],
-  "2025-07-20": [{ title: "Progress Journal Entry", time: "8:00 PM" }],
-  "2025-07-25": [
+  "2025-01-20": [{ title: "Progress Journal Entry", time: "8:00 PM" }],
+  "2025-01-25": [
     { title: "Monthly Summary Export", time: "10:00 AM" },
     { title: "Doctor Follow-up", time: "2:00 PM" },
   ],
@@ -52,6 +56,14 @@ export default function WeeklyCalendar({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  const { isConnected } = useGoogleAuth();
+  const { events: googleEvents, getEventsForDay, isLoadingEvents } = useGoogleCalendar({
+    enabled: isConnected,
+    timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(),
+    timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString(),
+  });
 
   // Attach click handler to header button if id is provided
   useEffect(() => {
@@ -74,6 +86,7 @@ export default function WeeklyCalendar({
   const daysInMonth = lastDayOfMonth.getDate();
 
   const navigateMonth = (direction: "prev" | "next") => {
+    setIsTransitioning(true);
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
       if (direction === "prev") {
@@ -83,6 +96,9 @@ export default function WeeklyCalendar({
       }
       return newDate;
     });
+    
+    // Clear transition state after a brief delay
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const isToday = (date: number) => {
@@ -104,10 +120,31 @@ export default function WeeklyCalendar({
   };
 
   const hasEvent = (date: number) => {
+    const currentDateObj = new Date(year, month, date);
+    
+    // Get Google Calendar events for this date
+    const googleEventsForDay = isConnected ? getEventsForDay(currentDateObj) : [];
+    
+    // Get sample medical events for this date
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       date
     ).padStart(2, "0")}`;
-    return sampleEvents[dateStr as keyof typeof sampleEvents];
+    const medicalEvents = sampleMedicalEvents[dateStr as keyof typeof sampleMedicalEvents] || [];
+    
+    // Combine both types of events
+    const combinedEvents = [
+      ...googleEventsForDay.map(event => ({
+        title: event.title,
+        time: event.isAllDay ? "All day" : format(new Date(event.startTime), "h:mm a"),
+        type: "google" as const
+      })),
+      ...medicalEvents.map(event => ({
+        ...event,
+        type: "medical" as const
+      }))
+    ];
+    
+    return combinedEvents.length > 0 ? combinedEvents : null;
   };
 
   const handleDateClick = (date: number) => {
@@ -125,6 +162,10 @@ export default function WeeklyCalendar({
     // Days of the month
     for (let date = 1; date <= daysInMonth; date++) {
       const events = hasEvent(date);
+      
+      // Show skeleton loading for Google Calendar events when loading or transitioning
+      const showEventSkeleton = isConnected && (isLoadingEvents || isTransitioning) && date % 3 === 0; // Show skeleton on some dates
+      
       days.push(
         <button
           key={date}
@@ -144,7 +185,25 @@ export default function WeeklyCalendar({
           >
             {date}
           </span>
-          {events && (
+          
+          {/* Show skeleton loading for events */}
+          {showEventSkeleton && (
+            <>
+              {/* Desktop: Event skeleton pills */}
+              <div className="w-full mt-1 space-y-0.5 hidden sm:block">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+              {/* Mobile: Event skeleton dots */}
+              <div className="flex flex-1 items-center justify-center gap-0.5 mt-1 sm:hidden">
+                <Skeleton className="w-1.5 h-1.5 rounded-full" />
+                <Skeleton className="w-1.5 h-1.5 rounded-full" />
+              </div>
+            </>
+          )}
+          
+          {/* Show actual events when not loading and not transitioning */}
+          {!showEventSkeleton && !isTransitioning && events && (
             <>
               {/* Desktop: Event pills */}
               <div className="w-full mt-1 space-y-0.5 hidden sm:block">
@@ -155,6 +214,8 @@ export default function WeeklyCalendar({
                       "text-xs px-1 py-0.5 rounded text-left truncate w-full",
                       isToday(date)
                         ? "bg-primary-foreground/20 text-primary-foreground"
+                        : event.type === "google"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                         : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     )}
                   >
@@ -176,13 +237,15 @@ export default function WeeklyCalendar({
               </div>
               {/* Mobile: Event dots */}
               <div className="flex flex-1 items-center justify-center gap-0.5 mt-1 sm:hidden">
-                {events.slice(0, 3).map((_, i) => (
+                {events.slice(0, 3).map((event, i) => (
                   <span
                     key={i}
                     className={cn(
                       "inline-block w-1.5 h-1.5 rounded-full",
                       isToday(date)
                         ? "bg-primary-foreground/80"
+                        : event.type === "google"
+                        ? "bg-green-500 dark:bg-green-300"
                         : "bg-blue-500 dark:bg-blue-300"
                     )}
                   />
@@ -281,12 +344,37 @@ export default function WeeklyCalendar({
             </h3>
           </CardHeader>
           <CardContent className="space-y-3">
-            {selectedDateEvents ? (
+            {/* Show skeleton loading when Google Calendar is loading and a date is selected */}
+            {isConnected && isLoadingEvents && selectedDate ? (
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border-l-4 border-l-gray-300">
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-1/2 mb-1" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+                <div className="p-3 rounded-lg border-l-4 border-l-gray-300">
+                  <Skeleton className="h-4 w-2/3 mb-2" />
+                  <Skeleton className="h-3 w-1/3 mb-1" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ) : selectedDateEvents ? (
               selectedDateEvents.map((event, index) => (
-                <div key={index} className="p-3 bg-muted rounded-lg">
+                <div 
+                  key={index} 
+                  className={cn(
+                    "p-3 rounded-lg border-l-4",
+                    event.type === "google" 
+                      ? "bg-green-50 border-l-green-500 dark:bg-green-950" 
+                      : "bg-blue-50 border-l-blue-500 dark:bg-blue-950"
+                  )}
+                >
                   <div className="font-medium text-sm">{event.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {event.time}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {event.type === "google" ? "📅 Google Calendar" : "💊 Medical Reminder"}
                   </div>
                 </div>
               ))
