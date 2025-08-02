@@ -66,9 +66,7 @@ export function useGoogleAuth() {
       }
       const data = await response.json();
       if (!data.success) {
-        throw new Error(
-          data.error || "Failed to initiate Google authentication"
-        );
+        throw new Error(data.error || "Failed to initiate Google authentication");
       }
       return data;
     },

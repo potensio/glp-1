@@ -24,20 +24,21 @@ export default function Header() {
     { label: "Progress", href: "/home/progress" },
     { label: "Medication", href: "/home/medication" },
     { label: "Journal", href: "/home/journal" },
+    { label: "Tips & Tricks", href: "/home/tips" },
   ];
 
   // Prefetch all navigation pages for instant transitions
   useEffect(() => {
-    console.log('Prefetching navigation pages...');
+    console.log("Prefetching navigation pages...");
     menuItems.forEach((item) => {
-      console.log('Prefetching:', item.href);
+      console.log("Prefetching:", item.href);
       router.prefetch(item.href);
     });
   }, [router]);
 
   // Aggressive prefetching with invisible Link components
   const PrefetchLinks = () => (
-    <div style={{ display: 'none' }}>
+    <div style={{ display: "none" }}>
       {menuItems.map((item) => (
         <Link key={`prefetch-${item.href}`} href={item.href} prefetch={true}>
           {item.label}
