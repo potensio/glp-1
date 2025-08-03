@@ -1,10 +1,11 @@
 "use client";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-
+import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 // Mock data for tips & tricks posts
 const tipsData = [
@@ -128,7 +129,7 @@ const tipsData = [
     shares: 0,
   },
   {
-    id: 3,
+    id: 4,
     title: "Building Support",
     icon: "🤝",
     date: "January 23, 2025",
@@ -195,10 +196,12 @@ function TipCard({ tip }: { tip: (typeof tipsData)[0] }) {
               key={index}
               className="relative aspect-[3/2] overflow-hidden rounded-lg bg-gray-100 snap-start"
             >
-              <img
+              <Image
                 src={image.url}
                 alt={image.caption}
-                className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
+                fill
+                className="object-cover transition-transform duration-200 hover:scale-105"
+                sizes="(max-width: 768px) 50vw, 25vw"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                 <p className="text-sm font-medium text-white">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -10,22 +10,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { Menu, ChevronDown, User, Settings, LogOut, X } from "lucide-react";
+import { X } from "lucide-react";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, profile, logout } = useAuth();
   const router = useRouter();
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { label: "Home", href: "/home" },
     { label: "Progress", href: "/home/progress" },
     { label: "Medication", href: "/home/medication" },
     { label: "Journal", href: "/home/journal" },
     { label: "Tips & Tricks", href: "/home/tips" },
-  ];
+  ], []);
 
   // Prefetch all navigation pages for instant transitions
   useEffect(() => {
@@ -34,7 +33,7 @@ export default function Header() {
       console.log("Prefetching:", item.href);
       router.prefetch(item.href);
     });
-  }, [router]);
+  }, [router, menuItems]);
 
   // Aggressive prefetching with invisible Link components
   const PrefetchLinks = () => (
