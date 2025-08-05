@@ -199,6 +199,87 @@ export class GoogleCalendarService {
   }
 
   /**
+   * Create a new event in Google Calendar
+   */
+  async createEvent(
+    userId: string,
+    eventData: {
+      title: string;
+      description?: string;
+      startTime: string;
+      endTime: string;
+      isAllDay?: boolean;
+      location?: string;
+      attendees?: string[];
+      recurrence?: string[];
+    }
+  ): Promise<CalendarEvent> {
+    const auth = await googleAuthService.getAuthenticatedClient(userId);
+    const calendar = google.calendar({ version: "v3", auth });
+
+    const integration = await prisma.googleIntegration.findUnique({
+      where: { userId },
+    });
+
+    if (!integration) {
+      throw new Error("Google Calendar integration not found");
+    }
+
+    const { title, description, startTime, endTime, isAllDay, location, attendees, recurrence } = eventData;
+
+    // Prepare event data for Google Calendar
+    const googleEventData: any = {
+      summary: title,
+      description: description || undefined,
+      location: location || undefined,
+    };
+
+    // Handle date/time formatting
+    if (isAllDay) {
+      // For all-day events, use date format (YYYY-MM-DD)
+      const startDate = new Date(startTime).toISOString().split('T')[0];
+      const endDate = new Date(endTime).toISOString().split('T')[0];
+      googleEventData.start = { date: startDate };
+      googleEventData.end = { date: endDate };
+    } else {
+      // For timed events, use dateTime format
+      googleEventData.start = { dateTime: startTime };
+      googleEventData.end = { dateTime: endTime };
+    }
+
+    // Add attendees if provided
+    if (attendees && attendees.length > 0) {
+      googleEventData.attendees = attendees.map(email => ({ email }));
+    }
+
+    // Add recurrence if provided
+    if (recurrence && recurrence.length > 0) {
+      googleEventData.recurrence = recurrence;
+    }
+
+    // Create event in Google Calendar
+    const response = await calendar.events.insert({
+      calendarId: integration.calendarId || "primary",
+      requestBody: googleEventData,
+    });
+
+    const createdEvent = response.data;
+
+    // Transform the created event to our format
+    return {
+      id: createdEvent.id!,
+      title: createdEvent.summary || "Untitled Event",
+      description: createdEvent.description || undefined,
+      startTime: createdEvent.start?.dateTime || createdEvent.start?.date || "",
+      endTime: createdEvent.end?.dateTime || createdEvent.end?.date || "",
+      isAllDay: !createdEvent.start?.dateTime,
+      location: createdEvent.location || undefined,
+      attendees: createdEvent.attendees?.map(a => a.email).filter((email): email is string => Boolean(email)) || [],
+      htmlLink: createdEvent.htmlLink || undefined,
+    };
+  }
+
+  /**
    * Get cached events from local database
    */
   async getCachedEvents(

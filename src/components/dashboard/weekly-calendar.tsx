@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -57,12 +57,26 @@ export default function WeeklyCalendar({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   const { isConnected } = useGoogleAuth();
-  const { events: googleEvents, getEventsForDay, isLoadingEvents } = useGoogleCalendar({
+
+  // Memoize the time range to prevent unnecessary re-renders
+  const timeRange = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    return {
+      timeMin: new Date(year, month, 1).toISOString(),
+      timeMax: new Date(year, month + 1, 0).toISOString(),
+    };
+  }, [currentDate]);
+
+  const {
+    events: googleEvents,
+    getEventsForDay,
+    isLoadingEvents,
+  } = useGoogleCalendar({
     enabled: isConnected,
-    timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(),
-    timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString(),
+    ...timeRange,
   });
 
   // Attach click handler to header button if id is provided
@@ -96,7 +110,7 @@ export default function WeeklyCalendar({
       }
       return newDate;
     });
-    
+
     // Clear transition state after a brief delay
     setTimeout(() => setIsTransitioning(false), 300);
   };
@@ -121,34 +135,41 @@ export default function WeeklyCalendar({
 
   const hasEvent = (date: number) => {
     const currentDateObj = new Date(year, month, date);
-    
+
     // Get Google Calendar events for this date
-    const googleEventsForDay = isConnected ? getEventsForDay(currentDateObj) : [];
-    
+    const googleEventsForDay = isConnected
+      ? getEventsForDay(currentDateObj)
+      : [];
+
     // Get sample medical events for this date
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       date
     ).padStart(2, "0")}`;
-    const medicalEvents = sampleMedicalEvents[dateStr as keyof typeof sampleMedicalEvents] || [];
-    
+    const medicalEvents =
+      sampleMedicalEvents[dateStr as keyof typeof sampleMedicalEvents] || [];
+
     // Combine both types of events
     const combinedEvents = [
-      ...googleEventsForDay.map(event => ({
+      ...googleEventsForDay.map((event) => ({
         title: event.title,
-        time: event.isAllDay ? "All day" : format(new Date(event.startTime), "h:mm a"),
-        type: "google" as const
+        time: event.isAllDay
+          ? "All day"
+          : format(new Date(event.startTime), "h:mm a"),
+        type: "google" as const,
       })),
-      ...medicalEvents.map(event => ({
+      ...medicalEvents.map((event) => ({
         ...event,
-        type: "medical" as const
-      }))
+        type: "medical" as const,
+      })),
     ];
-    
+
     return combinedEvents.length > 0 ? combinedEvents : null;
   };
 
   const handleDateClick = (date: number) => {
-    setSelectedDate(new Date(year, month, date));
+    // Create date in local timezone to avoid timezone conversion issues
+    const localDate = new Date(year, month, date, 12, 0, 0); // Set to noon to avoid timezone edge cases
+    setSelectedDate(localDate);
   };
 
   const renderCalendarDays = () => {
@@ -162,10 +183,11 @@ export default function WeeklyCalendar({
     // Days of the month
     for (let date = 1; date <= daysInMonth; date++) {
       const events = hasEvent(date);
-      
+
       // Show skeleton loading for Google Calendar events when loading or transitioning
-      const showEventSkeleton = isConnected && (isLoadingEvents || isTransitioning) && date % 3 === 0; // Show skeleton on some dates
-      
+      const showEventSkeleton =
+        isConnected && (isLoadingEvents || isTransitioning) && date % 3 === 0; // Show skeleton on some dates
+
       days.push(
         <button
           key={date}
@@ -185,7 +207,7 @@ export default function WeeklyCalendar({
           >
             {date}
           </span>
-          
+
           {/* Show skeleton loading for events */}
           {showEventSkeleton && (
             <>
@@ -201,7 +223,7 @@ export default function WeeklyCalendar({
               </div>
             </>
           )}
-          
+
           {/* Show actual events when not loading and not transitioning */}
           {!showEventSkeleton && !isTransitioning && events && (
             <>
@@ -276,6 +298,7 @@ export default function WeeklyCalendar({
         open={dialogOpen}
         setOpen={setDialogOpen}
         trigger={null}
+        selectedDate={selectedDate || undefined}
       />
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
         {/* Calendar Grid */}
@@ -360,12 +383,12 @@ export default function WeeklyCalendar({
               </div>
             ) : selectedDateEvents ? (
               selectedDateEvents.map((event, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={cn(
                     "p-3 rounded-lg border-l-4",
-                    event.type === "google" 
-                      ? "bg-green-50 border-l-green-500 dark:bg-green-950" 
+                    event.type === "google"
+                      ? "bg-green-50 border-l-green-500 dark:bg-green-950"
                       : "bg-blue-50 border-l-blue-500 dark:bg-blue-950"
                   )}
                 >
@@ -374,7 +397,9 @@ export default function WeeklyCalendar({
                     {event.time}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {event.type === "google" ? "📅 Google Calendar" : "💊 Medical Reminder"}
+                    {event.type === "google"
+                      ? "📅 Google Calendar"
+                      : "💊 Medical Reminder"}
                   </div>
                 </div>
               ))

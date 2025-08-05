@@ -14,13 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { CheckCheck, ArrowRight } from "lucide-react";
+import { CheckCheck, ArrowRight, Crown } from "lucide-react";
+import { RegistrationPopup } from "../registration-popup";
 
 export default function PlanCard() {
   const {
     subscription,
     hasPremiumSubscription,
     isLoading: authLoading,
+    user,
+    profile,
   } = useAuth();
   const {
     createCheckout,
@@ -35,10 +38,31 @@ export default function PlanCard() {
   } = usePlans();
   const [mounted, setMounted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showRegistrationPopup, setShowRegistrationPopup] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSubscribeClick = () => {
+    if (!premiumPlan) return;
+
+    // Check if profile is incomplete
+    if (!profile?.isComplete) {
+      setShowRegistrationPopup(true);
+      return;
+    }
+
+    // Profile is complete, proceed with checkout
+    createCheckout(premiumPlan.id, premiumPlan.stripePriceId || premiumPlan.id);
+  };
+
+  const handleRegistrationComplete = () => {
+    if (!premiumPlan) return;
+
+    // After registration is complete, proceed with checkout
+    createCheckout(premiumPlan.id, premiumPlan.stripePriceId || premiumPlan.id);
+  };
 
   const isLoading = authLoading || plansLoading;
 
@@ -124,18 +148,19 @@ export default function PlanCard() {
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <h3 className="text-2xl font-semibold flex items-center gap-1">
+            {!hasPremiumSubscription && (
+              <div className="inline-flex items-center justify-center w-8 h-8 mr-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full">
+                <Crown className="w-4 h-4 text-white" />
+              </div>
+            )}
             Unlock {premiumPlan.name} Features!
-            {hasPremiumSubscription ? (
+            {hasPremiumSubscription && (
               <span
                 className={`ml-2 px-2 py-0.5 text-xs rounded ${getStatusColor(
                   subscription!.status
                 )}`}
               >
                 {subscription!.status}
-              </span>
-            ) : (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded">
-                Available
               </span>
             )}
           </h3>
@@ -204,14 +229,9 @@ export default function PlanCard() {
           // Free user - show upgrade option
           <Button
             size={"sm"}
-            className="h-11 w-full md:w-40 cursor-pointer"
+            className="h-12 w-full md:w-40 cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
             disabled={subscriptionLoading}
-            onClick={() =>
-              createCheckout(
-                premiumPlan.id,
-                premiumPlan.stripePriceId || premiumPlan.id
-              )
-            }
+            onClick={handleSubscribeClick}
           >
             {subscriptionLoading ? (
               "Processing..."
@@ -260,6 +280,14 @@ export default function PlanCard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RegistrationPopup
+        open={showRegistrationPopup}
+        onOpenChange={setShowRegistrationPopup}
+        user={user}
+        profile={profile}
+        onRegistrationComplete={handleRegistrationComplete}
+      />
     </Card>
   );
 }

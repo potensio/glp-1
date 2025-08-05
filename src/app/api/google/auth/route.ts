@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Generate the URL for Google OAuth consent screen
     const scopes = [
-      "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/userinfo.email",
     ];
 

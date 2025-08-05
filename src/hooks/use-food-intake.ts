@@ -1,17 +1,21 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { FoodIntakeInput } from '@/lib/services/food-intake.service';
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
+import { FoodIntakeInput } from "@/lib/services/food-intake.service";
 
 // Fetch food intake entries from API
 async function fetchFoodIntakeEntries() {
-  const response = await fetch('/api/food-intakes');
-  
+  const response = await fetch("/api/food-intakes");
+
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch food intake data');
+    throw new Error(errorData.error || "Failed to fetch food intake data");
   }
-  
+
   return response.json();
 }
 
@@ -19,18 +23,19 @@ async function fetchFoodIntakeEntries() {
 function transformFoodIntakeDataForChart(entries: any[]) {
   // Sort by capturedDate ascending to show chronological order
   const sortedEntries = entries.sort(
-    (a: any, b: any) => new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
+    (a: any, b: any) =>
+      new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
   );
 
   // Take last 14 entries for the chart
   const recentEntries = sortedEntries.slice(-14);
-  
+
   // Transform data for chart with actual dates
   return recentEntries.map((entry: any) => {
     const date = new Date(entry.capturedDate);
     const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
-    
+
     return {
       name: `${month}/${day}`,
       calories: entry.calories,
@@ -48,7 +53,7 @@ export function useFoodIntake() {
   }
 
   const entries = useSuspenseQuery({
-    queryKey: ['food-intakes', profile.id],
+    queryKey: ["food-intakes", profile.id],
     queryFn: fetchFoodIntakeEntries,
     staleTime: 5 * 60 * 1000, // 5 minutes
   }).data;
@@ -60,13 +65,13 @@ export function useFoodIntake() {
   const createFoodIntakeMutation = useMutation({
     mutationFn: async (data: FoodIntakeInput) => {
       if (!profile?.id) {
-        throw new Error('Profile not found');
+        throw new Error("Profile not found");
       }
 
-      const response = await fetch('/api/food-intakes', {
-        method: 'POST',
+      const response = await fetch("/api/food-intakes", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           mealType: data.mealType,
@@ -79,7 +84,7 @@ export function useFoodIntake() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to log food intake');
+        throw new Error(errorData.error || "Failed to log food intake");
       }
 
       return await response.json();
@@ -87,16 +92,21 @@ export function useFoodIntake() {
     onSuccess: (result, data) => {
       toast({
         title: "Food logged successfully!",
-        description: `${data.food} (${data.calories} cal) has been added to your ${data.mealType.toLowerCase()}.`,
+        description: `${data.food} (${
+          data.calories
+        } cal) has been added to your ${data.mealType.toLowerCase()}.`,
       });
 
       // Invalidate and refetch food intake data
-      queryClient.invalidateQueries({ queryKey: ['food-intakes'] });
+      queryClient.invalidateQueries({ queryKey: ["food-intakes"] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to log food intake. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to log food intake. Please try again.",
         variant: "destructive",
       });
     },

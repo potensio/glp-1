@@ -16,7 +16,7 @@ type PaymentMethodsProps = {
 
 export default function PaymentMethods({ methods }: PaymentMethodsProps) {
   return (
-    <Card className="px-6">
+    <Card className="rounded-2xl p-5 md:p-6 shadow-xl">
       <div className="flex justify-between items-center mb-4">
         <div className="font-semibold text-lg">Payment Method</div>
       </div>

@@ -120,7 +120,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
         <Link href="/register" className="underline underline-offset-4">
-          Sign up
+          Join
         </Link>
       </div>
     </form>

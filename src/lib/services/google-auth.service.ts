@@ -19,7 +19,7 @@ export class GoogleAuthService {
    */
   generateAuthUrl(userId: string): string {
     const scopes = [
-      "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/userinfo.email",
     ];
 

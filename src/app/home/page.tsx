@@ -29,7 +29,7 @@ export default function DashPage() {
       <QuickActions />
 
       {profile && <HealthCharts />}
-      
+
       {/* Show plan card for free users, calendar for premium users */}
       {!hasPremiumSubscription ? (
         <PlanCard />

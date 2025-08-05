@@ -12,6 +12,7 @@ model User {
   email            String             @unique
   password         String
   stripeCustomerId String?            @unique // Stripe customer ID
+  isProfileComplete Boolean           @default(false) // Track if user completed full registration
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   profile          Profile?
@@ -26,6 +27,7 @@ model Profile {
   firstName       String
   lastName        String
   phoneNumber     String?
+  isComplete      Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   weights         Weight[]

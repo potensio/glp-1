@@ -1,12 +1,23 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
+import { useEffect, useState } from "react";
+import { getRandomQuote, CONFIG } from "@/config/quote";
 
 interface WelcomeHeroProps {
   userName: string;
 }
 
 export const WelcomeHero = ({ userName }: WelcomeHeroProps) => {
+  const [quote, setQuote] = useState<{ quote: string; author: string }>({
+    quote: "",
+    author: "",
+  });
+
+  useEffect(() => {
+    const quote = getRandomQuote();
+    setQuote(quote);
+  }, []);
+
   // Get the time of day to display appropriate greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -22,8 +33,8 @@ export const WelcomeHero = ({ userName }: WelcomeHeroProps) => {
           {getGreeting()}, {userName}!
         </h1>
         <p className="text-background text-lg mb-6">
-          &quot;Take care of your body. It&apos;s the only place you have to
-          live.&quot; - Jim Rohn
+          &quot;{quote.quote}&quot;{" "}
+          {quote.author !== "" ? `-${quote.author}` : ""}
         </p>
       </div>
     </div>
