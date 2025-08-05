@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,39 +14,52 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { RegistrationPopup } from "@/components/registration-popup";
-import { X } from "lucide-react";
+import PaywallCard from "@/components/billing/paywall-card";
+import { X, Crown } from "lucide-react";
 
 export default function Header() {
+  const {
+    user,
+    profile,
+    logout,
+    isLoading,
+    updateProfileCompletion,
+    hasPremiumSubscription,
+  } = useAuth();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [registrationPopupOpen, setRegistrationPopupOpen] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState<string>("");
   const [renderKey, setRenderKey] = useState(0);
-  const { user, profile, logout } = useAuth();
-  const router = useRouter();
-  
+
   // Force re-render when profile completion status changes
   useEffect(() => {
-    setRenderKey(prev => prev + 1);
+    setRenderKey((prev) => prev + 1);
   }, [profile?.isComplete]);
 
   // Check if profile is incomplete using the isComplete field
   const isProfileIncomplete = user && profile && !profile.isComplete;
-  
+
   // Debug logging to track profile completion status
-  console.log('Header - Auth state:', {
+  console.log("Header - Auth state:", {
     hasUser: !!user,
     hasProfile: !!profile,
     isComplete: profile?.isComplete,
     isProfileIncomplete,
-    profileData: profile
+    profileData: profile,
   });
 
-  const menuItems = useMemo(() => [
-    { label: "Home", href: "/home" },
-    { label: "Progress", href: "/home/progress" },
-    { label: "Medication", href: "/home/medication" },
-    { label: "Journal", href: "/home/journal" },
-    { label: "Tips & Tricks", href: "/home/tips" },
-  ], []);
+  const menuItems = useMemo(
+    () => [
+      { label: "Home", href: "/home", isPremium: false },
+      { label: "Progress", href: "/home/progress", isPremium: true },
+      { label: "Medication", href: "/home/medication", isPremium: true },
+      { label: "Journal", href: "/home/journal", isPremium: true },
+      { label: "Tips & Tricks", href: "/home/tips", isPremium: true },
+    ],
+    []
+  );
 
   // Prefetch all navigation pages for instant transitions
   useEffect(() => {
@@ -68,9 +82,17 @@ export default function Header() {
   );
 
   // Optimistic navigation for instant SPA feel
-  const handleNavigation = (href: string) => {
-    router.push(href);
+  const handleNavigation = (href: string, isPremium = false, label = "") => {
     setMenuOpen(false);
+
+    // Check if this is a premium feature and user doesn't have premium
+    if (isPremium && !hasPremiumSubscription) {
+      setPaywallFeature(label);
+      setPaywallOpen(true);
+      return;
+    }
+
+    router.push(href);
   };
 
   // Close mobile menu on escape key
@@ -104,81 +126,111 @@ export default function Header() {
   return (
     <header className="relative z-20 w-full backdrop-blur">
       <PrefetchLinks />
-      <nav className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-6 max-w-6xl mx-auto">
+      <nav className="flex items-center justify-between px-4 sm:px-6 py-6 max-w-6xl mx-auto">
         {/* Logo */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-semibold text-lg sm:text-xl text-background whitespace-nowrap">
-            Logo
+          <Image
+            src="/logo-2.png"
+            alt="My Daily Health Journal"
+            width={48}
+            height={48}
+            className="ml-[-8px]"
+          />
+          <span className="font-medium opacity-0 sm:opacity-100 text-lg ml-[-4px] text-background whitespace-nowrap">
+            Mydailyhealthjournal.com
           </span>
         </div>
 
         {/* Desktop Navigation */}
-        <ul className="hidden lg:flex items-center gap-8 xl:gap-12 text-background font-medium">
-          {menuItems.map((item) => (
-            <li key={item.label}>
-              <Link
-                href={item.href}
-                prefetch={true}
-                onClick={() => setMenuOpen(false)}
-                className="hover:underline transition-all duration-200 cursor-pointer bg-transparent border-none text-background font-medium py-2 px-1"
+        <div className="hidden lg:flex items-center gap-8 text-background font-medium">
+          <ul className="hidden lg:flex items-center gap-4 text-background font-medium">
+            {menuItems.map((item) => (
+              <li key={item.label}>
+                {isProfileIncomplete ? (
+                  <button
+                    onClick={() => setRegistrationPopupOpen(true)}
+                    className="hover:underline transition-all duration-200 cursor-pointer bg-transparent border-none text-background font-medium py-2 px-1 flex items-center gap-1"
+                  >
+                    {item.label}
+                    {item.isPremium && !hasPremiumSubscription && (
+                      <Crown className="w-4 h-4 text-amber-300" />
+                    )}
+                  </button>
+                ) : item.isPremium && !hasPremiumSubscription ? (
+                  <button
+                    onClick={() =>
+                      handleNavigation(item.href, item.isPremium, item.label)
+                    }
+                    className="hover:underline transition-all duration-200 cursor-pointer bg-transparent border-none text-background font-medium py-2 px-1 flex items-center gap-1"
+                  >
+                    {item.label}
+                    <Crown className="w-4 h-4 text-amber-300" />
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    prefetch={true}
+                    onClick={() => setMenuOpen(false)}
+                    className="hover:underline transition-all duration-200 cursor-pointer bg-transparent border-none text-background font-medium py-2 px-1"
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop User Menu */}
+          <div className="hidden lg:flex items-center gap-2">
+            {isProfileIncomplete ? (
+              <Button
+                onClick={() => setRegistrationPopupOpen(true)}
+                variant="outline"
+                className="bg-white text-blue-600 border-white hover:bg-blue-50"
               >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Desktop User Menu */}
-        <div className="hidden lg:flex items-center gap-2">
-          {isProfileIncomplete ? (
-            <Button
-              onClick={() => setRegistrationPopupOpen(true)}
-              variant="outline"
-              className="bg-white text-blue-600 border-white hover:bg-blue-50"
-            >
-              Register
-            </Button>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span className="flex items-center gap-2 cursor-pointer">
-                  <Avatar className="size-10">
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-background">
-                    {profile?.firstName || user?.email || "User"}
+                Register
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span className="flex items-center gap-2 cursor-pointer">
+                    <Avatar className="size-10">
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-background">
+                      {profile?.firstName || user?.email || "User"}
+                    </span>
                   </span>
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 p-2">
-                <DropdownMenuItem
-                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                  onSelect={() => handleNavigation("/home/billing")}
-                >
-                  Billing
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
-                  onSelect={() => handleNavigation("/home/account")}
-                >
-                  Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
-                  onSelect={() => {
-                    logout();
-                  }}
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 p-2">
+                  <DropdownMenuItem
+                    className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                    onSelect={() => handleNavigation("/home/billing")}
+                  >
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                    onSelect={() => handleNavigation("/home/account")}
+                  >
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="w-full px-4 justify-start font-normal hover:bg-red-50 cursor-pointer"
+                    onSelect={() => {
+                      logout();
+                    }}
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
-          {/* <button
+            {/* <button
             aria-label="Toggle dark mode"
             onClick={() => setIsDark((v) => !v)}
             className="ml-2 p-2 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition"
@@ -215,6 +267,7 @@ export default function Header() {
               </svg>
             )}
           </button> */}
+          </div>
         </div>
 
         {/* Mobile Menu Button or Register Button */}
@@ -301,7 +354,7 @@ export default function Header() {
 
               {/* Navigation Links */}
               <div className="py-6">
-                {menuItems.map((item, index) => (
+                {menuItems.map((item, index) =>
                   isProfileIncomplete ? (
                     <button
                       key={item.label}
@@ -309,12 +362,29 @@ export default function Header() {
                         setMenuOpen(false);
                         setRegistrationPopupOpen(true);
                       }}
-                      className="flex items-center w-full px-6 py-3 text-left font-medium hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
+                      className="flex items-center justify-between w-full px-6 py-3 text-left font-medium hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
                       style={{
                         animationDelay: `${index * 50}ms`,
                       }}
                     >
                       <span className="text-base">{item.label}</span>
+                      {item.isPremium && !hasPremiumSubscription && (
+                        <Crown className="w-4 h-4 text-amber-500" />
+                      )}
+                    </button>
+                  ) : item.isPremium && !hasPremiumSubscription ? (
+                    <button
+                      key={item.label}
+                      onClick={() =>
+                        handleNavigation(item.href, item.isPremium, item.label)
+                      }
+                      className="flex items-center justify-between w-full px-6 py-3 text-left font-medium hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
+                      style={{
+                        animationDelay: `${index * 50}ms`,
+                      }}
+                    >
+                      <span className="text-base">{item.label}</span>
+                      <Crown className="w-4 h-4 text-amber-500" />
                     </button>
                   ) : (
                     <Link
@@ -330,7 +400,7 @@ export default function Header() {
                       <span className="text-base">{item.label}</span>
                     </Link>
                   )
-                ))}
+                )}
               </div>
 
               {/* Account Actions */}
@@ -361,7 +431,7 @@ export default function Header() {
           </div>
         )}
       </nav>
-      
+
       {/* Registration Popup */}
       <RegistrationPopup
         open={registrationPopupOpen}
@@ -369,9 +439,16 @@ export default function Header() {
         user={user}
         profile={profile}
         onRegistrationComplete={() => {
-          console.log('Registration completed callback triggered');
-          setRenderKey(prev => prev + 1);
+          console.log("Registration completed callback triggered");
+          setRenderKey((prev) => prev + 1);
         }}
+      />
+
+      {/* Paywall Dialog */}
+      <PaywallCard
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        feature={paywallFeature}
       />
     </header>
   );

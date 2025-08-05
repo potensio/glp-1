@@ -148,21 +148,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await fetch("/api/logout", {
+      const response = await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
       });
+      
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
-      // Clear auth cache and redirect
+    onSuccess: async () => {
+      // Clear auth cache
       queryClient.setQueryData(authKeys.me, null);
-      router.push("/login");
+      
+      // Wait a bit to ensure cookie is cleared by browser
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Use replace instead of push to prevent back button issues
+      router.replace("/login");
     },
-    onError: (error) => {
+    onError: async (error) => {
       console.error("Logout error:", error);
       // Even if logout fails, clear local state and redirect
       queryClient.setQueryData(authKeys.me, null);
-      router.push("/login");
+      
+      // Wait a bit and redirect anyway
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.replace("/login");
     },
   });
 
@@ -181,7 +195,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      // If logout fails, still clear local state
+      console.error('Logout failed, clearing local state anyway:', error);
+      queryClient.setQueryData(authKeys.me, null);
+      queryClient.clear();
+      router.replace('/login');
+    }
   };
 
   const refreshUser = async () => {

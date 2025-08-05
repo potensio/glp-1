@@ -12,10 +12,7 @@ export default function AuthLayout({
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex flex-col justify-center items-center h-fit md:justify-start">
           <Image src="/logo.png" alt="Logo" width={48} height={48} />
-          <a
-            href="#"
-            className="flex items-center gap-2 font-medium text-lg font-semibold"
-          >
+          <a href="#" className="flex items-center gap-2 font-medium">
             My Daily Health Journal
           </a>
         </div>
