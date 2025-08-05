@@ -132,12 +132,12 @@ export default function Header() {
           <Image
             src="/logo-2.png"
             alt="My Daily Health Journal"
-            width={48}
-            height={48}
+            width={40}
+            height={40}
             className="ml-[-8px]"
           />
-          <span className="font-medium opacity-0 sm:opacity-100 text-lg ml-[-4px] text-background whitespace-nowrap">
-            Mydailyhealthjournal.com
+          <span className="font-medium opacity-0 sm:opacity-100 ml-[-4px] text-background whitespace-nowrap">
+            My Daily Health Journal
           </span>
         </div>
 

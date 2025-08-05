@@ -26,7 +26,7 @@ export function Footer() {
             health.
           </p>
         </div>
-        <div className="flex flex-col items-end w-full md:w-fit">
+        <div className="flex flex-col items-center md:items-end w-full md:w-fit">
           {" "}
           <span className="text-xs text-muted-foreground text-center md:text-left">
             &copy; {new Date().getFullYear()} My Daily Health Journal. All
