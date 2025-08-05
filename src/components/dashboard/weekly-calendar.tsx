@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -59,10 +59,20 @@ export default function WeeklyCalendar({
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   const { isConnected } = useGoogleAuth();
+  
+  // Memoize the time range to prevent unnecessary re-renders
+  const timeRange = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    return {
+      timeMin: new Date(year, month, 1).toISOString(),
+      timeMax: new Date(year, month + 1, 0).toISOString(),
+    };
+  }, [currentDate.getFullYear(), currentDate.getMonth()]);
+  
   const { events: googleEvents, getEventsForDay, isLoadingEvents } = useGoogleCalendar({
     enabled: isConnected,
-    timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(),
-    timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString(),
+    ...timeRange,
   });
 
   // Attach click handler to header button if id is provided
@@ -148,7 +158,9 @@ export default function WeeklyCalendar({
   };
 
   const handleDateClick = (date: number) => {
-    setSelectedDate(new Date(year, month, date));
+    // Create date in local timezone to avoid timezone conversion issues
+    const localDate = new Date(year, month, date, 12, 0, 0); // Set to noon to avoid timezone edge cases
+    setSelectedDate(localDate);
   };
 
   const renderCalendarDays = () => {
@@ -276,6 +288,7 @@ export default function WeeklyCalendar({
         open={dialogOpen}
         setOpen={setDialogOpen}
         trigger={null}
+        selectedDate={selectedDate || undefined}
       />
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
         {/* Calendar Grid */}

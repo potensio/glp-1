@@ -16,12 +16,6 @@ const signupSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -71,8 +65,8 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
         throw new Error(signupResult.error || "Signup failed");
       }
 
-      // After successful signup, automatically log the user in
-      await login(data.email, data.password);
+      // After successful signup, automatically log the user in with the generated password
+      await login(data.email, signupResult.generatedPassword);
 
       console.log("Signup successful, redirecting to home...");
       router.push("/home");
@@ -95,9 +89,9 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Create an account</h1>
+        <h1 className="text-2xl font-bold">Let’s get to know you</h1>
         <p className="text-muted-foreground text-sm text-balance">
-          Enter your information to get started
+          Just a few details to personalize your experience.
         </p>
       </div>
 
@@ -150,28 +144,15 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
           )}
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            {...register("password")}
-            className={`${errors.password ? "border-red-500" : ""} min-h-11`}
-          />
-          {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
-          )}
-        </div>
-
         <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Create account"}
+          Join for free
         </Button>
       </div>
 
       <div className="text-center text-sm">
-        Already have an account?{" "}
+        Already joined?{" "}
         <Link href="/login" className="underline underline-offset-4">
-          Sign in
+          Log in
         </Link>
       </div>
     </form>

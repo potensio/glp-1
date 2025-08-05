@@ -5,17 +5,21 @@ import {
   generateToken,
   validateEmail,
   validatePassword,
+  generateSecurePassword,
 } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, firstName, lastName } = body;
+    const { email, firstName, lastName } = body;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !firstName || !lastName) {
       return NextResponse.json(
-        { success: false, error: "All fields are required" },
+        {
+          success: false,
+          error: "Email, first name, and last name are required",
+        },
         { status: 400 }
       );
     }
@@ -28,17 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate password strength
-    if (!validatePassword(password)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Password must be at least 8 characters with uppercase, lowercase, and number",
-        },
-        { status: 400 }
-      );
-    }
+    // Auto-generate a secure password
+    const generatedPassword = generateSecurePassword();
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -52,13 +47,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(password);
+    // Hash the generated password
+    const hashedPassword = await hashPassword(generatedPassword);
 
     // Find the Free plan first
     const freePlan = await prisma.plan.findFirst({
       where: {
-        name: 'Free',
+        name: "Free",
         isActive: true,
       },
     });
@@ -72,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Create user, profile, and free subscription in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create user
+      // Create user (will be marked as incomplete profile via password generation flag)
       const user = await tx.user.create({
         data: {
           email,
@@ -94,7 +89,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: user.id,
           planId: freePlan.id,
-          status: 'ACTIVE',
+          status: "ACTIVE",
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           cancelAtPeriodEnd: false,
@@ -121,9 +116,10 @@ export async function POST(request: NextRequest) {
       profile: result.profile,
       subscription: {
         id: result.subscription.id,
-        planName: 'Free',
+        planName: "Free",
         status: result.subscription.status,
       },
+      generatedPassword, // Return the generated password for auto-login
       token,
     });
 

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
       },
       orderBy: {
-        price: 'asc',
+        price: "asc",
       },
     });
 

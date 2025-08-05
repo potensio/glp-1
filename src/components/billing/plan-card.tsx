@@ -15,12 +15,15 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { CheckCheck, ArrowRight } from "lucide-react";
+import { RegistrationPopup } from "../registration-popup";
 
 export default function PlanCard() {
   const {
     subscription,
     hasPremiumSubscription,
     isLoading: authLoading,
+    user,
+    profile,
   } = useAuth();
   const {
     createCheckout,
@@ -35,10 +38,37 @@ export default function PlanCard() {
   } = usePlans();
   const [mounted, setMounted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showRegistrationPopup, setShowRegistrationPopup] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSubscribeClick = () => {
+    if (!premiumPlan) return;
+    
+    // Check if profile is incomplete
+    if (!profile?.isComplete) {
+      setShowRegistrationPopup(true);
+      return;
+    }
+    
+    // Profile is complete, proceed with checkout
+    createCheckout(
+      premiumPlan.id,
+      premiumPlan.stripePriceId || premiumPlan.id
+    );
+  };
+
+  const handleRegistrationComplete = () => {
+    if (!premiumPlan) return;
+    
+    // After registration is complete, proceed with checkout
+    createCheckout(
+      premiumPlan.id,
+      premiumPlan.stripePriceId || premiumPlan.id
+    );
+  };
 
   const isLoading = authLoading || plansLoading;
 
@@ -206,12 +236,7 @@ export default function PlanCard() {
             size={"sm"}
             className="h-11 w-full md:w-40 cursor-pointer"
             disabled={subscriptionLoading}
-            onClick={() =>
-              createCheckout(
-                premiumPlan.id,
-                premiumPlan.stripePriceId || premiumPlan.id
-              )
-            }
+            onClick={handleSubscribeClick}
           >
             {subscriptionLoading ? (
               "Processing..."
@@ -260,6 +285,14 @@ export default function PlanCard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <RegistrationPopup
+          open={showRegistrationPopup}
+          onOpenChange={setShowRegistrationPopup}
+          user={user}
+          profile={profile}
+          onRegistrationComplete={handleRegistrationComplete}
+        />
     </Card>
   );
 }

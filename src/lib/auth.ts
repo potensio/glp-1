@@ -1,7 +1,7 @@
-import bcrypt from 'bcryptjs';
-import { SignJWT, jwtVerify } from 'jose';
-import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import bcrypt from "bcryptjs";
+import { SignJWT, jwtVerify } from "jose";
+import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 interface CustomJWTPayload {
   userId: string;
@@ -15,22 +15,27 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 // Verify password against hash
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 
 // Generate JWT token
-export async function generateToken(payload: CustomJWTPayload): Promise<string> {
+export async function generateToken(
+  payload: CustomJWTPayload
+): Promise<string> {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
+    throw new Error("JWT_SECRET environment variable is not set");
   }
-  
+
   const secretKey = new TextEncoder().encode(secret);
-  
+
   return await new SignJWT(payload as any)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
     .sign(secretKey);
 }
 
@@ -38,14 +43,14 @@ export async function generateToken(payload: CustomJWTPayload): Promise<string> 
 export async function verifyToken(token: string): Promise<CustomJWTPayload> {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
+    throw new Error("JWT_SECRET environment variable is not set");
   }
   try {
     const secretKey = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, secretKey);
     return payload as unknown as CustomJWTPayload;
   } catch {
-    throw new Error('Invalid or expired token');
+    throw new Error("Invalid or expired token");
   }
 }
 
@@ -54,14 +59,14 @@ export async function getUserFromRequest(request: NextRequest) {
   let token: string | undefined;
 
   // Try to get token from Authorization header
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.substring(7);
   }
 
   // If no token in header, try to get from cookie
   if (!token) {
-    token = request.cookies.get('auth-token')?.value;
+    token = request.cookies.get("auth-token")?.value;
   }
 
   if (!token) {
@@ -89,21 +94,8 @@ export async function getUserFromRequest(request: NextRequest) {
 export async function getUserWithProfile(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      createdAt: true,
-      updatedAt: true,
-      profile: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          phoneNumber: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
+    include: {
+      profile: true,
     },
   });
 }
@@ -113,14 +105,14 @@ export async function getUserWithProfileFromRequest(request: NextRequest) {
   let token: string | undefined;
 
   // Try to get token from Authorization header
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.substring(7);
   }
 
   // If no token in header, try to get from cookie
   if (!token) {
-    token = request.cookies.get('auth-token')?.value;
+    token = request.cookies.get("auth-token")?.value;
   }
 
   if (!token) {
@@ -132,21 +124,8 @@ export async function getUserWithProfileFromRequest(request: NextRequest) {
     // Single database query to get user with profile
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-        profile: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phoneNumber: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
+      include: {
+        profile: true,
       },
     });
     return user;
@@ -166,4 +145,30 @@ export function validatePassword(password: string): boolean {
   // At least 8 characters, 1 lowercase, 1 uppercase, 1 number
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
   return passwordRegex.test(password);
+}
+
+// Generate a secure random password
+export function generateSecurePassword(): string {
+  const length = 12;
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*';
+  const allChars = lowercase + uppercase + numbers + symbols;
+  
+  let password = '';
+  
+  // Ensure at least one character from each category
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+  
+  // Fill the rest randomly
+  for (let i = 4; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
 }

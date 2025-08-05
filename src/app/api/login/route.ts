@@ -70,22 +70,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const subscriptionData = subscription ? {
-      id: subscription.id,
-      status: subscription.status,
-      currentPeriodStart: subscription.currentPeriodStart,
-      currentPeriodEnd: subscription.currentPeriodEnd,
-      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-      plan: {
-        id: subscription.plan.id,
-        name: subscription.plan.name,
-        description: subscription.plan.description,
-        price: subscription.plan.price,
-        currency: subscription.plan.currency,
-        interval: subscription.plan.interval,
-        features: subscription.plan.features,
-      },
-    } : null;
+    const subscriptionData = subscription
+      ? {
+          id: subscription.id,
+          status: subscription.status,
+          currentPeriodStart: subscription.currentPeriodStart,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+          plan: {
+            id: subscription.plan.id,
+            name: subscription.plan.name,
+            description: subscription.plan.description,
+            price: subscription.plan.price,
+            currency: subscription.plan.currency,
+            interval: subscription.plan.interval,
+            features: subscription.plan.features,
+          },
+        }
+      : null;
 
     // Generate JWT token
     const token = await generateToken({
@@ -106,10 +108,10 @@ export async function POST(request: NextRequest) {
       token,
     });
 
-    response.cookies.set('auth-token', token, {
+    response.cookies.set("auth-token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 

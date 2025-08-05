@@ -14,6 +14,7 @@ interface Profile {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  isComplete?: boolean;
 }
 
 interface Plan {
@@ -42,7 +43,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<any>;
+  updateProfileCompletion: (isComplete: boolean) => void;
   hasPremiumSubscription: boolean;
 }
 
@@ -88,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   } = useQuery({
     queryKey: authKeys.me,
     queryFn: fetchCurrentUser,
-    staleTime: 60 * 60 * 1000, // 1 hour - don't refetch for 1 hour
+    staleTime: 5 * 60 * 1000, // 5 minutes - shorter stale time for better responsiveness
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in cache for 24 hours
     retry: (failureCount, error: any) => {
       // Don't retry on 401 (unauthorized)
@@ -98,9 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return failureCount < 2;
     },
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnMount: true, // Allow refetch on mount to catch updates
     placeholderData: (previousData) => previousData, // Keep previous data during refetch
-    networkMode: "offlineFirst", // Use cache first for instant navigation
+    networkMode: "online", // Ensure fresh data when online
   });
 
   // Login mutation
@@ -183,7 +185,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    await queryClient.invalidateQueries({ queryKey: authKeys.me });
+    console.log("refreshUser called - clearing cache and refetching");
+
+    // Completely clear all auth-related cache
+    queryClient.removeQueries({ queryKey: authKeys.me });
+
+    // Clear all cache to ensure no stale data anywhere
+    queryClient.clear();
+
+    // Force invalidation and refetch with fresh data
+    await queryClient.invalidateQueries({
+      queryKey: authKeys.me,
+      refetchType: "all", // Refetch all queries, not just active ones
+    });
+
+    // Force a completely fresh fetch
+    const freshData = await queryClient.fetchQuery({
+      queryKey: authKeys.me,
+      queryFn: fetchCurrentUser,
+      staleTime: 0,
+      gcTime: 0,
+    });
+
+    console.log("refreshUser - fresh data fetched:", freshData);
+
+    // Small delay to ensure all components re-render
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    console.log("refreshUser completed");
+
+    return freshData;
+  };
+
+  const updateProfileCompletion = (isComplete: boolean) => {
+    // Directly update the cached data
+    queryClient.setQueryData(authKeys.me, (oldData: any) => {
+      if (oldData?.profile) {
+        return {
+          ...oldData,
+          profile: {
+            ...oldData.profile,
+            isComplete,
+          },
+        };
+      }
+      return oldData;
+    });
   };
 
   const value = {
@@ -194,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     refreshUser,
+    updateProfileCompletion,
     hasPremiumSubscription,
   };
 

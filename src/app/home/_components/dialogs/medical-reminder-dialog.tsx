@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,15 +19,19 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useGoogleCalendar } from "@/hooks/use-google-calendar";
+import { toast } from "sonner";
 
 export function MedicalReminderDialog({
   open,
   setOpen,
   trigger,
+  selectedDate,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   trigger?: React.ReactNode;
+  selectedDate?: Date;
 }) {
   // Remove local open state
   const [reminderType, setReminderType] = useState("Medication");
@@ -39,6 +43,21 @@ export function MedicalReminderDialog({
   const [ends, setEnds] = useState("never");
   const [endDate, setEndDate] = useState("");
   const [endOccurrences, setEndOccurrences] = useState("");
+  const [startDate, setStartDate] = useState("");
+
+  // Prefill start date when dialog opens with selected date
+  useEffect(() => {
+    if (open && selectedDate) {
+      // Use local date formatting to avoid timezone conversion issues
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      setStartDate(dateString);
+    }
+  }, [open, selectedDate]);
+
+  const { createEvent, isCreatingEvent } = useGoogleCalendar();
 
   const reminderTypes = [
     "Medication",
@@ -47,6 +66,90 @@ export function MedicalReminderDialog({
     "Custom",
   ];
   const repeatUnits = ["Day(s)", "Week(s)", "Month(s)"];
+
+  // Helper function to map repeat units to RFC 5545 frequency values
+  const getFrequencyValue = (unit: string) => {
+    switch (unit) {
+      case "Day(s)":
+        return "DAILY";
+      case "Week(s)":
+        return "WEEKLY";
+      case "Month(s)":
+        return "MONTHLY";
+      default:
+        return "DAILY";
+    }
+  };
+
+  // Helper function to format UNTIL date properly for RFC 5545
+  const formatUntilDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    // Convert YYYY-MM-DD to YYYYMMDDTHHMMSSZ format
+    // Use end of day in UTC for proper UNTIL formatting
+    const date = new Date(dateStr + "T23:59:59.999Z");
+    return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  };
+
+  const handleSaveReminder = async () => {
+    // Validation
+    if (!description.trim()) {
+      toast.error("Please enter a description for the reminder");
+      return;
+    }
+    if (!time) {
+      toast.error("Please select a time for the reminder");
+      return;
+    }
+    if (!startDate) {
+      toast.error("Please select a start date for the reminder");
+      return;
+    }
+
+    try {
+       // Create start and end datetime strings with proper ISO formatting
+       const startDateTime = new Date(`${startDate}T${time}:00`).toISOString();
+       const endDateTime = new Date(new Date(`${startDate}T${time}:00`).getTime() + 60 * 60 * 1000).toISOString();
+       
+       // Prepare recurrence rules if repeating
+       const recurrenceRules = frequency === "repeat" ? [
+         `RRULE:FREQ=${getFrequencyValue(repeatUnit)};INTERVAL=${repeatEvery}${
+           ends === "date" ? `;UNTIL=${formatUntilDate(endDate)}` :
+           ends === "occurrences" ? `;COUNT=${endOccurrences}` : ""
+         }`
+       ] : undefined;
+       
+       // Prepare event data
+       const eventData = {
+         title: `${reminderType}: ${description}`,
+         description: `Medical reminder: ${description}`,
+         startTime: startDateTime,
+         endTime: endDateTime,
+         isAllDay: false,
+         recurrence: recurrenceRules
+       };
+
+      await createEvent(eventData);
+      
+      // Reset form
+      setDescription("");
+      setTime("");
+      setStartDate("");
+      setFrequency("repeat");
+      setRepeatEvery(1);
+      setRepeatUnit("Day(s)");
+      setEnds("never");
+      setEndDate("");
+      setEndOccurrences("");
+      
+      // Close dialog
+      setOpen(false);
+      
+      toast.success("Reminder created successfully!");
+    } catch (error) {
+      console.error("Error creating reminder:", error);
+      toast.error("Failed to create reminder. Please try again.");
+    }
+  };
 
   return (
     <>
@@ -82,6 +185,17 @@ export function MedicalReminderDialog({
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full h-11"
                 placeholder="e.g. Take Lisinopril 10mg, Dr. Smith Appointment"
+              />
+            </div>
+            {/* Start Date Input */}
+            <div className="space-y-1">
+              <label className="block text-sm text-gray-600">Start Date</label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full h-11"
+                min={new Date().toISOString().split('T')[0]} // Prevent past dates
               />
             </div>
             {/* Time and Frequency Row */}
@@ -225,9 +339,10 @@ export function MedicalReminderDialog({
             <Button
               type="button"
               className="flex-1 h-12"
-              onClick={() => setOpen(false)}
+              onClick={handleSaveReminder}
+              disabled={isCreatingEvent}
             >
-              Save Reminder
+              {isCreatingEvent ? "Creating..." : "Save Reminder"}
             </Button>
           </DialogFooter>
         </DialogContent>

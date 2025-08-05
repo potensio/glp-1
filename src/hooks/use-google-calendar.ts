@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useMemo } from "react";
 
 export interface GoogleCalendarEvent {
   id: string;
@@ -34,6 +35,25 @@ interface SyncResponse {
   needsReauth?: boolean;
 }
 
+interface CreateEventRequest {
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  isAllDay?: boolean;
+  location?: string;
+  attendees?: string[];
+  recurrence?: string[];
+}
+
+interface CreateEventResponse {
+  success: boolean;
+  event: GoogleCalendarEvent;
+  message: string;
+  error?: string;
+  needsReauth?: boolean;
+}
+
 interface UseGoogleCalendarOptions {
   timeMin?: string;
   timeMax?: string;
@@ -46,9 +66,14 @@ interface UseGoogleCalendarOptions {
  */
 export function useGoogleCalendar(options: UseGoogleCalendarOptions = {}) {
   const queryClient = useQueryClient();
+  
+  // Memoize default date ranges to prevent unnecessary re-renders
+  const defaultTimeMin = useMemo(() => new Date().toISOString(), []);
+  const defaultTimeMax = useMemo(() => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), []);
+  
   const {
-    timeMin = new Date().toISOString(),
-    timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    timeMin = defaultTimeMin,
+    timeMax = defaultTimeMax,
     maxResults = 50,
     enabled = true,
   } = options;
@@ -87,7 +112,8 @@ export function useGoogleCalendar(options: UseGoogleCalendarOptions = {}) {
       return data.events;
     },
     enabled,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors
       if (error.message.includes("authentication expired")) {
@@ -136,8 +162,11 @@ export function useGoogleCalendar(options: UseGoogleCalendarOptions = {}) {
       toast.success("Calendar synced successfully", {
         description: `${data.stats.created} created, ${data.stats.updated} updated, ${data.stats.deleted} deleted`,
       });
-      // Invalidate and refetch events
-      queryClient.invalidateQueries({ queryKey: ["google-calendar-events"] });
+      // Invalidate calendar events cache to refetch fresh data
+      queryClient.invalidateQueries({ 
+        queryKey: ["google-calendar-events"],
+        exact: false // Invalidate all calendar event queries regardless of time range
+      });
     },
     onError: (error) => {
       if (error.message.includes("authentication expired")) {
@@ -152,6 +181,108 @@ export function useGoogleCalendar(options: UseGoogleCalendarOptions = {}) {
         });
       }
     },
+  });
+
+  // Mutation to create a new calendar event
+  const createEventMutation = useMutation<
+    CreateEventResponse,
+    Error,
+    CreateEventRequest,
+    { previousEvents: [any, any][] }
+  >({
+    mutationFn: async (eventData: CreateEventRequest) => {
+      const response = await fetch("/api/google/calendar/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Google Calendar authentication expired");
+        }
+        if (response.status === 400) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Invalid event data");
+        }
+        throw new Error("Failed to create calendar event");
+      }
+
+      const data: CreateEventResponse = await response.json();
+      if (!data.success) {
+        if (data.needsReauth) {
+          throw new Error("Google Calendar authentication expired");
+        }
+        throw new Error(data.error || "Failed to create calendar event");
+      }
+
+      return data;
+    },
+    onMutate: async (newEvent) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["google-calendar-events"] });
+
+      // Snapshot the previous value
+      const previousEvents = queryClient.getQueriesData({ queryKey: ["google-calendar-events"] });
+
+      // Optimistically update all relevant calendar queries
+      queryClient.setQueriesData(
+        { queryKey: ["google-calendar-events"] },
+        (old: GoogleCalendarEvent[] | undefined) => {
+          if (!old) return [];
+          
+          const optimisticEvent: GoogleCalendarEvent = {
+            id: `temp-${Date.now()}`,
+            title: newEvent.title,
+            description: newEvent.description,
+            startTime: newEvent.startTime,
+            endTime: newEvent.endTime,
+            isAllDay: newEvent.isAllDay || false,
+            location: newEvent.location,
+            attendees: newEvent.attendees || [],
+          };
+          
+          return [...old, optimisticEvent];
+        }
+      );
+
+      return { previousEvents };
+    },
+    onSuccess: (data) => {
+      toast.success("Event created successfully", {
+        description: `"${data.event.title}" has been added to your calendar`,
+      });
+    },
+    onError: (error, newEvent, context) => {
+        // Rollback optimistic updates on error
+        if (context?.previousEvents) {
+          context.previousEvents.forEach(([queryKey, data]: [any, any]) => {
+            queryClient.setQueryData(queryKey, data);
+          });
+        }
+       
+       // Handle specific error types
+       if (error.message.includes("authentication expired")) {
+         toast.error("Google Calendar authentication expired", {
+           description: "Please reconnect your Google Calendar",
+         });
+         // Invalidate auth status to trigger re-check
+         queryClient.invalidateQueries({ queryKey: ["google-auth-status"] });
+       } else {
+         toast.error("Failed to create event", {
+           description: error.message,
+         });
+       }
+     },
+    onSettled: () => {
+       // Always refetch after mutation to ensure consistency
+       queryClient.invalidateQueries({ 
+         queryKey: ["google-calendar-events"],
+         exact: false
+       });
+     },
   });
 
   // Helper function to get events for a specific date range
@@ -193,6 +324,8 @@ export function useGoogleCalendar(options: UseGoogleCalendarOptions = {}) {
     refetchEvents,
     syncEvents: syncMutation.mutate,
     isSyncing: syncMutation.isPending,
+    createEvent: createEventMutation.mutate,
+    isCreatingEvent: createEventMutation.isPending,
 
     // Helpers
     getEventsForDateRange,
