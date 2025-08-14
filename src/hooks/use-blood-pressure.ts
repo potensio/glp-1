@@ -1,7 +1,7 @@
 import {
   useMutation,
   useQueryClient,
-  useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
@@ -36,11 +36,26 @@ const bloodPressureKeys = {
   lists: () => [...bloodPressureKeys.all, "list"] as const,
   list: (profileId: string) =>
     [...bloodPressureKeys.lists(), profileId] as const,
+  filtered: (profileId: string, dateRange?: { startDate: string; endDate: string }) => 
+    [...bloodPressureKeys.list(profileId), "filtered", dateRange] as const,
 };
 
 // Fetch function for TanStack Query
-async function fetchBloodPressureEntries(): Promise<BloodPressureData[]> {
-  const response = await fetch("/api/blood-pressures");
+async function fetchBloodPressureEntries(dateRange?: {
+  startDate: string;
+  endDate: string;
+}): Promise<BloodPressureData[]> {
+  let url = "/api/blood-pressures";
+  
+  if (dateRange) {
+    const params = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+    url += `?${params.toString()}`;
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -146,7 +161,10 @@ export function useCreateBloodPressureEntry() {
   });
 }
 
-export function useBloodPressure() {
+export function useBloodPressure(dateRange?: {
+  startDate: string;
+  endDate: string;
+}) {
   const { profile } = useAuth();
   const { toast } = useToast();
 
@@ -155,11 +173,12 @@ export function useBloodPressure() {
     throw new Error("Profile not available");
   }
 
-  const entries = useSuspenseQuery({
-    queryKey: bloodPressureKeys.list(profile.id),
-    queryFn: fetchBloodPressureEntries,
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: bloodPressureKeys.filtered(profile.id, dateRange),
+    queryFn: () => fetchBloodPressureEntries(dateRange),
+    enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000,
-  }).data;
+  });
 
   const chartData = transformBloodPressureDataForChart(entries);
 
@@ -261,6 +280,8 @@ export function useBloodPressure() {
     chartData,
     createBloodPressure: createBloodPressureMutation.mutate,
     isCreating: createBloodPressureMutation.isPending,
+    isLoading,
+    error,
     // Helper functions
     getSystolicStatus,
     getDiastolicStatus,

@@ -53,10 +53,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get query parameters for date filtering
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
     // Use service layer for business logic
-    const foodIntakes = await FoodIntakeService.getFoodIntakesByProfile(
-      user.id
-    );
+    const foodIntakes = startDate && endDate
+      ? await FoodIntakeService.getFoodIntakesByDateRange(
+          user.id,
+          new Date(startDate),
+          new Date(endDate)
+        )
+      : await FoodIntakeService.getFoodIntakesByProfile(user.id);
 
     return NextResponse.json(foodIntakes);
   } catch (error) {

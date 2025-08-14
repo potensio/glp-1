@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { useState } from "react";
 import { AuthProvider } from "@/contexts/auth-context";
+import { DateFilterProvider } from "@/contexts/date-filter-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,17 +19,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: false,
             refetchOnMount: false, // Don't refetch on mount if data exists
             placeholderData: (previousData: any) => previousData, // Keep previous data during refetch
-            networkMode: 'offlineFirst', // Use cache first for instant navigation
+            networkMode: "offlineFirst", // Use cache first for instant navigation
           },
         },
       })
   );
 
   const [persister] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return createSyncStoragePersister({
         storage: window.localStorage,
-        key: 'glp1-cache',
+        key: "glp1-cache",
       });
     }
     return undefined;
@@ -41,17 +42,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
         persistOptions={{
           persister,
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          buster: '1.0', // Change this to invalidate all cached data
+          buster: "1.0", // Change this to invalidate all cached data
         }}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <DateFilterProvider>{children}</DateFilterProvider>
+        </AuthProvider>
       </PersistQueryClientProvider>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <DateFilterProvider>{children}</DateFilterProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import StripeClientService from "@/lib/services/stripe-client";
 import { useAuth } from "@/contexts/auth-context";

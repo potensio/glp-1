@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -23,10 +24,7 @@ export function ConnectedApps() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const {
-    authStatus,
     isConnected,
-    isTokenExpired,
-    integration,
     isCheckingStatus,
     connect,
     disconnect,
@@ -159,11 +157,18 @@ export function ConnectedApps() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900"></div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                <Image
+                  src="/misc/google-calendar-logo.png"
+                  alt="Google Calendar"
+                  width={24}
+                  height={24}
+                />
+              </div>
               <div>
                 <h3 className="font-medium">
                   Google Calendar
-                  <span className="ml-2 text-sm text-muted-foreground">
+                  <span className="ml-2 text-sm text-muted-foreground" suppressHydrationWarning>
                     ({status.text})
                   </span>
                 </h3>

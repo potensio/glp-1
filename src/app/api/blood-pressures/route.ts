@@ -53,10 +53,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use service layer for business logic
-    const bloodPressures = await BloodPressureService.getBloodPressuresByProfile(
-      user.id
-    );
+    // Get query parameters for date filtering
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    let bloodPressures;
+    
+    if (startDate && endDate) {
+      // Use date range filtering if both dates are provided
+      bloodPressures = await BloodPressureService.getBloodPressuresByDateRange(
+        user.id,
+        new Date(startDate),
+        new Date(endDate)
+      );
+    } else {
+      // Get all blood pressures if no date range specified
+      bloodPressures = await BloodPressureService.getBloodPressuresByProfile(
+        user.id
+      );
+    }
 
     return NextResponse.json(bloodPressures);
   } catch (error) {
