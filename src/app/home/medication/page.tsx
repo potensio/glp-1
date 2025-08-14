@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
-import { Save, Printer } from "lucide-react";
+import { Save } from "lucide-react";
 import { MedicationCreationDialog } from "@/app/home/_components/dialogs/medication-creation-dialog";
 import { MedicationList } from "@/components/medication/medication-list";
 import { MedicationListSkeleton } from "@/components/medication/medication-list-skeleton";
@@ -71,14 +71,7 @@ export default function MedicationManagement() {
             schedule.
           </p>
         </div>{" "}
-        <Button
-          size={"lg"}
-          variant={"outline"}
-          className="hidden md:flex md:w-36 bg-transparent text-background hover:bg-background/10 hover:text-background"
-        >
-          Print
-          <Printer />
-        </Button>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

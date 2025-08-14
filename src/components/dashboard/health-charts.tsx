@@ -4,15 +4,7 @@ import { WeightTrendChart } from "../charts/weight-trend-chart";
 import { BloodPressureChart } from "../charts/blood-pressure-chart";
 import { CaloriesIntakeChart } from "../charts/calories-intake-chart";
 import { BloodSugarChart } from "../charts/blood-sugar-chart";
-import { Suspense } from "react";
 import { Card } from "@/components/ui/card";
-
-interface HealthChartsProps {
-  className?: string;
-  showTitle?: boolean;
-  title?: string;
-  showPrintButtons?: boolean;
-}
 
 function HealthChartsSkeleton() {
   return (
@@ -31,24 +23,30 @@ function HealthChartsSkeleton() {
   );
 }
 
-export function HealthCharts({ className = "", showPrintButtons = false }: HealthChartsProps) {
+export function HealthCharts({
+  className = "",
+  showTitle = true,
+  title = "Health Overview",
+}: {
+  className?: string;
+  showTitle?: boolean;
+  title?: string;
+}) {
   return (
-    <Suspense fallback={<HealthChartsSkeleton />}>
-      <div className={className}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-          {/* Weight Trend Chart */}
-          <WeightTrendChart showPrintButton={showPrintButtons} />
+    <div className={className}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full health-charts-grid">
+        {/* Weight Trend Chart */}
+        <WeightTrendChart />
 
-          {/* Blood Pressure Chart */}
-          <BloodPressureChart showPrintButton={showPrintButtons} />
+        {/* Blood Pressure Chart */}
+        <BloodPressureChart />
 
-          {/* Calories Intake Chart */}
-          <CaloriesIntakeChart showPrintButton={showPrintButtons} />
+        {/* Calories Intake Chart */}
+        <CaloriesIntakeChart />
 
-          {/* Blood Sugar Chart */}
-          <BloodSugarChart showPrintButton={showPrintButtons} />
-        </div>
+        {/* Blood Sugar Chart */}
+        <BloodSugarChart />
       </div>
-    </Suspense>
+    </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useFoodIntake } from "@/hooks/use-food-intake";
-import { Flame, Printer } from "lucide-react";
+import { useDateFilter } from "@/contexts/date-filter-context";
+import { Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   XAxis,
@@ -14,10 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import React from "react";
 
-interface CaloriesIntakeChartProps {
-  showPrintButton?: boolean;
-}
-
 // Define a local type for the custom tooltip props
 interface CustomTooltipProps {
   active?: boolean;
@@ -29,11 +26,9 @@ interface CustomTooltipProps {
 const CaloriesIntakeDisplay = ({
   data,
   latestIntake,
-  showPrint = false,
 }: {
   data: { name: string; calories: number }[];
   latestIntake: number;
-  showPrint?: boolean;
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
     const active = props?.active;
@@ -59,24 +54,20 @@ const CaloriesIntakeDisplay = ({
           <div className="bg-blue-100 p-2 rounded-lg">
             <Flame className="h-5 w-5 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">
+          <h3 className="text-lg font-semibold text-gray-800 chart-title">
             Calories Intake
           </h3>
         </div>
-        {showPrint && (
-          <Button variant={"outline"} className="cursor-pointer">
-            <Printer />
-          </Button>
-        )}
+
       </div>
-      <div className="h-40">
+      <div className="h-40 chart-container">
         {data.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 text-sm">
             No calories data available
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
+            <AreaChart data={data} data-chart="true">
               <defs>
                 <linearGradient
                   id="caloriesAreaGradient"
@@ -95,10 +86,7 @@ const CaloriesIntakeDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis 
-                hide 
-                domain={['dataMin - 50', 'dataMax + 50']}
-              />
+              <YAxis hide domain={["dataMin - 50", "dataMax + 50"]} />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
@@ -122,10 +110,39 @@ const CaloriesIntakeDisplay = ({
 };
 
 // Main component
-export const CaloriesIntakeChart: React.FC<CaloriesIntakeChartProps> = ({
-  showPrintButton = false,
-}) => {
-  const { chartData } = useFoodIntake();
+export const CaloriesIntakeChart: React.FC = () => {
+  const { getDateRangeForAPI } = useDateFilter();
+  const dateRange = getDateRangeForAPI();
+  const { chartData, isLoading, error } = useFoodIntake(dateRange);
+
+  if (isLoading) {
+    return (
+      <Card className="rounded-2xl p-5 md:p-6 animate-pulse">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="bg-gray-200 p-2 rounded-lg w-9 h-9"></div>
+          <div className="h-6 bg-gray-200 rounded w-32"></div>
+        </div>
+        <div className="h-40 bg-gray-200 rounded mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-24"></div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="rounded-2xl p-5 md:p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="bg-green-100 p-2 rounded-lg">
+            <Flame className="h-5 w-5 text-green-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Calories Intake</h3>
+        </div>
+        <div className="flex items-center justify-center h-40 text-destructive">
+          <p>Failed to load calories data</p>
+        </div>
+      </Card>
+    );
+  }
 
   const latestIntake =
     chartData.length > 0 ? chartData[chartData.length - 1].calories : 0;
@@ -134,7 +151,6 @@ export const CaloriesIntakeChart: React.FC<CaloriesIntakeChartProps> = ({
     <CaloriesIntakeDisplay
       data={chartData}
       latestIntake={latestIntake}
-      showPrint={showPrintButton}
     />
   );
 };

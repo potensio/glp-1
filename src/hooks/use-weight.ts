@@ -15,7 +15,7 @@
 import {
   useMutation,
   useQueryClient,
-  useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 // Tool for showing success/error messages
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,6 @@ interface ChartData {
  * Provides all weight-related data and statistics
  */
 interface UseWeightReturn {
-  // Chart data - no loading/error states needed with Suspense
   chartData: ChartData[];
   currentWeight: number;
   entries: WeightData[];
@@ -60,6 +59,8 @@ interface UseWeightReturn {
     totalEntries: number;
     lastUpdated?: string;
   };
+  isLoading: boolean;
+  error: Error | null;
 }
 
 /**
@@ -70,15 +71,31 @@ const weightKeys = {
   all: ["weight"] as const,
   lists: () => [...weightKeys.all, "list"] as const,
   list: (profileId: string) => [...weightKeys.lists(), profileId] as const,
+  filtered: (profileId: string, dateRange?: { startDate: string; endDate: string }) => 
+    [...weightKeys.list(profileId), "filtered", dateRange] as const,
 };
 
 /**
  * Gets weight data from the server
  * Used by TanStack Query for data fetching and caching
+ * @param dateRange - Optional date range for filtering
  * @returns Promise resolving to array of weight entries
  */
-async function fetchWeightEntries(): Promise<WeightData[]> {
-  const response = await fetch("/api/weights");
+async function fetchWeightEntries(dateRange?: {
+  startDate: string;
+  endDate: string;
+}): Promise<WeightData[]> {
+  let url = "/api/weights";
+  
+  if (dateRange) {
+    const params = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+    url += `?${params.toString()}`;
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -185,7 +202,10 @@ export function useCreateWeightEntry() {
  * - Data is cached so it loads faster
  * - Instant navigation with streaming content
  */
-export function useWeight(): UseWeightReturn {
+export function useWeight(dateRange?: {
+  startDate: string;
+  endDate: string;
+}): UseWeightReturn {
   const { profile } = useAuth();
 
   // Throw error if no profile - this will be caught by error boundary
@@ -193,25 +213,30 @@ export function useWeight(): UseWeightReturn {
     throw new Error("Profile not available");
   }
 
-  const entries = useSuspenseQuery({
-    queryKey: weightKeys.list(profile.id),
-    queryFn: fetchWeightEntries,
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: weightKeys.filtered(profile.id, dateRange),
+    queryFn: () => fetchWeightEntries(dateRange),
+    enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000,
-  }).data;
+  });
 
   const chartData = transformWeightDataForChart(entries);
+  const currentWeight = entries[0]?.weight || 0;
 
+  // Calculate stats
   const stats = {
-    currentWeight: entries[0]?.weight || 0,
+    currentWeight,
     previousWeight: entries[1]?.weight || 0,
     totalEntries: entries.length,
     lastUpdated: entries[0]?.capturedDate,
   };
 
   return {
-    entries,
     chartData,
-    currentWeight: stats.currentWeight,
+    currentWeight,
+    entries,
     stats,
+    isLoading,
+    error,
   };
 }

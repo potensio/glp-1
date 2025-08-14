@@ -31,33 +31,25 @@ export function ForgotPasswordForm({
     setIsLoading(true);
 
     try {
-      // In a real implementation, you would call an API endpoint to send a reset email
-      // For now, we'll just simulate success after a delay
-      setTimeout(() => {
-        setSuccess(true);
-        setIsLoading(false);
-      }, 1500);
-
-      // Uncomment and implement when you have the reset password API endpoint
-      // const response = await fetch("/api/reset-password", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ email }),
-      // });
-      // 
-      // const data = await response.json();
-      // 
-      // if (!response.ok) {
-      //   throw new Error(data.error || "Failed to send reset email");
-      // }
-      // 
-      // setSuccess(true);
+      const response = await fetch("/api/auth/request-password-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send reset email");
+      }
+      
+      setSuccess(true);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred. Please try again.");
     } finally {
-      // setIsLoading(false); // Uncomment when using the real API
+      setIsLoading(false);
     }
   }
   return (

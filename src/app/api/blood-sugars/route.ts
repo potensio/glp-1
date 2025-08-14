@@ -49,12 +49,17 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    const bloodSugars = await BloodSugarService.getBloodSugarsByProfile(
-      user.id,
-      limit
-    );
+    const bloodSugars = startDate && endDate
+      ? await BloodSugarService.getBloodSugarsByDateRange(
+          user.id,
+          new Date(startDate),
+          new Date(endDate)
+        )
+      : await BloodSugarService.getBloodSugarsByProfile(user.id, limit);
 
     return NextResponse.json(bloodSugars);
   } catch (error) {

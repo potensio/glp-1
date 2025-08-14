@@ -7,6 +7,10 @@ import { usePaymentMethods } from "@/hooks/use-payment-methods";
 import { useBillingHistory } from "@/hooks/use-billing-history";
 import { useAuth } from "@/contexts/auth-context";
 import { Suspense } from "react";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import { deduplicatedToast } from "@/lib/utils";
 
 // Component-specific types to match existing component interfaces
 type ComponentPaymentMethod = {
@@ -110,8 +114,24 @@ function BillingHistorySection({ profileId }: { profileId: string }) {
 
 function BillingPageContent() {
   const { profile } = useAuth();
+  const searchParams = useSearchParams();
 
   // Handle successful return from Stripe checkout - now handled by direct redirect to pending page
+  // Check if we're coming from a successful subscription activation
+  useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "true") {
+      // Show success toast and remove the query parameter
+      deduplicatedToast(toast.success, "Subscription activated!", {
+        description: "Your premium subscription is now active.",
+      });
+
+      // Remove the success parameter from URL without triggering a navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete("success");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   if (!profile?.id) {
     return (

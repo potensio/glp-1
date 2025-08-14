@@ -84,6 +84,12 @@ export async function getUserFromRequest(request: NextRequest) {
         updatedAt: true,
       },
     });
+    
+    // Return null if user is deactivated
+    if (user && (user as any).isDeactivated) {
+      return null;
+    }
+    
     return user;
   } catch {
     return null;
@@ -128,6 +134,12 @@ export async function getUserWithProfileFromRequest(request: NextRequest) {
         profile: true,
       },
     });
+    
+    // Return null if user is deactivated
+    if (user && (user as any).isDeactivated) {
+      return null;
+    }
+    
     return user;
   } catch {
     return null;

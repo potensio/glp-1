@@ -6,7 +6,6 @@ interface ChartSkeletonProps {
   title: string;
   iconBgColor?: string;
   iconColor?: string;
-  showPrintButton?: boolean;
   showStats?: boolean;
   statsCount?: number;
 }
@@ -16,7 +15,6 @@ export function ChartSkeleton({
   title,
   iconBgColor = "bg-purple-100",
   iconColor = "text-purple-600",
-  showPrintButton = true,
   showStats = true,
   statsCount = 2,
 }: ChartSkeletonProps) {
@@ -30,9 +28,7 @@ export function ChartSkeleton({
           </div>
           <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
         </div>
-        {showPrintButton && (
-          <div className="h-9 w-16 bg-gray-200 rounded animate-pulse" />
-        )}
+
       </div>
 
       {/* Chart Area */}
