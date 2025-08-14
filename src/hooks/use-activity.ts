@@ -1,5 +1,5 @@
 import {
-  useQuery,
+  useSuspenseQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -64,13 +64,15 @@ const deleteActivityEntry = async (id: string): Promise<void> => {
 };
 
 export function useActivity(startDate?: Date, endDate?: Date) {
-  const { data: activities = [], isLoading, error } = useQuery({
-    queryKey: ["activities", startDate?.toISOString(), endDate?.toISOString()],
+  const activities = useSuspenseQuery({
+    queryKey: ["activities", startDate, endDate],
     queryFn: () => fetchActivities(startDate, endDate),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    staleTime: 5 * 60 * 1000,
+  }).data;
 
-  return { activities, isLoading, error };
+  return {
+    activities,
+  };
 }
 
 export function useCreateActivity() {

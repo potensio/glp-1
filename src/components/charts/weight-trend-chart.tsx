@@ -1,8 +1,7 @@
 "use client";
 
 import { useWeight } from "@/hooks/use-weight";
-import { useDateFilter } from "@/contexts/date-filter-context";
-import { Scale } from "lucide-react";
+import { Scale, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   XAxis,
@@ -15,6 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import React from "react";
 
+interface WeightTrendChartProps {
+  showPrintButton?: boolean;
+}
+
 // Define a local type for the custom tooltip props
 interface CustomTooltipProps {
   active?: boolean;
@@ -26,9 +29,11 @@ interface CustomTooltipProps {
 const WeightTrendDisplay = ({
   data,
   currentWeight,
+  showPrint = false,
 }: {
   data: { name: string; value: number }[];
   currentWeight: number;
+  showPrint?: boolean;
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
     const active = props?.active;
@@ -54,20 +59,22 @@ const WeightTrendDisplay = ({
           <div className="bg-purple-100 p-2 rounded-lg">
             <Scale className="h-5 w-5 text-purple-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 chart-title">
-            Weight Trend
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-800">Weight Trend</h3>
         </div>
-
+        {showPrint && (
+          <Button variant={"outline"} className="cursor-pointer">
+            <Printer />
+          </Button>
+        )}
       </div>
-      <div className="h-40 chart-container">
+      <div className="h-40 ">
         {data.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 text-sm">
             No weight data available
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} data-chart="true">
+            <AreaChart data={data}>
               <defs>
                 <linearGradient
                   id="weightAreaGradient"
@@ -86,7 +93,10 @@ const WeightTrendDisplay = ({
                 tickLine={false}
                 className="text-xs"
               />
-              <YAxis hide domain={["dataMin - 5", "dataMax + 5"]} />
+              <YAxis 
+                hide 
+                domain={['dataMin - 5', 'dataMax + 5']}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
@@ -110,45 +120,17 @@ const WeightTrendDisplay = ({
 };
 
 // Main weight trend chart component
-export const WeightTrendChart: React.FC = () => {
-  const { getDateRangeForAPI } = useDateFilter();
-  const dateRange = getDateRangeForAPI();
-  const { chartData, currentWeight, isLoading, error } = useWeight(dateRange);
-
-  if (isLoading) {
-    return (
-      <Card className="rounded-2xl p-5 md:p-6 animate-pulse">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="bg-gray-200 p-2 rounded-lg w-9 h-9"></div>
-          <div className="h-6 bg-gray-200 rounded w-32"></div>
-        </div>
-        <div className="h-40 bg-gray-200 rounded mb-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-24"></div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="rounded-2xl p-5 md:p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="bg-purple-100 p-2 rounded-lg">
-            <Scale className="h-5 w-5 text-purple-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-800">Weight Trend</h3>
-        </div>
-        <div className="flex items-center justify-center h-40 text-destructive">
-          <p>Failed to load weight data</p>
-        </div>
-      </Card>
-    );
-  }
+export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
+  showPrintButton = false,
+}) => {
+  const { chartData, currentWeight } = useWeight();
 
   return (
     <WeightTrendDisplay
-        data={chartData}
-        currentWeight={currentWeight}
-      />
+      data={chartData}
+      currentWeight={currentWeight}
+      showPrint={showPrintButton}
+    />
   );
 };
 

@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Handle custom auth routes - redirect authenticated users to home (except reset-password)
+  // Handle custom auth routes - redirect authenticated users to home
   if (
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register") ||
@@ -35,11 +35,6 @@ export async function middleware(request: NextRequest) {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL("/home", request.url));
     }
-    return NextResponse.next();
-  }
-
-  // Allow reset-password page for both authenticated and unauthenticated users
-  if (request.nextUrl.pathname.startsWith("/reset-password")) {
     return NextResponse.next();
   }
 
@@ -86,7 +81,6 @@ export const config = {
     "/login",
     "/register",
     "/forgot-password",
-    "/reset-password",
     "/handler/:path*",
     "/api/:path*",
   ],

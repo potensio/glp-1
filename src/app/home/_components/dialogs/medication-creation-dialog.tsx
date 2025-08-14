@@ -18,11 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useMedication } from "@/hooks/use-medication";
-import { useGoogleAuth } from "@/hooks/use-google-auth";
-import { useGoogleCalendar } from "@/hooks/use-google-calendar";
 import { toast } from "sonner";
-import { Loader2, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 interface EditingMedication {
   id: string;
@@ -63,9 +60,6 @@ export function MedicationCreationDialog({
 
   const { createMedication, updateMedication, isCreating, isUpdating } =
     useMedication();
-  
-  const { isConnected: isGoogleConnected } = useGoogleAuth();
-  const { createEvent, isCreatingEvent } = useGoogleCalendar({ enabled: isGoogleConnected });
 
   // Populate form when editing
   useEffect(() => {
@@ -152,24 +146,6 @@ export function MedicationCreationDialog({
         dosageUnits.find((unit) => unit.value === dosageUnit)?.label ||
         dosageUnit;
       const action = editingMedication ? "updated" : "added";
-      
-      // Create calendar event if reminders are enabled and Google Calendar is connected
-      if (enableReminders && isGoogleConnected && !editingMedication) {
-        const startDateTime = new Date(date);
-        startDateTime.setHours(9, 0, 0, 0); // Default to 9 AM
-        const endDateTime = new Date(startDateTime);
-        endDateTime.setHours(9, 30, 0, 0); // 30 minutes duration
-        
-        createEvent({
-          title: `Take ${medicationName}`,
-          description: `Medication reminder: ${medicationName} (${dosage}${dosageUnitLabel})${description ? `\n\nNotes: ${description}` : ''}${prescribingDoctor ? `\nPrescribed by: ${prescribingDoctor}` : ''}`,
-          startTime: startDateTime.toISOString(),
-          endTime: endDateTime.toISOString(),
-          isAllDay: false,
-          recurrence: repeatUnit === "Day(s)" ? [`RRULE:FREQ=DAILY;INTERVAL=${repeatEvery}`] : [`RRULE:FREQ=WEEKLY;INTERVAL=${repeatEvery}`],
-        });
-      }
-      
       toast.success(
         `Medication ${action}: ${medicationName} (${dosage}${dosageUnitLabel})`
       );
@@ -349,38 +325,22 @@ export function MedicationCreationDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center space-x-2 h-8">
                 <Checkbox
                   id="enable-reminders"
                   checked={enableReminders}
-                  disabled={!isGoogleConnected}
                   onCheckedChange={(checked) =>
                     setEnableReminders(checked === true)
                   }
                 />
                 <label
                   htmlFor="enable-reminders"
-                  className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-                    !isGoogleConnected ? 'opacity-50' : ''
-                  }`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Set reminder notifications
                 </label>
               </div>
-              {!isGoogleConnected && (
-                <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-md">
-                  <p className="mb-1">Connect your Google Calendar to enable reminder notifications.</p>
-                  <Link 
-                    href="/home/account" 
-                    className="text-primary hover:underline inline-flex items-center gap-1"
-                    onClick={() => setOpen(false)}
-                  >
-                    Go to Account Settings
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                </div>
-              )}
             </div>
           </form>
           <DialogFooter className="flex flex-row gap-2">
@@ -397,13 +357,13 @@ export function MedicationCreationDialog({
               className="flex-1 h-11 cursor-pointer"
               onClick={handleSave}
               disabled={
-                !medicationName || !dosage || !date || isCreating || isUpdating || isCreatingEvent
+                !medicationName || !dosage || !date || isCreating || isUpdating
               }
             >
-              {isCreating || isUpdating || isCreatingEvent ? (
+              {isCreating || isUpdating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isCreatingEvent ? "Creating reminder..." : editingMedication ? "Updating..." : "Saving..."}
+                  {editingMedication ? "Updating..." : "Saving..."}
                 </>
               ) : editingMedication ? (
                 "Update Medication"

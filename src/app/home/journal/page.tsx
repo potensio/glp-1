@@ -141,11 +141,7 @@ function JournalContent() {
         const relativeTime = isMounted ? getRelativeTime(lastUpdated) : null;
 
         return (
-          <Card 
-            key={journal.id} 
-            className="p-0 cursor-pointer hover:shadow-md transition-shadow duration-200"
-            onClick={() => handleEdit(journal.id)}
-          >
+          <Card key={journal.id} className="p-0">
             <div className="flex items-center justify-between px-6 pt-6 pb-1">
               <span className="font-semibold text-base">{formattedDate}</span>
               <DropdownMenu>
@@ -159,20 +155,12 @@ function JournalContent() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem 
-                    onSelect={(e) => {
-                      e.stopPropagation();
-                      handleEdit(journal.id);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => handleEdit(journal.id)}>
                     Edit Entry
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.stopPropagation();
-                      handleDelete(journal.id, formattedDate);
-                    }}
+                    onSelect={() => handleDelete(journal.id, formattedDate)}
                   >
                     Delete Entry
                   </DropdownMenuItem>

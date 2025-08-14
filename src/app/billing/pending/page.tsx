@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { deduplicatedToast } from "@/lib/utils";
 
 type PendingState = "checking" | "success" | "timeout" | "error";
 
@@ -63,16 +62,13 @@ export default function PendingPage() {
           // Add a small delay before showing success to prevent jarring instant transitions
           setTimeout(() => {
             setState("success");
-            deduplicatedToast(toast.success, "Subscription activated!", {
+            toast.success("Subscription activated!", {
               description: "Your premium subscription is now active.",
             });
 
-            // Clear all toasts before redirecting to prevent duplicates
-            toast.dismiss();
-
             // Redirect after showing success state
             setTimeout(() => {
-              router.push("/home?success=true");
+              router.push("/home/billing?success=true");
             }, 2000);
           }, 4000); // 1.5 second delay before showing success
         }
