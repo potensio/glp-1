@@ -191,7 +191,7 @@ export default function JournalEditor() {
 
   // Static toolbar for mobile/tablet
   const StaticToolbar = () => (
-    <div className="md:hidden flex items-center gap-1 bg-gray-50 border-b border-gray-200 px-4 py-2 overflow-x-auto">
+    <div className="md:hidden flex items-center gap-1 bg-gray-50 border-b border-gray-200 p-2 overflow-x-auto">
       <ToolbarButtons editor={editor} />
     </div>
   );
@@ -291,8 +291,8 @@ export default function JournalEditor() {
     <>
       <Card className="min-h-screen bg-white flex flex-col py-0 gap-0">
         {/* Header */}
-        <header className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
-          <p className="text-gray-600 italic text-lg">{currentDate}</p>
+        <header className="flex justify-between items-center px-3 py-3 md:px-8 md:py-6 border-b border-gray-100">
+          <p className="text-gray-600 italic md:text-lg">{currentDate}</p>
           <div className="flex items-center gap-2 text-gray-500">
             <Clock className="w-4 h-4" />
             <span className="text-sm font-medium">{currentTime}</span>
@@ -328,10 +328,7 @@ export default function JournalEditor() {
                   Saving...
                 </>
               ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </>
+                <>Save</>
               )}
             </Button>
           </div>

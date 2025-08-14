@@ -3,8 +3,18 @@
 import { Button } from "@/components/ui/button";
 import { HealthCharts } from "@/components/dashboard/health-charts";
 import { ProgressOverview } from "@/components/progress/progress-overview";
-import { Scale, TrendingDown, TrendingUp, Heart, Footprints, Printer } from "lucide-react";
-import { DateFilterProvider, useDateFilter } from "@/contexts/date-filter-context";
+import {
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  Heart,
+  Footprints,
+  Printer,
+} from "lucide-react";
+import {
+  DateFilterProvider,
+  useDateFilter,
+} from "@/contexts/date-filter-context";
 import { DateFilterPicker } from "@/components/progress/date-filter-picker";
 import { useWeight } from "@/hooks/use-weight";
 import { useBloodPressure } from "@/hooks/use-blood-pressure";
@@ -55,7 +65,7 @@ function useActivityStreak(activities: any[]) {
 function ProgressPageContent() {
   const { getDateRangeForAPI } = useDateFilter();
   const dateRange = getDateRangeForAPI();
-  
+
   const { stats, entries: weightEntries } = useWeight(dateRange);
   const { entries: bpEntries, getOverallStatus } = useBloodPressure(dateRange);
   const { activities } = useActivity(
@@ -97,14 +107,12 @@ function ProgressPageContent() {
       startDate,
       endDate,
     });
-    window.open(`/pdf-preview?${params.toString()}`, '_blank');
+    window.open(`/pdf-preview?${params.toString()}`, "_blank");
   };
 
   return (
     <>
       <div className="space-y-6">
-
-
         <div className="flex flex-col sm:flex-row justify-between">
           <div className="flex flex-col">
             <h1 className="text-background text-3xl leading-tight font-semibold mb-2">
@@ -120,7 +128,6 @@ function ProgressPageContent() {
               onClick={handlePrint}
               className="md:hidden"
               variant="outline"
-              size="sm"
             >
               <Printer className="h-4 w-4" />
             </Button>
@@ -129,9 +136,8 @@ function ProgressPageContent() {
               onClick={handlePrint}
               className="hidden md:flex"
               variant="outline"
-              size="sm"
             >
-              <Printer className="h-4 w-4 mr-2" />
+              <Printer className="h-4 w-4" />
               Generate PDF
             </Button>
             <DateFilterPicker />

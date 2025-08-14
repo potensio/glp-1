@@ -50,14 +50,18 @@ export function SecurityPrivacy() {
 
       toast({
         title: "Password Reset Email Sent",
-        description: "Check your email for instructions to reset your password.",
+        description:
+          "Check your email for instructions to reset your password.",
       });
 
       setIsDialogOpen(false);
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -75,7 +79,7 @@ export function SecurityPrivacy() {
           <div>
             <h4 className="font-medium">Password</h4>
             <p className="text-sm text-muted-foreground">
-              Last changed 3 months ago
+              Keep your account secure with a strong password
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -88,8 +92,9 @@ export function SecurityPrivacy() {
               <DialogHeader>
                 <DialogTitle>Change Password</DialogTitle>
                 <DialogDescription>
-                   We&apos;ll send a password reset link to your email address. You can use this link to set a new password.
-                 </DialogDescription>
+                  We&apos;ll send a password reset link to your email address.
+                  You can use this link to set a new password.
+                </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <Button
@@ -99,10 +104,7 @@ export function SecurityPrivacy() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleChangePassword}
-                  disabled={isLoading}
-                >
+                <Button onClick={handleChangePassword} disabled={isLoading}>
                   {isLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
               </DialogFooter>
@@ -122,7 +124,7 @@ export function SecurityPrivacy() {
           </Button>
         </div> */}
 
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <div>
             <h4 className="font-medium">Login Activity</h4>
             <p className="text-sm text-muted-foreground">
@@ -132,7 +134,7 @@ export function SecurityPrivacy() {
           <Button variant="outline" size="sm">
             View Activity
           </Button>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

@@ -14,6 +14,7 @@ interface Profile {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  avatarUrl?: string;
   isComplete?: boolean;
 }
 
