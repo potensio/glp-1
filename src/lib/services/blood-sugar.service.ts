@@ -7,6 +7,7 @@ export const bloodSugarSchema = z.object({
   measurementType: z.enum(["fasting", "before_meal", "after_meal", "bedtime"], {
     message: "Please select a valid measurement type",
   }),
+  capturedDate: z.string().optional(),
 });
 
 export type BloodSugarInput = z.infer<typeof bloodSugarSchema>;
@@ -16,7 +17,7 @@ const createBloodSugarSchema = z.object({
   level: z.number().min(20).max(600),
   measurementType: z.enum(["fasting", "before_meal", "after_meal", "bedtime"]),
   profileId: z.string().min(1, "Profile ID is required"),
-  capturedDate: z.date().optional(), // Optional, defaults to current date
+  capturedDate: z.date(),
 });
 
 export type CreateBloodSugarData = z.infer<typeof createBloodSugarSchema>;
@@ -30,7 +31,7 @@ export class BloodSugarService {
         level: validatedData.level,
         measurementType: validatedData.measurementType,
         profileId: validatedData.profileId,
-        capturedDate: validatedData.capturedDate || new Date(),
+        capturedDate: validatedData.capturedDate,
       },
     });
   }

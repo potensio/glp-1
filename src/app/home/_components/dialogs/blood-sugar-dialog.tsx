@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { Droplets } from "lucide-react";
 import { useCreateBloodSugarEntry } from "@/hooks/use-blood-sugar";
-import { toast } from "sonner";
+import { useDateFilter } from "@/contexts/date-filter-context";
 
 const measurementTypes = [
   { label: "Fasting", value: "fasting" },
@@ -26,6 +26,8 @@ export function BloodSugarDialogContent({
   onSave?: (data: { level: number; type: string }) => void;
   onClose?: () => void;
 }) {
+  const { getDateRangeForAPI } = useDateFilter();
+  const dateRange = getDateRangeForAPI();
   const [measurementType, setMeasurementType] = useState(
     measurementTypes[0].value
   );
@@ -35,7 +37,7 @@ export function BloodSugarDialogContent({
     measurementType?: string;
     general?: string;
   }>({});
-  const createBloodSugarMutation = useCreateBloodSugarEntry();
+  const createBloodSugarMutation = useCreateBloodSugarEntry(dateRange);
 
   const handleSave = () => {
     setErrors({});
@@ -63,13 +65,13 @@ export function BloodSugarDialogContent({
       },
       {
         onSuccess: () => {
-          toast.success(`Blood sugar logged: ${bloodSugarValue} mg/dL (${measurementType})`);
           onSave?.({ level: bloodSugarValue, type: measurementType });
           onClose?.();
+          // Reset form
+          setBloodSugar("");
+          setMeasurementType(measurementTypes[0].value);
+          setErrors({});
         },
-        onError: () => {
-          toast.error('Failed to log blood sugar. Please try again.');
-        }
       }
     );
   };

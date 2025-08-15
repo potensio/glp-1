@@ -15,44 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import React from "react";
 
-// Define a local type for the custom tooltip props
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: { value: number }[];
-  label?: string;
-}
-
 // Chart display component
 const BloodPressureDisplay = ({
   data,
   latestReading,
 }: {
-  data: { name: string; systolic: number; diastolic: number }[];
+  data: { id: string; name: string; systolic: number; diastolic: number; fullDate: string; time: string }[];
   latestReading: string;
 }) => {
-  const CustomTooltip = (props: CustomTooltipProps) => {
-    const active = props?.active;
-    const payload = props?.payload;
-    const label = props?.label;
-    if (active && payload && payload.length === 2) {
-      return (
-        <div className="bg-white p-2 rounded shadow text-xs border border-gray-200">
-          <div className="font-semibold">{label}</div>
-          <div>
-            Systolic:{" "}
-            <span className="font-bold text-red-500">{payload[0].value}</span>
-          </div>
-          <div>
-            Diastolic:{" "}
-            <span className="font-bold text-orange-500">
-              {payload[1].value}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
@@ -65,7 +35,6 @@ const BloodPressureDisplay = ({
             Blood Pressure
           </h3>
         </div>
-
       </div>
       <div className="h-40 chart-container">
         {data.length === 0 ? (
@@ -80,9 +49,40 @@ const BloodPressureDisplay = ({
                 axisLine={false}
                 tickLine={false}
                 className="text-xs"
+                tickFormatter={(value) => value.split('-')[0]} // Display only the date part
               />
               <YAxis hide domain={["dataMin - 10", "dataMax + 10"]} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    // Debug: Log the payload structure
+                    console.log('Tooltip payload:', payload);
+                    console.log('Tooltip label:', label);
+                    
+                    // For BarChart with multiple bars, we need to get the data from the payload
+                    // The payload contains an array of bars being hovered
+                    const data = payload[0].payload;
+                    
+                    // Get the actual values from the payload entries
+                    const systolicEntry = payload.find(entry => entry.dataKey === 'systolic');
+                    const diastolicEntry = payload.find(entry => entry.dataKey === 'diastolic');
+                    
+                    return (
+                      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-xl">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                          Systolic: <span className="font-bold text-red-500">{systolicEntry?.value || data.systolic}</span> mmHg
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                          Diastolic: <span className="font-bold text-orange-500">{diastolicEntry?.value || data.diastolic}</span> mmHg
+                        </p>
+                        <p className="text-xs text-gray-600">{data.fullDate}</p>
+                        <p className="text-xs text-gray-500">{data.time}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Bar
                 dataKey="systolic"
                 fill="#ef4444"
@@ -146,7 +146,9 @@ export const BloodPressureChart: React.FC = () => {
           <div className="bg-red-100 p-2 rounded-lg">
             <Heart className="h-5 w-5 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">Blood Pressure</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Blood Pressure
+          </h3>
         </div>
         <div className="flex items-center justify-center h-40 text-destructive">
           <p>Failed to load blood pressure data</p>
@@ -155,7 +157,7 @@ export const BloodPressureChart: React.FC = () => {
     );
   }
 
-  // Calculate latest reading
+  // Calculate latest reading (now at the end of the array since we reversed it)
   const latestReading =
     chartData.length > 0
       ? `${chartData[chartData.length - 1].systolic}/${
@@ -164,9 +166,6 @@ export const BloodPressureChart: React.FC = () => {
       : "No data";
 
   return (
-    <BloodPressureDisplay
-      data={chartData}
-      latestReading={latestReading}
-    />
+    <BloodPressureDisplay data={chartData} latestReading={latestReading} />
   );
 };

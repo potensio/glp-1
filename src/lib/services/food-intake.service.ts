@@ -9,6 +9,7 @@ export const foodIntakeSchema = z.object({
     .number()
     .min(1, "Calories must be at least 1")
     .max(10000, "Calories must be less than 10,000"),
+  capturedDate: z.string().optional(),
 });
 
 export type FoodIntakeInput = z.infer<typeof foodIntakeSchema>;
@@ -18,7 +19,7 @@ const createFoodIntakeSchema = z.object({
   mealType: z.string().min(1),
   food: z.string().min(1),
   calories: z.number().min(1),
-  capturedDate: z.string().datetime().optional(),
+  capturedDate: z.date(),
   profileId: z.string(),
 });
 
@@ -41,10 +42,11 @@ export class FoodIntakeService {
     // Create food intake record
     return await prisma.foodIntake.create({
       data: {
-        ...validatedData,
-        capturedDate: validatedData.capturedDate 
-          ? new Date(validatedData.capturedDate)
-          : new Date(),
+        mealType: validatedData.mealType,
+        food: validatedData.food,
+        calories: validatedData.calories,
+        capturedDate: validatedData.capturedDate,
+        profileId: validatedData.profileId,
       },
     });
   }

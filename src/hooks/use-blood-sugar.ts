@@ -15,7 +15,7 @@
 import {
   useMutation,
   useQueryClient,
-  useQuery,
+  useSuspenseQuery,
 } from "@tanstack/react-query";
 // Tool for showing success/error messages
 import { useToast } from "@/hooks/use-toast";
@@ -42,8 +42,12 @@ interface BloodSugarData {
  * Contains formatted date labels and blood sugar values
  */
 interface ChartData {
+  id: string;
   name: string; // Formatted date (e.g., "Jan 15")
   value: number; // Blood sugar level
+  fullDate: string;
+  time: string;
+  measurementType: string;
 }
 
 /**
@@ -51,17 +55,23 @@ interface ChartData {
  * Provides all blood sugar-related data and statistics
  */
 interface UseBloodSugarReturn {
-  chartData: ChartData[];
-  currentLevel: number;
   entries: BloodSugarData[];
+  chartData: ChartData[];
+  latest: BloodSugarData | null;
+  count: number;
+  average: number;
+  highest: number;
+  lowest: number;
+  currentLevel: number;
   stats: {
+    average: number;
+    highest: number;
+    lowest: number;
+    count: number;
     currentLevel: number;
-    previousLevel: number;
-    totalEntries: number;
+    trend?: "up" | "down" | "stable";
     lastUpdated?: string;
   };
-  isLoading: boolean;
-  error: Error | null;
 }
 
 /**
@@ -149,14 +159,26 @@ function transformBloodSugarDataForChart(
   // Take last 14 entries for the chart
   const recentEntries = sortedEntries.slice(-14);
 
-  return recentEntries.map((entry) => {
+  return recentEntries.map((entry, index) => {
     const date = new Date(entry.capturedDate);
     const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
+    const fullDate = date.toLocaleDateString();
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Format measurement type for display
+    const measurementTypeDisplay = entry.measurementType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
 
     return {
-      name: `${month}/${day}`,
+      id: entry.id,
+      name: `${month}/${day}-${index}`, // Add index to ensure uniqueness
       value: entry.level,
+      fullDate,
+      time,
+      measurementType: measurementTypeDisplay,
     };
   });
 }
@@ -166,28 +188,76 @@ function transformBloodSugarDataForChart(
  * Handles API calls, cache invalidation, and user feedback
  * @returns Mutation object with mutate function and loading state
  */
-export function useCreateBloodSugarEntry() {
+export function useCreateBloodSugarEntry(dateRange?: { startDate: string; endDate: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   return useMutation({
-    mutationFn: createBloodSugarEntry,
+    mutationFn: async (data: BloodSugarInput) => {
+      const response = await fetch("/api/blood-sugars", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          level: data.level,
+          measurementType: data.measurementType,
+          capturedDate: data.capturedDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to log blood sugar");
+      }
+
+      return response.json();
+    },
+    onMutate: async (newEntry) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: bloodSugarKeys.filtered(profile!.id, dateRange) });
+
+      // Snapshot the previous value
+      const previousEntries = queryClient.getQueryData(bloodSugarKeys.filtered(profile!.id, dateRange));
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(bloodSugarKeys.filtered(profile!.id, dateRange), (old: any[]) => [
+        {
+          ...newEntry,
+          id: `temp-${Date.now()}`,
+          profileId: profile!.id,
+          capturedDate: newEntry.capturedDate || new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        ...(old || []),
+      ]);
+
+      // Return a context object with the snapshotted value
+      return { previousEntries };
+    },
+    onError: (err, newEntry, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(bloodSugarKeys.filtered(profile!.id, dateRange), context?.previousEntries);
+      
+      toast({
+        title: "Error",
+        description:
+          err.message || "Failed to log blood sugar. Please try again.",
+        variant: "destructive",
+      });
+    },
     onSuccess: (data) => {
-      // Invalidate and refetch blood sugar data
-      queryClient.invalidateQueries({ queryKey: bloodSugarKeys.lists() });
       const measurementTypeDisplay = data.measurementType.replace("_", " ");
       toast({
         title: "Blood sugar logged!",
         description: `Your blood sugar of ${data.level} mg/dL has been recorded for ${measurementTypeDisplay}.`,
       });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description:
-          error.message || "Failed to log blood sugar. Please try again.",
-        variant: "destructive",
-      });
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: bloodSugarKeys.all });
     },
   });
 }
@@ -213,28 +283,48 @@ export function useBloodSugar(dateRange?: { startDate: string; endDate: string }
     throw new Error("Profile not available");
   }
 
-  const { data: entries = [], isLoading, error } = useQuery({
+  const { data: entries = [] } = useSuspenseQuery({
     queryKey: bloodSugarKeys.filtered(profile.id, dateRange),
     queryFn: () => fetchBloodSugarEntries(dateRange),
-    enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000,
   });
 
   const chartData = transformBloodSugarDataForChart(entries);
 
+  const average = entries.length > 0 
+    ? Math.round(entries.reduce((sum, entry) => sum + entry.level, 0) / entries.length)
+    : 0;
+  const highest = entries.length > 0 
+    ? Math.max(...entries.map(entry => entry.level))
+    : 0;
+  const lowest = entries.length > 0 
+    ? Math.min(...entries.map(entry => entry.level))
+    : 0;
+  const currentLevel = entries.length > 0 ? entries[0].level : 0;
+  const count = entries.length;
+
   const stats = {
-    currentLevel: entries[0]?.level || 0,
-    previousLevel: entries[1]?.level || 0,
-    totalEntries: entries.length,
-    lastUpdated: entries[0]?.capturedDate,
+    average,
+    highest,
+    lowest,
+    count,
+    currentLevel,
+    trend: entries.length > 1 
+      ? (currentLevel > entries[1].level ? "up" as const : 
+         currentLevel < entries[1].level ? "down" as const : "stable" as const)
+      : undefined,
+    lastUpdated: entries.length > 0 ? entries[0].capturedDate : undefined,
   };
 
   return {
     entries,
     chartData,
-    currentLevel: stats.currentLevel,
+    latest: entries[0] || null,
+    count,
+    average,
+    highest,
+    lowest,
+    currentLevel,
     stats,
-    isLoading,
-    error,
   };
 }

@@ -19,6 +19,7 @@ import { DateFilterPicker } from "@/components/progress/date-filter-picker";
 import { useWeight } from "@/hooks/use-weight";
 import { useBloodPressure } from "@/hooks/use-blood-pressure";
 import { useActivity } from "@/hooks/use-activity";
+import { getOverallStatus } from "@/lib/services/blood-pressure.service";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 
@@ -67,7 +68,7 @@ function ProgressPageContent() {
   const dateRange = getDateRangeForAPI();
 
   const { stats, entries: weightEntries } = useWeight(dateRange);
-  const { entries: bpEntries, getOverallStatus } = useBloodPressure(dateRange);
+  const { entries: bpEntries } = useBloodPressure(dateRange);
   const { activities } = useActivity(
     new Date(dateRange.startDate),
     new Date(dateRange.endDate)
