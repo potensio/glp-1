@@ -56,10 +56,14 @@ export default function PendingPage() {
 
     const checkSubscription = async () => {
       try {
-        await refreshUser();
+        // Refresh user data first
+        const freshUserData = await refreshUser();
+        
+        // Check the fresh subscription data directly
+        const hasActivePremium = freshUserData?.subscription && 
+          freshUserData.subscription.plan.name.toLowerCase() !== "free";
 
-        // Check if user now has premium subscription
-        if (hasPremiumSubscription) {
+        if (hasActivePremium) {
           // Add a small delay before showing success to prevent jarring instant transitions
           setTimeout(() => {
             setState("success");
@@ -74,7 +78,7 @@ export default function PendingPage() {
             setTimeout(() => {
               router.push("/home?success=true");
             }, 2000);
-          }, 4000); // 1.5 second delay before showing success
+          }, 1500); // Reduced delay for better UX
         }
       } catch (error) {
         console.error("Error checking subscription:", error);
@@ -89,7 +93,7 @@ export default function PendingPage() {
     const interval = setInterval(checkSubscription, 3000);
 
     return () => clearInterval(interval);
-  }, [state, refreshUser, hasPremiumSubscription, router]);
+  }, [state, refreshUser, router]); // Removed hasPremiumSubscription from dependencies
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
