@@ -10,11 +10,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const { mealType, food, calories, capturedDate } = await request.json();
+
+    // Validate required fields
+    if (!mealType || !food || typeof calories !== 'number') {
+      return NextResponse.json(
+        { error: "Missing required fields: mealType, food, calories" },
+        { status: 400 }
+      );
+    }
 
     // Use service layer for business logic
     const foodIntake = await FoodIntakeService.createFoodIntake({
-      ...body,
+      mealType,
+      food,
+      calories,
+      capturedDate: capturedDate ? new Date(capturedDate) : new Date(),
       profileId: user.id,
     });
 
@@ -59,13 +70,22 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
 
     // Use service layer for business logic
-    const foodIntakes = startDate && endDate
-      ? await FoodIntakeService.getFoodIntakesByDateRange(
-          user.id,
-          new Date(startDate),
-          new Date(endDate)
-        )
-      : await FoodIntakeService.getFoodIntakesByProfile(user.id);
+    let foodIntakes;
+    if (startDate && endDate) {
+      // Use date range filtering if both dates are provided
+      // Set start to beginning of day and end to end of day to handle timezone issues
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T23:59:59.999Z');
+      
+      foodIntakes = await FoodIntakeService.getFoodIntakesByDateRange(
+        user.id,
+        start,
+        end
+      );
+    } else {
+      // Get all food intakes if no date range specified
+      foodIntakes = await FoodIntakeService.getFoodIntakesByProfile(user.id);
+    }
 
     return NextResponse.json(foodIntakes);
   } catch (error) {
