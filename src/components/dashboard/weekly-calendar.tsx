@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MedicalReminderDialog } from "@/app/home/_components/dialogs/medical-reminder-dialog";
 import { useGoogleCalendar } from "@/hooks/use-google-calendar";
@@ -58,7 +58,7 @@ export default function WeeklyCalendar({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const { isConnected } = useGoogleAuth();
+  const { isConnected, connect, isConnecting } = useGoogleAuth();
 
   // Memoize the time range to prevent unnecessary re-renders
   const timeRange = useMemo(() => {
@@ -292,7 +292,7 @@ export default function WeeklyCalendar({
     : null;
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 relative">
       {/* MedicalReminderDialog for both header and sidebar button */}
       <MedicalReminderDialog
         open={dialogOpen}
@@ -300,7 +300,12 @@ export default function WeeklyCalendar({
         trigger={null}
         selectedDate={selectedDate || undefined}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+      <div
+        className={cn(
+          "grid grid-cols-1 lg:grid-cols-6 gap-4",
+          !isConnected && "blur-xs pointer-events-none"
+        )}
+      >
         {/* Calendar Grid */}
         <Card className="lg:col-span-4 gap-0 rounded-2xl shadow-xl">
           {/* Header */}
@@ -426,6 +431,35 @@ export default function WeeklyCalendar({
           </CardContent>
         </Card>
       </div>
+
+      {/* Google Connection Overlay */}
+      {!isConnected && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl">
+          <Card className="p-6 text-center max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-2">
+              Connect Google Calendar
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Connect your Google Calendar to view and manage your medical
+              reminders and appointments.
+            </p>
+            <Button
+              className="w-full"
+              onClick={() => connect()}
+              disabled={isConnecting}
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Connect Google Calendar"
+              )}
+            </Button>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
