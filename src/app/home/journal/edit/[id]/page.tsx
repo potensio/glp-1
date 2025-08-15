@@ -17,7 +17,6 @@ import {
   LinkIcon,
   Save,
   Loader2,
-  ArrowLeft,
 } from "lucide-react";
 import { useUpdateJournal } from "@/hooks/use-journal";
 import { toast } from "sonner";
@@ -271,25 +270,6 @@ export default function EditJournalPage() {
 
   return (
     <div className="pb-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/home/journal')}
-          className="rounded-full"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-background text-3xl leading-tight font-semibold">
-            Edit Journal
-          </h1>
-          <p className="text-background text-lg">
-            Editing entry from {formattedOriginalDate}
-          </p>
-        </div>
-      </div>
 
       {/* Editor */}
       <Card className="min-h-screen bg-white flex flex-col py-0 gap-0">

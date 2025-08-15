@@ -1,15 +1,25 @@
 import {
   useMutation,
   useQueryClient,
-  useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { FoodIntakeInput } from "@/lib/services/food-intake.service";
 
 // Fetch food intake entries from API
-async function fetchFoodIntakeEntries() {
-  const response = await fetch("/api/food-intakes");
+async function fetchFoodIntakeEntries(dateRange?: { startDate: string; endDate: string }) {
+  let url = "/api/food-intakes";
+  
+  if (dateRange) {
+    const params = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+    url += `?${params.toString()}`;
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -43,7 +53,16 @@ function transformFoodIntakeDataForChart(entries: any[]) {
   });
 }
 
-export function useFoodIntake() {
+// Query keys for consistent caching
+const foodIntakeKeys = {
+  all: ["food-intakes"] as const,
+  lists: () => [...foodIntakeKeys.all, "list"] as const,
+  list: (profileId: string) => [...foodIntakeKeys.lists(), profileId] as const,
+  filtered: (profileId: string, dateRange?: { startDate: string; endDate: string }) => 
+    [...foodIntakeKeys.list(profileId), "filtered", dateRange] as const,
+};
+
+export function useFoodIntake(dateRange?: { startDate: string; endDate: string }) {
   const { toast } = useToast();
   const { profile } = useAuth();
 
@@ -52,11 +71,12 @@ export function useFoodIntake() {
     throw new Error("Profile not available");
   }
 
-  const entries = useSuspenseQuery({
-    queryKey: ["food-intakes", profile.id],
-    queryFn: fetchFoodIntakeEntries,
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: foodIntakeKeys.filtered(profile.id, dateRange),
+    queryFn: () => fetchFoodIntakeEntries(dateRange),
+    enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  }).data;
+  });
 
   const chartData = transformFoodIntakeDataForChart(entries);
 
@@ -117,5 +137,7 @@ export function useFoodIntake() {
     chartData,
     createFoodIntake: createFoodIntakeMutation.mutate,
     isCreating: createFoodIntakeMutation.isPending,
+    isLoading,
+    error,
   };
 }

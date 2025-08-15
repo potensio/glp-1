@@ -52,8 +52,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's weight entries using the service
-    const weights = await WeightService.getWeightsByProfile(authUser.id);
+    // Get query parameters for date filtering
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    let weights;
+    
+    if (startDate && endDate) {
+      // Use date range filtering if both dates are provided
+      weights = await WeightService.getWeightsByDateRange(
+        authUser.id,
+        new Date(startDate),
+        new Date(endDate)
+      );
+    } else {
+      // Get all weights if no date range specified
+      weights = await WeightService.getWeightsByProfile(authUser.id);
+    }
 
     return NextResponse.json(weights);
   } catch (error) {

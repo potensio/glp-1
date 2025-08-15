@@ -15,7 +15,7 @@
 import {
   useMutation,
   useQueryClient,
-  useSuspenseQuery,
+  useQuery,
 } from "@tanstack/react-query";
 // Tool for showing success/error messages
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +51,6 @@ interface ChartData {
  * Provides all blood sugar-related data and statistics
  */
 interface UseBloodSugarReturn {
-  // Chart data - no loading/error states needed with Suspense
   chartData: ChartData[];
   currentLevel: number;
   entries: BloodSugarData[];
@@ -61,6 +60,8 @@ interface UseBloodSugarReturn {
     totalEntries: number;
     lastUpdated?: string;
   };
+  isLoading: boolean;
+  error: Error | null;
 }
 
 /**
@@ -71,6 +72,8 @@ const bloodSugarKeys = {
   all: ["blood-sugar"] as const,
   lists: () => [...bloodSugarKeys.all, "list"] as const,
   list: (profileId: string) => [...bloodSugarKeys.lists(), profileId] as const,
+  filtered: (profileId: string, dateRange?: { startDate: string; endDate: string }) => 
+    [...bloodSugarKeys.list(profileId), "filtered", dateRange] as const,
 };
 
 /**
@@ -78,8 +81,18 @@ const bloodSugarKeys = {
  * Used by TanStack Query for data fetching and caching
  * @returns Promise resolving to array of blood sugar entries
  */
-async function fetchBloodSugarEntries(): Promise<BloodSugarData[]> {
-  const response = await fetch("/api/blood-sugars");
+async function fetchBloodSugarEntries(dateRange?: { startDate: string; endDate: string }): Promise<BloodSugarData[]> {
+  let url = "/api/blood-sugars";
+  
+  if (dateRange) {
+    const params = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+    url += `?${params.toString()}`;
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -192,7 +205,7 @@ export function useCreateBloodSugarEntry() {
  * - Data is cached so it loads faster
  * - Instant navigation with streaming content
  */
-export function useBloodSugar(): UseBloodSugarReturn {
+export function useBloodSugar(dateRange?: { startDate: string; endDate: string }): UseBloodSugarReturn {
   const { profile } = useAuth();
 
   // Throw error if no profile - this will be caught by error boundary
@@ -200,11 +213,12 @@ export function useBloodSugar(): UseBloodSugarReturn {
     throw new Error("Profile not available");
   }
 
-  const entries = useSuspenseQuery({
-    queryKey: bloodSugarKeys.list(profile.id),
-    queryFn: fetchBloodSugarEntries,
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: bloodSugarKeys.filtered(profile.id, dateRange),
+    queryFn: () => fetchBloodSugarEntries(dateRange),
+    enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000,
-  }).data;
+  });
 
   const chartData = transformBloodSugarDataForChart(entries);
 
@@ -220,5 +234,7 @@ export function useBloodSugar(): UseBloodSugarReturn {
     chartData,
     currentLevel: stats.currentLevel,
     stats,
+    isLoading,
+    error,
   };
 }

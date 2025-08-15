@@ -195,8 +195,10 @@ export default function Header() {
                 <DropdownMenuTrigger asChild>
                   <span className="flex items-center gap-2 cursor-pointer">
                     <Avatar className="size-10">
-                      <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>CN</AvatarFallback>
+                      <AvatarImage src={profile?.avatarUrl} />
+                      <AvatarFallback>
+                        {profile?.firstName?.[0] || user?.email?.[0] || "U"}
+                      </AvatarFallback>
                     </Avatar>
                     <span className="font-medium text-background">
                       {profile?.firstName || user?.email || "User"}
@@ -331,7 +333,7 @@ export default function Header() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="size-10">
-                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarImage src={profile?.avatarUrl} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {profile?.firstName?.[0] || user?.email?.[0] || "U"}
                       </AvatarFallback>

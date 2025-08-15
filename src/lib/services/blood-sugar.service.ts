@@ -43,6 +43,23 @@ export class BloodSugarService {
     });
   }
 
+  static async getBloodSugarsByDateRange(
+    profileId: string,
+    startDate: Date,
+    endDate: Date
+  ) {
+    return await prisma.bloodSugar.findMany({
+      where: {
+        profileId,
+        capturedDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: { capturedDate: "desc" },
+    });
+  }
+
   static async getBloodSugarById(id: string) {
     return await prisma.bloodSugar.findUnique({
       where: { id },

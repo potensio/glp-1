@@ -1,9 +1,9 @@
 "use client";
 
-import { ProfileInfo } from "@/components/ProfileInfo";
-import { SecurityPrivacy } from "@/components/SecurityPrivacy";
-import { DangerZone } from "@/components/DangerZone";
-import { ConnectedApps } from "@/components/account/ConnectedApps";
+import { ProfileInfo } from "@/components/account/profile-info";
+import { SecurityPrivacy } from "@/components/account/security-privacy";
+import { DangerZone } from "@/components/account/danger-zone";
+import { ConnectedApps } from "@/components/account/connected-apps";
 // import Preferences from "@/components/account/Preferences";
 
 export default function AccountPage() {

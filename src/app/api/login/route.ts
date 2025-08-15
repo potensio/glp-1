@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
+            isComplete: true,
           },
         },
       },

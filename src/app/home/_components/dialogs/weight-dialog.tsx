@@ -115,14 +115,14 @@ export function WeightDialogContent({
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 mb-4">
         <div className="flex flex-col items-center gap-2">
-          <label className="text-3xl font-bold flex items-baseline">
-            <Input
+          <div className="flex gap-1 items-center">
+            <input
               ref={inputRef}
               type="text"
               value={currentWeight || ""}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              className="h-12 w-20 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
+              className="h-12 w-20 bg-red-400 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
               style={{ maxWidth: 80 }}
               aria-label="Weight in pounds"
               placeholder="0"
@@ -130,7 +130,7 @@ export function WeightDialogContent({
             <span className="text-base font-medium text-gray-500 ml-1">
               lbs
             </span>
-          </label>
+          </div>
           {errors.weight && (
             <p className="text-sm text-red-500 mt-1">{errors.weight.message}</p>
           )}
