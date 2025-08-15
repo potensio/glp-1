@@ -12,6 +12,7 @@ import {
 import { useWeight } from "@/hooks/use-weight";
 import { useBloodPressure } from "@/hooks/use-blood-pressure";
 import { useActivity } from "@/hooks/use-activity";
+import { getOverallStatus } from "@/lib/services/blood-pressure.service";
 import { useDateFilter } from "@/contexts/date-filter-context";
 import { useMemo, Suspense } from "react";
 
@@ -115,7 +116,7 @@ function ProgressOverviewContent() {
   const dateRange = getDateRangeForAPI();
 
   const { stats, entries: weightEntries, isLoading: weightLoading, error: weightError } = useWeight(dateRange);
-  const { entries: bpEntries, getOverallStatus, isLoading: bpLoading, error: bpError } = useBloodPressure(dateRange);
+  const { entries: bpEntries, isLoading: bpLoading, error: bpError } = useBloodPressure(dateRange);
   const { activities, isLoading: activityLoading, error: activityError } = useActivity(
     new Date(dateRange.startDate),
     new Date(dateRange.endDate)

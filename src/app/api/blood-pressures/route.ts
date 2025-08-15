@@ -10,11 +10,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const { systolic, diastolic, capturedDate } = await request.json();
+
+    if (!systolic || typeof systolic !== 'number') {
+      return NextResponse.json({ error: 'Systolic pressure is required and must be a number' }, { status: 400 });
+    }
+
+    if (!diastolic || typeof diastolic !== 'number') {
+      return NextResponse.json({ error: 'Diastolic pressure is required and must be a number' }, { status: 400 });
+    }
+
+    // Use current date if capturedDate is not provided
+    const dateToCapture = capturedDate ? new Date(capturedDate) : new Date();
 
     // Use service layer for business logic
     const bloodPressure = await BloodPressureService.createBloodPressure({
-      ...body,
+      systolic,
+      diastolic,
+      capturedDate: dateToCapture,
       profileId: user.id,
     });
 
@@ -62,10 +75,14 @@ export async function GET(request: NextRequest) {
     
     if (startDate && endDate) {
       // Use date range filtering if both dates are provided
+      // Set start to beginning of day and end to end of day to handle timezone issues
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T23:59:59.999Z');
+      
       bloodPressures = await BloodPressureService.getBloodPressuresByDateRange(
         user.id,
-        new Date(startDate),
-        new Date(endDate)
+        start,
+        end
       );
     } else {
       // Get all blood pressures if no date range specified

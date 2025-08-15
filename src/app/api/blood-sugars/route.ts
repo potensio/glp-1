@@ -10,16 +10,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await request.json();
+    const { level, measurementType, capturedDate } = await request.json();
     
-    // Validate input data
-    const validatedData = bloodSugarSchema.parse(data);
+    // Check for missing required fields
+    if (typeof level !== 'number' || !measurementType) {
+      return NextResponse.json(
+        { error: "Missing required fields: level, measurementType" },
+        { status: 400 }
+      );
+    }
 
-    // Create blood sugar entry with current date
+    // Create blood sugar entry
     const bloodSugar = await BloodSugarService.createBloodSugar({
-      ...validatedData,
+      level,
+      measurementType,
       profileId: user.id,
-      capturedDate: new Date(), // Always use current date
+      capturedDate: capturedDate ? new Date(capturedDate) : new Date(),
     });
 
     return NextResponse.json(bloodSugar, { status: 201 });
@@ -56,8 +62,8 @@ export async function GET(request: NextRequest) {
     const bloodSugars = startDate && endDate
       ? await BloodSugarService.getBloodSugarsByDateRange(
           user.id,
-          new Date(startDate),
-          new Date(endDate)
+          new Date(startDate + 'T00:00:00.000Z'),
+          new Date(endDate + 'T23:59:59.999Z')
         )
       : await BloodSugarService.getBloodSugarsByProfile(user.id, limit);
 

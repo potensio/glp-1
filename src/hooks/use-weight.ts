@@ -43,6 +43,10 @@ interface WeightData {
 interface ChartData {
   name: string; // Formatted date (e.g., "Jan 15")
   value: number; // Weight value
+  fullDate: string; // Full date for tooltip (e.g., "Aug 8 2025")
+  time: string; // Time for tooltip (e.g., "10:30 AM")
+  capturedDate: string; // Original ISO date string
+  id: string; // Database ID for unique identification
 }
 
 /**
@@ -119,7 +123,7 @@ async function createWeightEntry(data: WeightInput): Promise<WeightData> {
     },
     body: JSON.stringify({
       weight: data.weight,
-      capturedDate: new Date().toISOString(),
+      // Let the API set capturedDate to current time automatically
     }),
   });
 
@@ -138,24 +142,50 @@ async function createWeightEntry(data: WeightInput): Promise<WeightData> {
  * @returns Array of chart data with formatted dates and values
  */
 function transformWeightDataForChart(weights: WeightData[]): ChartData[] {
-  // Sort by capturedDate ascending to show chronological order
+  // Sort by capturedDate ascending to get chronological order (oldest to newest)
   const sortedWeights = weights.sort(
     (a, b) =>
       new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
   );
 
-  // Take last 14 entries for the chart
+  // Take last 14 entries (most recent) for the chart
   const recentWeights = sortedWeights.slice(-14);
+  
+  // Data is already in chronological order (oldest to newest)
+  const chronologicalWeights = recentWeights;
 
-  return recentWeights.map((weight) => {
+  return chronologicalWeights.map((weight, index) => {
+    // Parse the date - it comes as ISO string from database
     const date = new Date(weight.capturedDate);
+    
+    // Ensure consistent timezone handling
     const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
+    
+    // Format full date for tooltip (e.g., "Aug 8 2025")
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    const fullDate = `${monthNames[date.getMonth()]} ${day} ${date.getFullYear()}`;
+    
+    // Use actual time from capturedDate with seconds for precision
+    const time = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
 
-    return {
-      name: `${month}/${day}`,
-      value: weight.weight,
-    };
+    // Use the actual index as part of the name to ensure uniqueness
+      return {
+        name: `${month}/${day}-${index}`, // Add index to make each point unique
+        value: weight.weight,
+        fullDate,
+        time,
+        capturedDate: weight.capturedDate,
+        id: weight.id,
+      };
   });
 }
 
@@ -171,8 +201,8 @@ export function useCreateWeightEntry() {
   return useMutation({
     mutationFn: createWeightEntry,
     onSuccess: (data) => {
-      // Invalidate and refetch weight data
-      queryClient.invalidateQueries({ queryKey: weightKeys.lists() });
+      // Invalidate all weight-related queries including filtered ones
+      queryClient.invalidateQueries({ queryKey: weightKeys.all });
       toast({
         title: "Weight saved!",
         description: `Your weight of ${data.weight} lbs has been recorded.`,
@@ -213,14 +243,20 @@ export function useWeight(dateRange?: {
     throw new Error("Profile not available");
   }
 
-  const { data: entries = [], isLoading, error } = useQuery({
+  const { data: rawEntries = [], isLoading, error } = useQuery({
     queryKey: weightKeys.filtered(profile.id, dateRange),
     queryFn: () => fetchWeightEntries(dateRange),
     enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000,
   });
 
-  const chartData = transformWeightDataForChart(entries);
+  // Sort entries by capturedDate descending (most recent first) for stats
+  const entries = [...rawEntries].sort(
+    (a, b) => new Date(b.capturedDate).getTime() - new Date(a.capturedDate).getTime()
+  );
+
+  // Pass raw entries to chart transformation (it will handle its own sorting)
+  const chartData = transformWeightDataForChart(rawEntries);
   const currentWeight = entries[0]?.weight || 0;
 
   // Calculate stats

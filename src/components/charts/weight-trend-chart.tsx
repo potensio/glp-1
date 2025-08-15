@@ -4,49 +4,25 @@ import { useWeight } from "@/hooks/use-weight";
 import { useDateFilter } from "@/contexts/date-filter-context";
 import { Scale } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import {
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  Tooltip,
-} from "recharts";
+import { XAxis, YAxis, ResponsiveContainer, AreaChart, Area, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 import React from "react";
-
-// Define a local type for the custom tooltip props
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: { value: number }[];
-  label?: string;
-}
 
 // Chart display component
 const WeightTrendDisplay = ({
   data,
   currentWeight,
 }: {
-  data: { name: string; value: number }[];
+  data: {
+    name: string;
+    value: number;
+    fullDate: string;
+    time: string;
+    capturedDate: string;
+    id: string;
+  }[];
   currentWeight: number;
 }) => {
-  const CustomTooltip = (props: CustomTooltipProps) => {
-    const active = props?.active;
-    const payload = props?.payload;
-    const label = props?.label;
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 rounded shadow text-xs border border-gray-200">
-          <div className="font-semibold">{label}</div>
-          <div>
-            Weight: <span className="font-bold">{payload[0].value} lbs</span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
       <div className="flex items-center justify-between ">
@@ -58,7 +34,6 @@ const WeightTrendDisplay = ({
             Weight Trend
           </h3>
         </div>
-
       </div>
       <div className="h-40 chart-container">
         {data.length === 0 ? (
@@ -84,10 +59,29 @@ const WeightTrendDisplay = ({
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                className="text-xs"
+                tick={{ fontSize: 12, fill: "#6b7280" }}
+                tickFormatter={(value) => {
+                  // Extract just the date part (before the dash) for display
+                  return value.split('-')[0] || "";
+                }}
+                interval={0}
               />
               <YAxis hide domain={["dataMin - 5", "dataMax + 5"]} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-xl">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">{data.value} lbs</p>
+                        <p className="text-xs text-gray-600">{data.fullDate}</p>
+                        <p className="text-xs text-gray-500">{data.time}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Area
                 type="monotone"
                 dataKey="value"
@@ -144,12 +138,7 @@ export const WeightTrendChart: React.FC = () => {
     );
   }
 
-  return (
-    <WeightTrendDisplay
-        data={chartData}
-        currentWeight={currentWeight}
-      />
-  );
+  return <WeightTrendDisplay data={chartData} currentWeight={currentWeight} />;
 };
 
 // Legacy component removed - use WeightTrendChart with useSuspense prop instead

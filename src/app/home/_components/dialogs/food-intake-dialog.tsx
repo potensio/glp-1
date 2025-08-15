@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Utensils, Sparkles, Loader2 } from "lucide-react";
-import { useFoodIntake } from "@/hooks/use-food-intake";
+import { useCreateFoodIntakeEntry } from "@/hooks/use-food-intake";
 import { toast } from "sonner";
 
 const mealTypes = [
@@ -31,7 +31,7 @@ export function FoodIntakeDialogContent({
   const [food, setFood] = useState("");
   const [calories, setCalories] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { createFoodIntake, isCreating } = useFoodIntake();
+  const createFoodIntakeMutation = useCreateFoodIntakeEntry();
 
   const handleLog = () => {
     setErrors({});
@@ -52,13 +52,12 @@ export function FoodIntakeDialogContent({
       return;
     }
 
-    createFoodIntake({
+    createFoodIntakeMutation.mutate({
       mealType,
       food,
       calories: caloriesValue,
     }, {
       onSuccess: () => {
-        toast.success(`${mealType} logged: ${food} (${caloriesValue} cal)`);
         // Reset and close
         setFood("");
         setCalories("");
@@ -66,9 +65,6 @@ export function FoodIntakeDialogContent({
         onSave?.();
         onClose?.();
       },
-      onError: () => {
-        toast.error('Failed to log food intake. Please try again.');
-      }
     });
   };
 
@@ -185,9 +181,9 @@ export function FoodIntakeDialogContent({
           className="w-full"
           size={"lg"}
           onClick={handleLog}
-          disabled={!food || !calories || isCreating}
+          disabled={!food || !calories || createFoodIntakeMutation.isPending}
         >
-          {isCreating ? (
+          {createFoodIntakeMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Logging...

@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef, useEffect } from "react";
 import { Heart } from "lucide-react";
-import { useBloodPressure, useCreateBloodPressureEntry } from "@/hooks/use-blood-pressure";
+import { useCreateBloodPressureEntry } from "@/hooks/use-blood-pressure";
+import { getSystolicStatus, getDiastolicStatus } from "@/lib/services/blood-pressure.service";
 import { toast } from "sonner";
 
 export function BloodPressureDialogContent({
@@ -35,12 +36,32 @@ export function BloodPressureDialogContent({
   const diastolicRef = useRef<HTMLInputElement>(null);
 
   const { mutate: createBloodPressure, isPending: isCreating } = useCreateBloodPressureEntry();
-  const {
-    getSystolicStatus,
-    getDiastolicStatus,
-    getStatusColor,
-    getBarColor,
-  } = useBloodPressure();
+
+  const getStatusColor = (status: "low" | "normal" | "high") => {
+    switch (status) {
+      case "low":
+        return "text-blue-600";
+      case "normal":
+        return "text-green-600";
+      case "high":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
+    }
+  };
+
+  const getBarColor = (status: "low" | "normal" | "high") => {
+    switch (status) {
+      case "low":
+        return "bg-blue-500";
+      case "normal":
+        return "bg-green-500";
+      case "high":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
 
   useEffect(() => {
     setSystolicInput(String(systolic));

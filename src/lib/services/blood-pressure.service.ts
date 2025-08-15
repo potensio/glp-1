@@ -47,7 +47,7 @@ export type BloodPressureInput = z.infer<typeof bloodPressureSchema>;
 const createBloodPressureSchema = z.object({
   systolic: z.number().min(50).max(250),
   diastolic: z.number().min(30).max(150),
-  capturedDate: z.string().datetime().optional(),
+  capturedDate: z.date(),
   profileId: z.string(),
 });
 
@@ -70,10 +70,10 @@ export class BloodPressureService {
     // Create blood pressure record
     return await prisma.bloodPressure.create({
       data: {
-        ...validatedData,
-        capturedDate: validatedData.capturedDate 
-          ? new Date(validatedData.capturedDate)
-          : new Date(),
+        systolic: validatedData.systolic,
+        diastolic: validatedData.diastolic,
+        capturedDate: validatedData.capturedDate,
+        profileId: validatedData.profileId,
       },
     });
   }

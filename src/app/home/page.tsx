@@ -5,6 +5,7 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { HealthCharts } from "@/components/dashboard/health-charts";
 import WeeklyCalendar from "@/components/dashboard/weekly-calendar";
 import PlanCard from "@/components/billing/plan-card";
+import { DateFilterProvider } from "@/contexts/date-filter-context";
 
 import { useAuth } from "@/contexts/auth-context";
 import { useEffect } from "react";
@@ -49,7 +50,11 @@ export default function DashPage() {
       )}
       <QuickActions />
 
-      {profile && <HealthCharts />}
+      {profile && (
+        <DateFilterProvider>
+          <HealthCharts />
+        </DateFilterProvider>
+      )}
 
       {/* Show plan card for free users, calendar for premium users */}
       {!hasPremiumSubscription ? (

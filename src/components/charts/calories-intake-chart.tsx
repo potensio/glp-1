@@ -18,7 +18,7 @@ import React from "react";
 // Define a local type for the custom tooltip props
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: { value: number }[];
+  payload?: { value: number; payload: any }[];
   label?: string;
 }
 
@@ -27,19 +27,28 @@ const CaloriesIntakeDisplay = ({
   data,
   latestIntake,
 }: {
-  data: { name: string; calories: number }[];
+  data: { id: string; name: string; calories: number; fullDate: string; time: string; mealType: string; food: string }[];
   latestIntake: number;
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
     const active = props?.active;
     const payload = props?.payload;
-    const label = props?.label;
+    
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
-        <div className="bg-white p-2 rounded shadow text-xs border border-gray-200">
-          <div className="font-semibold">{label}</div>
-          <div>
-            Calories: <span className="font-bold">{payload[0].value} kcal</span>
+        <div className="bg-white p-3 rounded-lg shadow-lg text-sm border border-gray-200">
+          <div className="font-semibold text-gray-800 mb-2">
+            Calories: <span className="font-bold text-blue-600">{payload[0].value}</span> kcal
+          </div>
+          <div className="text-gray-700 text-xs mb-1">
+            Meal: {data.mealType}
+          </div>
+          <div className="text-gray-700 text-xs mb-1">
+            Food: {data.food}
+          </div>
+          <div className="text-gray-600 text-xs">
+            {data.fullDate} at {data.time}
           </div>
         </div>
       );
@@ -58,7 +67,6 @@ const CaloriesIntakeDisplay = ({
             Calories Intake
           </h3>
         </div>
-
       </div>
       <div className="h-40 chart-container">
         {data.length === 0 ? (
@@ -85,6 +93,7 @@ const CaloriesIntakeDisplay = ({
                 axisLine={false}
                 tickLine={false}
                 className="text-xs"
+                tickFormatter={(value) => value.split('-')[0]} // Display only the date part
               />
               <YAxis hide domain={["dataMin - 50", "dataMax + 50"]} />
               <Tooltip content={<CustomTooltip />} />
@@ -135,7 +144,9 @@ export const CaloriesIntakeChart: React.FC = () => {
           <div className="bg-green-100 p-2 rounded-lg">
             <Flame className="h-5 w-5 text-green-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">Calories Intake</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Calories Intake
+          </h3>
         </div>
         <div className="flex items-center justify-center h-40 text-destructive">
           <p>Failed to load calories data</p>
@@ -147,10 +158,5 @@ export const CaloriesIntakeChart: React.FC = () => {
   const latestIntake =
     chartData.length > 0 ? chartData[chartData.length - 1].calories : 0;
 
-  return (
-    <CaloriesIntakeDisplay
-      data={chartData}
-      latestIntake={latestIntake}
-    />
-  );
+  return <CaloriesIntakeDisplay data={chartData} latestIntake={latestIntake} />;
 };

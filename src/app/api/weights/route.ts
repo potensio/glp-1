@@ -61,10 +61,14 @@ export async function GET(request: NextRequest) {
     
     if (startDate && endDate) {
       // Use date range filtering if both dates are provided
+      // Set start to beginning of day and end to end of day to handle timezone issues
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T23:59:59.999Z');
+      
       weights = await WeightService.getWeightsByDateRange(
         authUser.id,
-        new Date(startDate),
-        new Date(endDate)
+        start,
+        end
       );
     } else {
       // Get all weights if no date range specified
