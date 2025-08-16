@@ -27,7 +27,7 @@ const CaloriesIntakeDisplay = ({
   data,
   latestIntake,
 }: {
-  data: { id: string; name: string; calories: number; fullDate: string; time: string; mealType: string; food: string }[];
+  data: { id: string; name: string; calories: number; fullDate: string; time: string; mealType: string; food: string; entryCount?: number; mealFoodPairs?: { mealType: string; food: string; calories: number }[] }[];
   latestIntake: number;
 }) => {
   const CustomTooltip = (props: CustomTooltipProps) => {
@@ -38,17 +38,20 @@ const CaloriesIntakeDisplay = ({
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg text-sm border border-gray-200">
-          <div className="font-semibold text-gray-800 mb-2">
-            Calories: <span className="font-bold text-blue-600">{payload[0].value}</span> kcal
+          <div className="font-semibold text-gray-800 mb-3">
+            Total Calories: <span className="font-bold text-blue-600">{payload[0].value}</span> kcal
           </div>
-          <div className="text-gray-700 text-xs mb-1">
-            Meal: {data.mealType}
-          </div>
-          <div className="text-gray-700 text-xs mb-1">
-            Food: {data.food}
-          </div>
-          <div className="text-gray-600 text-xs">
-            {data.fullDate} at {data.time}
+          {data.mealFoodPairs && data.mealFoodPairs.length > 0 && (
+            <div className="space-y-1 mb-2">
+              {data.mealFoodPairs.map((pair: { mealType: string; food: string; calories: number }, index: number) => (
+                <div key={index} className="text-gray-700 text-xs">
+                  <span className="font-medium">{pair.mealType}:</span> {pair.food}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="text-gray-600 text-xs border-t pt-2">
+            {data.fullDate} • {data.time}
           </div>
         </div>
       );
@@ -111,7 +114,7 @@ const CaloriesIntakeDisplay = ({
       </div>
       <div className="flex justify-between text-sm">
         <span className="text-gray-600">
-          Latest: <span className="font-semibold">{latestIntake} kcal</span>
+          Latest Day: <span className="font-semibold">{latestIntake} kcal</span>
         </span>
       </div>
     </Card>

@@ -37,31 +37,73 @@ function transformFoodIntakeDataForChart(entries: any[]) {
       new Date(a.capturedDate).getTime() - new Date(b.capturedDate).getTime()
   );
 
-  // Take last 14 entries for the chart
-  const recentEntries = sortedEntries.slice(-14);
+  // Group entries by date and sum calories
+  const dailyCalories = new Map<string, {
+    totalCalories: number;
+    date: Date;
+    entries: any[];
+  }>();
 
-  // Transform data for chart with actual dates
-  return recentEntries.map((entry: any, index: number) => {
+  sortedEntries.forEach((entry: any) => {
     const date = new Date(entry.capturedDate);
+    const dateKey = date.toDateString(); // Use date string as key to group by day
+    
+    if (!dailyCalories.has(dateKey)) {
+      dailyCalories.set(dateKey, {
+        totalCalories: 0,
+        date,
+        entries: []
+      });
+    }
+    
+    const dayData = dailyCalories.get(dateKey)!;
+    dayData.totalCalories += entry.calories;
+    dayData.entries.push(entry);
+  });
+
+  // Convert to array and take last 14 days
+  const dailyData = Array.from(dailyCalories.values())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(-14);
+
+  // Transform data for chart with daily totals
+  return dailyData.map((dayData, index) => {
+    const date = dayData.date;
     const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
     const fullDate = date.toLocaleDateString();
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
-    // Format meal type for display
-    const mealTypeDisplay = entry.mealType
-      .split('_')
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    // Get meal types for the day
+    const mealTypes = dayData.entries.map(entry => 
+      entry.mealType
+        .split('_')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    );
+    
+    // Get unique foods for the day
+    const foods = [...new Set(dayData.entries.map(entry => entry.food))];
+    
+    // Create meal-food pairs for structured display
+    const mealFoodPairs = dayData.entries.map(entry => ({
+      mealType: entry.mealType
+        .split('_')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' '),
+      food: entry.food,
+      calories: entry.calories
+    }));
 
     return {
-      id: entry.id,
-      name: `${month}/${day}-${index}`, // Add index to ensure uniqueness
-      calories: entry.calories,
+      id: `day-${date.toISOString().split('T')[0]}`, // Use date as ID
+      name: `${month}/${day}`,
+      calories: dayData.totalCalories,
       fullDate,
-      time,
-      mealType: mealTypeDisplay,
-      food: entry.food,
+      time: `${dayData.entries.length} meal${dayData.entries.length > 1 ? 's' : ''}`,
+      mealType: mealTypes.join(', '),
+      food: foods.join(', '),
+      entryCount: dayData.entries.length,
+      mealFoodPairs: mealFoodPairs
     };
   });
 }
