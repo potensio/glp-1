@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Droplets } from "lucide-react";
 import { useCreateBloodSugarEntry } from "@/hooks/use-blood-sugar";
 import { useDateFilter } from "@/contexts/date-filter-context";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const measurementTypes = [
   { label: "Fasting", value: "fasting" },
@@ -22,12 +23,17 @@ const measurementTypes = [
 export function BloodSugarDialogContent({
   onSave,
   onClose,
+  initialDate,
 }: {
   onSave?: (data: { level: number; type: string }) => void;
   onClose?: () => void;
+  initialDate?: Date;
 }) {
   const { getDateRangeForAPI } = useDateFilter();
   const dateRange = getDateRangeForAPI();
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
   const [measurementType, setMeasurementType] = useState(
     measurementTypes[0].value
   );
@@ -62,6 +68,7 @@ export function BloodSugarDialogContent({
       {
         level: bloodSugarValue,
         measurementType: measurementType as any,
+        capturedDate: selectedDate.toISOString(),
       },
       {
         onSuccess: () => {
@@ -78,18 +85,27 @@ export function BloodSugarDialogContent({
 
   return (
     <>
-      <DialogHeader>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="bg-red-100 p-3 rounded-full">
-            <Droplets className="size-5 text-red-600" />
+      <DialogHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-red-100 p-3 rounded-full">
+              <Droplets className="size-5 text-red-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                Blood Sugar
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                Track your blood glucose levels throughout the day
+              </DialogDescription>
+            </div>
           </div>
-          <DialogTitle className="text-lg font-semibold">
-            Blood Sugar
-          </DialogTitle>
+
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
-        <DialogDescription>
-          Track your blood glucose levels throughout the day
-        </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-6">

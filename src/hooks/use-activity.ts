@@ -42,6 +42,7 @@ const createActivityEntry = async (data: ActivityInput): Promise<Activity> => {
     body: JSON.stringify({
       type: data.type,
       duration: data.duration,
+      capturedDate: data.capturedDate || new Date().toISOString(),
     }),
   });
 

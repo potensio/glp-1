@@ -38,15 +38,22 @@ export function deduplicatedToast(
 
 // Date formatting utility for calendar pickers
 export function formatDateWithOrdinal(date: Date): string {
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  }).replace(/\b(\d+)\b/, (match) => {
-    const day = parseInt(match);
-    const suffix = day % 10 === 1 && day !== 11 ? 'st' : 
-                  day % 10 === 2 && day !== 12 ? 'nd' : 
-                  day % 10 === 3 && day !== 13 ? 'rd' : 'th';
-    return day + suffix;
-  });
+  return date
+    .toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+    .replace(/\b(\d+)\b/, (match) => {
+      const day = parseInt(match);
+      const suffix =
+        day % 10 === 1 && day !== 11
+          ? "st"
+          : day % 10 === 2 && day !== 12
+          ? "nd"
+          : day % 10 === 3 && day !== 13
+          ? "rd"
+          : "th";
+      return day + suffix;
+    });
 }

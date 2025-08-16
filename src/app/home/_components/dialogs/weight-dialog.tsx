@@ -1,19 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
 import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Scale } from "lucide-react";
 import { useCreateWeightEntry } from "@/hooks/use-weight";
 import { toast } from "sonner";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { weightSchema, type WeightInput } from "@/lib/services/weight.service";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function WeightDialogContent({
   defaultWeight = 165,
@@ -21,13 +21,18 @@ export function WeightDialogContent({
   max = 1000,
   onSave,
   onClose,
+  initialDate,
 }: {
   defaultWeight?: number;
   min?: number;
   max?: number;
   onSave?: (weight: number) => void;
   onClose?: () => void;
+  initialDate?: Date;
 }) {
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: createWeight, isPending: isLoading } = useCreateWeightEntry();
 
@@ -35,6 +40,7 @@ export function WeightDialogContent({
     resolver: zodResolver(weightSchema),
     defaultValues: {
       weight: defaultWeight,
+      capturedDate: selectedDate,
     },
     mode: "onChange",
   });
@@ -48,7 +54,12 @@ export function WeightDialogContent({
   const currentWeight = watch("weight");
 
   const onSubmit: SubmitHandler<WeightInput> = (data) => {
-    createWeight(data, {
+    const submissionData = {
+      ...data,
+      capturedDate: selectedDate, // Use the selected date from the date picker
+    };
+    
+    createWeight(submissionData, {
       onSuccess: () => {
         toast.success(`Weight logged: ${data.weight} lbs`);
         onSave?.(data.weight);
@@ -66,6 +77,11 @@ export function WeightDialogContent({
     inputRef.current?.focus();
     inputRef.current?.select();
   }, []);
+
+  // Update form when selectedDate changes
+  useEffect(() => {
+    setValue("capturedDate", selectedDate, { shouldValidate: true });
+  }, [selectedDate, setValue]);
 
   // Handle slider change
   const handleSliderChange = ([value]: number[]) => {
@@ -92,15 +108,24 @@ export function WeightDialogContent({
 
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="pb-3">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className="bg-purple-100 p-2 rounded-full">
-            <Scale className="h-6 w-6 text-purple-600" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="bg-purple-100 p-2 rounded-full">
+              <Scale className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">Weight</DialogTitle>
+              <DialogDescription className="text-sm">Track your weight progress</DialogDescription>
+            </div>
           </div>
-          <DialogTitle className="text-lg font-semibold">Weight</DialogTitle>
+
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
-        <DialogDescription>Track your weight progress</DialogDescription>
         <Slider
           min={min}
           max={max}
@@ -122,7 +147,7 @@ export function WeightDialogContent({
               value={currentWeight || ""}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              className="h-12 w-20 bg-red-400 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
+              className="h-12 w-20 text-center bg-transparent outline-none border border-border rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-0 m-0 text-3xl font-bold appearance-none transition-colors"
               style={{ maxWidth: 80 }}
               aria-label="Weight in pounds"
               placeholder="0"

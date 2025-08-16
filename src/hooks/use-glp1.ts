@@ -29,6 +29,7 @@ export function useGlp1() {
           body: JSON.stringify({
             type: data.type,
             dose: data.dose,
+            ...(data.capturedDate && { capturedDate: data.capturedDate.toISOString() }),
           }),
         });
 

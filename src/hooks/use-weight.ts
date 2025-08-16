@@ -123,7 +123,7 @@ async function createWeightEntry(data: WeightInput): Promise<WeightData> {
     },
     body: JSON.stringify({
       weight: data.weight,
-      // Let the API set capturedDate to current time automatically
+      capturedDate: data.capturedDate?.toISOString(), // Include capturedDate if provided
     }),
   });
 

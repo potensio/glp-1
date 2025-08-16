@@ -11,12 +11,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, duration } = body;
+    const { type, duration, capturedDate } = body;
+
+    // Use current date if capturedDate is not provided
+    const dateToCapture = capturedDate ? new Date(capturedDate) : new Date();
 
     const activity = await ActivityService.createActivity({
       type,
       duration: parseInt(duration),
-      capturedDate: new Date(),
+      capturedDate: dateToCapture,
       profileId: user.id,
     });
 

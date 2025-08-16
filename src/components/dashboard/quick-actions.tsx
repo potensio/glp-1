@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { WeightDialogContent } from "../../app/home/_components/dialogs/weight-dialog";
 import { BloodPressureDialogContent } from "../../app/home/_components/dialogs/blood-pressure-dialog";
-import { FoodIntakeDialogContent } from "../../app/home/_components/dialogs/food-intake-dialog";
+import { MultiMealIntakeDialogContent } from "../../app/home/_components/dialogs/multi-meal-intake-dialog";
 import { Glp1DialogContent } from "../../app/home/_components/dialogs/glp1-dialog";
 import { ActivityDialogContent } from "../../app/home/_components/dialogs/activity-dialog";
 import { BloodSugarDialogContent } from "../../app/home/_components/dialogs/blood-sugar-dialog";
@@ -53,9 +53,7 @@ export const QuickActions = () => {
       <div className={`${item.color} p-3 rounded-full mb-2`}>
         <item.icon className="h-6 w-6 text-white" />
       </div>
-      <span className="text-sm font-medium text-gray-700">
-        {item.label}
-      </span>
+      <span className="text-sm font-medium text-gray-700">{item.label}</span>
     </>
   );
 
@@ -77,11 +75,12 @@ export const QuickActions = () => {
       case "Weight":
         return <WeightDialogContent onSave={() => setOpenDialog(null)} />;
       case "Blood Pressure":
-        return <BloodPressureDialogContent onClose={() => setOpenDialog(null)} />;
+        return (
+          <BloodPressureDialogContent onClose={() => setOpenDialog(null)} />
+        );
       case "Food":
         return (
-          <FoodIntakeDialogContent
-            todayCalories={1450}
+          <MultiMealIntakeDialogContent
             onSave={() => setOpenDialog(null)}
             onClose={() => setOpenDialog(null)}
           />
@@ -125,7 +124,7 @@ export const QuickActions = () => {
           {renderButtonContent(item)}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         {renderDialogContent(item)}
       </DialogContent>
     </Dialog>
@@ -146,7 +145,7 @@ export const QuickActions = () => {
           return renderCompleteProfileButton(item, index);
         })}
       </div>
-      
+
       {/* Registration Popup for incomplete profiles */}
       <RegistrationPopup
         open={registrationPopupOpen}

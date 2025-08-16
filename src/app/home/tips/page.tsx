@@ -23,19 +23,19 @@ const tipsData = [
         subtitle: "2 inches away from belly button",
       },
       {
-        url: "/illustration/tips-injection-2.webp",
+        url: "/illustration/tips-injection-4.webp",
+        caption: "Rotate Sites",
+        subtitle: "Change location each injection",
+      },
+      {
+        url: "/illustration/tips-injection-3.webp",
         caption: "Upper Thigh",
         subtitle: "Front and outer area",
       },
       {
-        url: "/illustration/tips-injection-3.webp",
+        url: "/illustration/tips-injection-2.webp",
         caption: "Upper Arm",
         subtitle: "Back of upper arm",
-      },
-      {
-        url: "/illustration/tips-injection-4.webp",
-        caption: "Rotate Sites",
-        subtitle: "Change location each injection",
       },
     ],
     detailedContent: {
@@ -171,8 +171,8 @@ const tipsData = [
 
 function TipCard({ tip }: { tip: (typeof tipsData)[0] }) {
   return (
-    <Card className="">
-      <CardHeader>
+    <Card className="gap-3 md:gap-5">
+      <CardHeader className="px-3 md:px-6">
         <div className="flex justify-center items-start gap-3">
           <div className="size-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
             {tip.icon ? (
@@ -189,7 +189,7 @@ function TipCard({ tip }: { tip: (typeof tipsData)[0] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-6">
+      <CardContent className="px-3 md:px-6">
         {/* Image Grid */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           {tip.images.map((image, index) => (
@@ -256,7 +256,9 @@ function TipCard({ tip }: { tip: (typeof tipsData)[0] }) {
           <Button
             variant="outline"
             className="w-full gap-2"
-            onClick={() => window.open('https://blog.mydailyhealthjournal.com/', '_blank')}
+            onClick={() =>
+              window.open("https://blog.mydailyhealthjournal.com/", "_blank")
+            }
           >
             <ExternalLink className="w-4 h-4" />
             Read More on Our Blog
@@ -347,11 +349,11 @@ export default function TipsPage() {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-background text-2xl md:text-3xl leading-tight font-semibold mb-2">
+      <div className="mb-8 mx-auto">
+        <h1 className="text-background text-2xl md:text-3xl text-center leading-tight font-semibold mb-2">
           Tips & Tricks
         </h1>
-        <p className="text-background/80 text-base md:text-lg">
+        <p className="text-background/80 text-base text-center md:text-lg">
           Discover helpful tips and expert advice to improve your health and
           wellness journey
         </p>

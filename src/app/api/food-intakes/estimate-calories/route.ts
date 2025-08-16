@@ -18,17 +18,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if OpenRouter API key is configured
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      console.error('OpenRouter API key not configured');
+      return NextResponse.json(
+        { error: "Calorie estimation service not available" },
+        { status: 503 }
+      );
+    }
+
     // Call OpenRouter API for calorie estimation
     const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer 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`,
+        'Authorization': `Bearer ${openRouterApiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
         'X-Title': 'GLP-1 Health Tracker'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [
           {
             role: 'system',

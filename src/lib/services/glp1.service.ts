@@ -10,6 +10,7 @@ export const glp1Schema = z.object({
     .number()
     .min(0.1, "Dose must be at least 0.1 mg")
     .max(50, "Dose must be less than 50 mg"),
+  capturedDate: z.date().optional(),
 });
 
 export type Glp1Input = z.infer<typeof glp1Schema>;

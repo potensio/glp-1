@@ -7,11 +7,18 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useState } from "react";
-import { Utensils, Sparkles, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Utensils, Sparkles, Loader2, CalendarIcon } from "lucide-react";
 import { useCreateFoodIntakeEntry } from "@/hooks/use-food-intake";
 import { useEstimateCalories } from "@/hooks/use-calorie-estimation";
 import { toast } from "sonner";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { formatDateWithOrdinal } from "@/lib/utils";
 
 const mealTypes = [
   { label: "Breakfast" },
@@ -32,8 +39,15 @@ export function FoodIntakeDialogContent({
   const [food, setFood] = useState("");
   const [calories, setCalories] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const createFoodIntakeMutation = useCreateFoodIntakeEntry();
   const estimateCaloriesMutation = useEstimateCalories();
+
+  // Debug: Monitor calories state changes
+  useEffect(() => {
+    console.log("Calories state changed to:", calories);
+  }, [calories]);
 
   const handleEstimateCalories = async () => {
     if (!food.trim()) {
@@ -41,14 +55,24 @@ export function FoodIntakeDialogContent({
       return;
     }
 
+    console.log("Starting calorie estimation for:", food);
+
     estimateCaloriesMutation.mutate(
       { foodDescription: food },
       {
         onSuccess: (data) => {
-          setCalories(data.estimatedCalories.toString());
-          toast.success("Calories estimated successfully!");
+          console.log("Calorie estimation response:", data);
+          console.log("Setting calories to:", data.estimatedCalories.toString());
+          const caloriesString = data.estimatedCalories.toString();
+          console.log("Calories string:", caloriesString, "Type:", typeof caloriesString);
+          console.log("Regex test:", /^\d*$/.test(caloriesString));
+          console.log("Current calories state before setting:", calories);
+          setCalories(caloriesString);
+          console.log("setCalories called with:", caloriesString);
+          toast.success(`Calories estimated: ${caloriesString}`);
         },
         onError: (error) => {
+          console.error("Calorie estimation error:", error);
           toast.error(error.message || "Failed to estimate calories");
         },
       }
@@ -74,20 +98,23 @@ export function FoodIntakeDialogContent({
       return;
     }
 
-    createFoodIntakeMutation.mutate({
-      mealType,
-      food,
-      calories: caloriesValue,
-    }, {
-      onSuccess: () => {
-        // Reset and close
-        setFood("");
-        setCalories("");
-        setMealType(mealTypes[0].label);
-        onSave?.();
-        onClose?.();
+    createFoodIntakeMutation.mutate(
+      {
+        mealType,
+        food,
+        calories: caloriesValue,
       },
-    });
+      {
+        onSuccess: () => {
+          // Reset and close
+          setFood("");
+          setCalories("");
+          setMealType(mealTypes[0].label);
+          onSave?.();
+          onClose?.();
+        },
+      }
+    );
   };
 
   return (
@@ -95,13 +122,39 @@ export function FoodIntakeDialogContent({
       <DialogHeader>
         <div className="flex items-center gap-3 mb-2 justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-3 rounded-full">
-              <Utensils className="size-5 text-green-600" />
+            <div className="bg-green-100 p-2 rounded-full">
+              <Utensils className="h-6 w-6 text-green-600" />
             </div>
+
             <DialogTitle className="text-lg font-semibold">
               Food Intake
             </DialogTitle>
           </div>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-9 justify-between font-normal text-xs px-3"
+              >
+                {formatDateWithOrdinal(selectedDate)}
+                <CalendarIcon className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                captionLayout="dropdown"
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setDatePickerOpen(false);
+                  }
+                }}
+                disabled={(date) => date > new Date()}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         <DialogDescription>
           Log your food intake and track calories for better health monitoring.
@@ -209,12 +262,14 @@ export function FoodIntakeDialogContent({
         </div>
       </div>
 
-      <DialogFooter className="flex flex-col mt-6">
+      <DialogFooter className="flex flex-row gap-3">
+        <Button variant="outline" onClick={onClose} className="flex-1">
+          Cancel
+        </Button>
         <Button
-          className="w-full"
-          size={"lg"}
           onClick={handleLog}
           disabled={!food || !calories || createFoodIntakeMutation.isPending}
+          className="flex-1"
         >
           {createFoodIntakeMutation.isPending ? (
             <>

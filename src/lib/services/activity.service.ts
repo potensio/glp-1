@@ -8,6 +8,7 @@ export const activitySchema = z.object({
     .number()
     .min(1, "Duration must be at least 1 minute")
     .max(1440, "Duration must be less than 24 hours"),
+  capturedDate: z.string().optional(),
 });
 
 export type ActivityInput = z.infer<typeof activitySchema>;

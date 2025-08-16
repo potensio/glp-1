@@ -129,7 +129,7 @@ async function createBloodSugarEntry(
     body: JSON.stringify({
       level: data.level,
       measurementType: data.measurementType,
-      capturedDate: new Date().toISOString(),
+      capturedDate: data.capturedDate ? new Date(data.capturedDate).toISOString() : new Date().toISOString(),
     }),
   });
 

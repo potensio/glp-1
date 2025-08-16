@@ -12,14 +12,20 @@ import { Syringe } from "lucide-react";
 import { useGlp1 } from "@/hooks/use-glp1";
 import { toast } from "sonner";
 import { glp1Schema } from "@/lib/services/glp1.service";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const glp1Types = ["Ozempic", "Wegovy", "Mounjaro", "Zepbound"];
 
 export function Glp1DialogContent({
   onSave,
+  initialDate,
 }: {
   onSave?: (data: { type: string; dose: string }) => void;
+  initialDate?: Date;
 }) {
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
   const [type, setType] = useState(glp1Types[0]);
   const [dose, setDose] = useState("");
   const [errors, setErrors] = useState<{ type?: string; dose?: string }>({});
@@ -48,6 +54,7 @@ export function Glp1DialogContent({
       await createGlp1Entry({
         type: type as "Ozempic" | "Wegovy" | "Mounjaro" | "Zepbound",
         dose: doseValue,
+        capturedDate: selectedDate,
       });
       
       toast.success(`${type} logged: ${doseValue} mg`);
@@ -62,12 +69,21 @@ export function Glp1DialogContent({
 
   return (
     <>
-      <DialogHeader>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <Syringe className="size-5 text-blue-600" />
+      <DialogHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Syringe className="size-5 text-blue-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">GLP-1</DialogTitle>
+            </div>
           </div>
-          <DialogTitle className="text-lg font-semibold">GLP-1</DialogTitle>
+
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
       </DialogHeader>
       {/* GLP-1 type selector */}

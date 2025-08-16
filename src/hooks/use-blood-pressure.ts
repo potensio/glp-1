@@ -189,7 +189,7 @@ export function useCreateBloodPressureEntry() {
   }
 
   return useMutation({
-    mutationFn: async (data: { systolic: number; diastolic: number }) => {
+    mutationFn: async (data: BloodPressureInput) => {
       // Validate the data
       const validatedData = bloodPressureSchema.parse(data);
 
@@ -197,7 +197,7 @@ export function useCreateBloodPressureEntry() {
       const entryData = {
         systolic: validatedData.systolic,
         diastolic: validatedData.diastolic,
-        capturedDate: new Date().toISOString(),
+        capturedDate: validatedData.capturedDate || new Date().toISOString(),
         profileId: profile.id,
       };
 

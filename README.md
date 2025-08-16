@@ -1,24 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GLP-1 Health Tracker
+
+A comprehensive health tracking application for GLP-1 medication users, built with Next.js, Prisma, and modern web technologies.
+
+## Features
+
+- **Health Tracking**: Weight, blood pressure, blood sugar, and medication logging
+- **Food Intake**: AI-powered calorie estimation using OpenRouter API
+- **Progress Visualization**: Interactive charts and progress tracking
+- **Google Calendar Integration**: Sync health events with your calendar
+- **Subscription Management**: Stripe-powered billing system
+- **Secure Authentication**: JWT-based auth with profile management
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ and npm/yarn/pnpm
+- PostgreSQL database (we recommend [Neon](https://neon.tech))
+- Required API keys (see Environment Setup below)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd glp1
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Set up environment variables (see Environment Setup below)
+
+4. Set up the database:
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.local` and update the following required environment variables:
+
+### Database
+```env
+DATABASE_URL="your_neon_database_url_here"
+```
+
+### Authentication
+```env
+JWT_SECRET="your_jwt_secret_here"
+```
+
+### OpenRouter API (for AI calorie estimation)
+```env
+OPENROUTER_API_KEY="your_openrouter_api_key_here"
+```
+
+**To get an OpenRouter API key:**
+1. Visit [OpenRouter](https://openrouter.ai/keys)
+2. Sign up for an account
+3. Generate a new API key
+4. Add credits to your account for API usage
+5. Update the `OPENROUTER_API_KEY` in your `.env.local` file
+
+### Stripe (for billing)
+```env
+STRIPE_SECRET_KEY="your_stripe_secret_key_here"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="your_stripe_publishable_key_here"
+STRIPE_WEBHOOK_SECRET="your_stripe_webhook_secret_here"
+```
+
+### Google OAuth (for calendar integration)
+```env
+GOOGLE_CLIENT_ID="your_google_client_id_here"
+GOOGLE_CLIENT_SECRET="your_google_client_secret_here"
+```
+
+### Email Service (Resend)
+```env
+RESEND_API_KEY="your_resend_api_key_here"
+RESEND_FROM_EMAIL="noreply@yourdomain.com"
+```
+
+### File Upload (Vercel Blob)
+```env
+BLOB_READ_WRITE_TOKEN="your_blob_token_here"
+```
 
 ## Learn More
 

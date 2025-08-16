@@ -72,10 +72,17 @@ export async function GET(request: NextRequest) {
     // Use service layer for business logic
     let foodIntakes;
     if (startDate && endDate) {
-      // Use date range filtering if both dates are provided
-      // Set start to beginning of day and end to end of day to handle timezone issues
-      const start = new Date(startDate + 'T00:00:00.000Z');
-      const end = new Date(endDate + 'T23:59:59.999Z');
+      // Parse the ISO date strings directly
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Validate that the dates are valid
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid date format. Please use ISO date strings." },
+          { status: 400 }
+        );
+      }
       
       foodIntakes = await FoodIntakeService.getFoodIntakesByDateRange(
         user.id,

@@ -11,12 +11,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, dose } = body;
+    const { type, dose, capturedDate } = body;
 
     const glp1Entry = await Glp1Service.createGlp1Entry({
       type,
       dose: parseFloat(dose),
-      capturedDate: new Date(),
+      capturedDate: capturedDate ? new Date(capturedDate) : new Date(),
       profileId: user.id,
     });
 

@@ -7,6 +7,7 @@ export const weightSchema = z.object({
     .number()
     .min(50, "Weight must be at least 50 lbs")
     .max(1000, "Weight must be less than 1000 lbs"),
+  capturedDate: z.date().optional(), // Optional for backward compatibility
 });
 
 export type WeightInput = z.infer<typeof weightSchema>;

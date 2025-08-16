@@ -1,0 +1,478 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Utensils,
+  Sparkles,
+  Loader2,
+  Plus,
+  X,
+  Check,
+  CalendarIcon,
+} from "lucide-react";
+import {
+  useCreateFoodIntakeEntry,
+  useFoodIntakeByDate,
+  useAllFoodIntake,
+} from "@/hooks/use-food-intake";
+import { useEstimateCalories } from "@/hooks/use-calorie-estimation";
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+
+const mealTypes = [
+  { label: "Breakfast", icon: "🌅" },
+  { label: "Lunch", icon: "☀️" },
+  { label: "Dinner", icon: "🌙" },
+  { label: "Snack", icon: "🍎" },
+];
+
+interface MealEntry {
+  id: string;
+  mealType: string;
+  food: string;
+  calories: string;
+  isEstimating?: boolean;
+}
+
+export function MultiMealIntakeDialogContent({
+  onSave,
+  onClose,
+  initialDate,
+}: {
+  todayCalories?: number;
+  onSave?: () => void;
+  onClose?: () => void;
+  initialDate?: Date;
+}) {
+  // Get all food intake data to find the most recent date with data
+  const { mostRecentDateWithData, isLoading: loadingAllData } =
+    useAllFoodIntake();
+
+  const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
+
+  // Update selectedDate when mostRecentDateWithData becomes available (only if no initialDate was provided)
+  useEffect(() => {
+    if (!initialDate && mostRecentDateWithData && !loadingAllData) {
+      setSelectedDate(mostRecentDateWithData);
+    }
+  }, [mostRecentDateWithData, loadingAllData, initialDate]);
+
+  const createFoodIntakeMutation = useCreateFoodIntakeEntry();
+  const estimateCaloriesMutation = useEstimateCalories();
+
+  // Fetch existing food intake data for the selected date
+  const {
+    entries: existingEntries,
+    isLoading: isLoadingEntries,
+    error: loadingError,
+  } = useFoodIntakeByDate(selectedDate);
+
+  // Memoize entries length to prevent unnecessary re-renders
+  const entriesLength = useMemo(
+    () => existingEntries?.length || 0,
+    [existingEntries]
+  );
+
+  // Pre-load existing data when date changes or component mounts
+  useEffect(() => {
+    if (!isLoadingEntries && !loadingError) {
+      if (existingEntries && existingEntries.length > 0) {
+        const preloadedMeals: MealEntry[] = existingEntries.map(
+          (entry: any) => ({
+            id: entry.id,
+            mealType: entry.mealType,
+            food: entry.food,
+            calories: entry.calories.toString(),
+          })
+        );
+        setMeals(preloadedMeals);
+      } else {
+        // Clear meals if no existing data for the selected date
+        setMeals([]);
+      }
+    }
+  }, [entriesLength, selectedDate, isLoadingEntries, loadingError]);
+
+  const addMeal = (mealType: string) => {
+    const newMeal: MealEntry = {
+      id: Date.now().toString(),
+      mealType,
+      food: "",
+      calories: "",
+    };
+    setMeals([...meals, newMeal]);
+  };
+
+  const removeMeal = (id: string) => {
+    setMeals(meals.filter((meal) => meal.id !== id));
+  };
+
+  const updateMeal = (id: string, field: keyof MealEntry, value: string) => {
+    setMeals(
+      meals.map((meal) => (meal.id === id ? { ...meal, [field]: value } : meal))
+    );
+  };
+
+  const handleEstimateCalories = async (
+    mealId: string,
+    foodDescription: string
+  ) => {
+    if (!foodDescription.trim()) {
+      toast.error("Please enter a food description first");
+      return;
+    }
+
+    // Set estimating state for this specific meal
+    setMeals(
+      meals.map((meal) =>
+        meal.id === mealId ? { ...meal, isEstimating: true } : meal
+      )
+    );
+
+    estimateCaloriesMutation.mutate(
+      { foodDescription },
+      {
+        onSuccess: (data) => {
+          updateMeal(mealId, "calories", data.estimatedCalories.toString());
+          setMeals(
+            meals.map((meal) =>
+              meal.id === mealId ? { ...meal, isEstimating: false } : meal
+            )
+          );
+          toast.success("Calories estimated successfully!");
+        },
+        onError: (error) => {
+          setMeals(
+            meals.map((meal) =>
+              meal.id === mealId ? { ...meal, isEstimating: false } : meal
+            )
+          );
+          toast.error(error.message || "Failed to estimate calories");
+        },
+      }
+    );
+  };
+
+  const handleLogAllMeals = async () => {
+    setErrors({});
+
+    // Validate all meals
+    const validationErrors: Record<string, string> = {};
+
+    if (meals.length === 0) {
+      validationErrors.general = "Please add at least one meal.";
+    }
+
+    meals.forEach((meal, index) => {
+      if (!meal.food.trim()) {
+        validationErrors[`food-${meal.id}`] = "Food description is required.";
+      }
+      if (!meal.calories || isNaN(parseInt(meal.calories))) {
+        validationErrors[`calories-${meal.id}`] =
+          "Valid calories amount is required.";
+      }
+    });
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    // Set the captured date to the selected date
+    const capturedDate = new Date(selectedDate);
+    capturedDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+
+    // Log all meals sequentially
+    try {
+      for (const meal of meals) {
+        await new Promise((resolve, reject) => {
+          createFoodIntakeMutation.mutate(
+            {
+              mealType: meal.mealType,
+              food: meal.food,
+              calories: parseInt(meal.calories),
+              capturedDate: capturedDate.toISOString(),
+            },
+            {
+              onSuccess: resolve,
+              onError: reject,
+            }
+          );
+        });
+      }
+
+      // Reset and close after all meals are logged
+      setMeals([]);
+      toast.success(
+        `Successfully logged ${meals.length} meal${
+          meals.length > 1 ? "s" : ""
+        }!`
+      );
+      onSave?.();
+      onClose?.();
+    } catch (error) {
+      toast.error("Failed to log some meals. Please try again.");
+    }
+  };
+
+  const getTotalCalories = () => {
+    return meals.reduce((total, meal) => {
+      const calories = parseInt(meal.calories) || 0;
+      return total + calories;
+    }, 0);
+  };
+
+  const getAvailableMealTypes = () => {
+    const usedTypes = meals.map((meal) => meal.mealType);
+    return mealTypes.filter((type) => !usedTypes.includes(type.label));
+  };
+
+  return (
+    <>
+      <DialogHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-green-100 p-3 rounded-full">
+              <Utensils className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                Daily Food Intake
+              </DialogTitle>
+              {isLoadingEntries && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  Loading existing data...
+                </span>
+              )}
+              {loadingError && (
+                <span className="text-sm font-normal text-red-500">
+                  Failed to load existing data
+                </span>
+              )}
+            </div>
+          </div>
+
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
+        </div>
+      </DialogHeader>
+
+      <div className="space-y-3 max-h-[65vh] overflow-y-auto">
+        {/* Add meal buttons */}
+        {getAvailableMealTypes().length > 0 && (
+          <div className="space-y-2">
+            <DialogDescription>Log multiple meals at once</DialogDescription>
+            <div className="grid grid-cols-4 gap-1">
+              {getAvailableMealTypes().map((type) => (
+                <Button
+                  key={type.label}
+                  variant="outline"
+                  size="sm"
+                  className="h-auto p-2 flex flex-col items-center gap-0.5 hover:bg-primary/5 hover:border-primary"
+                  onClick={() => addMeal(type.label)}
+                >
+                  <span className="text-sm">{type.icon}</span>
+                  <span className="text-xs font-medium">{type.label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Meal entries */}
+        {meals.map((meal, index) => (
+          <Card key={meal.id} className="p-3 gap-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm">
+                  {mealTypes.find((t) => t.label === meal.mealType)?.icon}
+                </span>
+                <h4 className="font-medium text-sm">{meal.mealType}</h4>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEstimateCalories(meal.id, meal.food)}
+                disabled={!meal.food.trim() || meal.isEstimating}
+                className="text-primary font-medium hover:text-primary/80 h-auto p-1.5"
+              >
+                {meal.isEstimating ? (
+                  <>
+                    <Loader2 className="size-3 animate-spin" />
+                    Estimating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-3 text-orange-400" />
+                    AI Estimate
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              {/* Food input */}
+              <div className="space-y-1 w-full">
+                <label className="text-xs font-medium text-muted-foreground">
+                  What did you eat?
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Grilled chicken salad"
+                  value={meal.food}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 200) {
+                      updateMeal(meal.id, "food", value);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && value.length < 3) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        [`food-${meal.id}`]:
+                          "Food description must be at least 3 characters.",
+                      }));
+                    }
+                  }}
+                  className={`w-full h-10 text-foreground bg-transparent outline-none border rounded-md focus:ring-1 focus:ring-primary focus:border-primary p-2 text-sm transition-colors ${
+                    errors[`food-${meal.id}`]
+                      ? "border-red-500"
+                      : "border-border"
+                  }`}
+                />
+                <div className="flex justify-between items-center">
+                  {errors[`food-${meal.id}`] ? (
+                    <span className="text-xs text-red-500">
+                      {errors[`food-${meal.id}`]}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {meal.food.length < 3 && meal.food.length > 0
+                        ? `Need ${3 - meal.food.length} more characters`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Calories input */}
+              <div className="space-y-1 w-fit">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Calories
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-baseline">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="350"
+                      value={meal.calories}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only digits and limit to reasonable length
+                        if (/^\d*$/.test(value) && value.length <= 4) {
+                          updateMeal(meal.id, "calories", value);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = e.target.value;
+                        if (value && parseInt(value) > 5000) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            [`calories-${meal.id}`]:
+                              "Calories cannot exceed 5000 per meal.",
+                          }));
+                        }
+                      }}
+                      className={`w-16 h-10 text-foreground text-center bg-transparent outline-none border rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm font-semibold transition-colors ${
+                        errors[`calories-${meal.id}`]
+                          ? "border-red-500"
+                          : "border-border"
+                      }`}
+                    />
+                    <span className="text-xs font-medium text-muted-foreground ml-1">
+                      cal
+                    </span>
+                  </div>
+                </div>
+
+                {errors[`calories-${meal.id}`] && (
+                  <span className="text-xs text-red-500">
+                    {errors[`calories-${meal.id}`]}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-end gap-2 mb-1">
+                <Button variant={"outline"} onClick={() => removeMeal(meal.id)}>
+                  <X />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        {/* Empty state */}
+        {meals.length === 0 && (
+          <div className="text-center py-4 text-muted-foreground">
+            <Utensils className="size-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs">No meals added yet</p>
+            <p className="text-xs opacity-75">
+              Start by adding your first meal above
+            </p>
+          </div>
+        )}
+
+        {errors.general && (
+          <div className="text-xs text-red-500 text-center bg-red-50 p-2 rounded-md">
+            {errors.general}
+          </div>
+        )}
+      </div>
+
+      <DialogFooter className="flex flex-row gap-3 mt-4">
+        <Button
+          variant="outline"
+          className="flex-1 h-11 text-md"
+          onClick={onClose}
+          disabled={createFoodIntakeMutation.isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          className="flex-1 h-11 text-md"
+          onClick={handleLogAllMeals}
+          disabled={meals.length === 0 || createFoodIntakeMutation.isPending}
+        >
+          {createFoodIntakeMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              Logging meals...
+            </>
+          ) : (
+            <>
+              Log
+              {meals.length > 0 && ` (${getTotalCalories()} cal)`}
+            </>
+          )}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}

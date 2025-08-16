@@ -39,6 +39,7 @@ export const bloodPressureSchema = z.object({
     .number()
     .min(30, "Diastolic must be at least 30")
     .max(150, "Diastolic must be less than 150"),
+  capturedDate: z.string().optional(),
 });
 
 export type BloodPressureInput = z.infer<typeof bloodPressureSchema>;

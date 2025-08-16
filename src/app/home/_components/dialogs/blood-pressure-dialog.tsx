@@ -10,6 +10,7 @@ import { Heart } from "lucide-react";
 import { useCreateBloodPressureEntry } from "@/hooks/use-blood-pressure";
 import { getSystolicStatus, getDiastolicStatus } from "@/lib/services/blood-pressure.service";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function BloodPressureDialogContent({
   lastSystolic = 120,
@@ -19,6 +20,7 @@ export function BloodPressureDialogContent({
   minDiastolic = 40,
   maxDiastolic = 120,
   onClose,
+  initialDate,
 }: {
   lastSystolic?: number;
   lastDiastolic?: number;
@@ -27,7 +29,11 @@ export function BloodPressureDialogContent({
   minDiastolic?: number;
   maxDiastolic?: number;
   onClose?: () => void;
+  initialDate?: Date;
 }) {
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
   const [systolic, setSystolic] = useState(lastSystolic);
   const [diastolic, setDiastolic] = useState(lastDiastolic);
   const [systolicInput, setSystolicInput] = useState(String(lastSystolic));
@@ -131,7 +137,7 @@ export function BloodPressureDialogContent({
     setSystolicInput(String(sys));
     setDiastolicInput(String(dia));
 
-    createBloodPressure({ systolic: sys, diastolic: dia }, {
+    createBloodPressure({ systolic: sys, diastolic: dia, capturedDate: selectedDate.toISOString() }, {
       onSuccess: () => {
         toast.success(`Blood pressure logged: ${sys}/${dia} mmHg`);
         onClose?.();
@@ -168,6 +174,11 @@ export function BloodPressureDialogContent({
               Blood Pressure
             </DialogTitle>
           </div>
+          
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
         <DialogDescription className="text-muted-foreground text-sm mb-2">
           Enter your blood pressure readings below.

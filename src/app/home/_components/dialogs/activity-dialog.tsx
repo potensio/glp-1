@@ -10,19 +10,25 @@ import { useState } from "react";
 import { Footprints } from "lucide-react";
 import { useCreateActivity } from "@/hooks/use-activity";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const activityTypes = ["🚶🏻 Walking", "🏃🏻 Running", "🚴 Cycling", "🏊🏻 Swimming"];
 
 export function ActivityDialogContent({
   onSave,
   onClose,
+  initialDate,
 }: {
   stepsToday?: number;
   minutesActive?: number;
   goalSteps?: number;
   onSave?: (data: { type: string; duration: string }) => void;
   onClose?: () => void;
+  initialDate?: Date;
 }) {
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialDate || new Date()
+  );
   const [type, setType] = useState(activityTypes[0]);
   const [duration, setDuration] = useState("");
   
@@ -38,6 +44,7 @@ export function ActivityDialogContent({
       {
         type,
         duration: durationMinutes,
+        capturedDate: selectedDate.toISOString(),
       },
       {
         onSuccess: () => {
@@ -64,6 +71,11 @@ export function ActivityDialogContent({
               Activity
             </DialogTitle>
           </div>
+          
+          <DatePicker
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
         </div>
       </DialogHeader>
       <div className="flex flex-col gap-2">
