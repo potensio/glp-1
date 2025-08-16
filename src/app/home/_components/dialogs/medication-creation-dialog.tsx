@@ -17,12 +17,21 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useMedication } from "@/hooks/use-medication";
 import { useGoogleAuth } from "@/hooks/use-google-auth";
 import { useGoogleCalendar } from "@/hooks/use-google-calendar";
 import { toast } from "sonner";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, ChevronDown, CalendarIcon } from "lucide-react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { formatDateWithOrdinal } from "@/lib/utils";
 
 interface EditingMedication {
   id: string;
@@ -53,7 +62,8 @@ export function MedicationCreationDialog({
   const [dosage, setDosage] = useState("");
   const [dosageUnit, setDosageUnit] = useState("MG");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [repeatEvery, setRepeatEvery] = useState(1);
   const [repeatUnit, setRepeatUnit] = useState("Day(s)");
   const [prescribingDoctor, setPrescribingDoctor] = useState("");
@@ -66,6 +76,7 @@ export function MedicationCreationDialog({
   
   const { isConnected: isGoogleConnected } = useGoogleAuth();
   const { createEvent, isCreatingEvent } = useGoogleCalendar({ enabled: isGoogleConnected });
+  const queryClient = useQueryClient();
 
   // Populate form when editing
   useEffect(() => {
@@ -74,10 +85,10 @@ export function MedicationCreationDialog({
       setDosage(editingMedication.dosage.toString());
       setDosageUnit(editingMedication.dosageUnit);
       setDescription(editingMedication.description || "");
-      // Parse date from ISO string to "2024-01-15" format
+      // Parse date from ISO string to Date object
       const dateObj = new Date(editingMedication.startDate);
       if (!isNaN(dateObj.getTime())) {
-        setDate(dateObj.toISOString().split("T")[0]);
+        setDate(dateObj);
       }
       setRepeatEvery(editingMedication.repeatEvery);
       setRepeatUnit(editingMedication.repeatUnit);
@@ -90,7 +101,7 @@ export function MedicationCreationDialog({
       setDosage("");
       setDosageUnit("MG");
       setDescription("");
-      setDate("");
+      setDate(undefined);
       setRepeatEvery(1);
       setRepeatUnit("Day(s)");
       setMedicationStatus("active");
@@ -141,7 +152,7 @@ export function MedicationCreationDialog({
       description,
       prescribingDoctor,
       status: medicationStatus as "active" | "paused" | "inactive",
-      startDate: date,
+      startDate: date!.toISOString().split('T')[0],
       repeatEvery,
       repeatUnit: repeatUnit as "Day(s)" | "Week(s)",
       enableReminders,
@@ -155,7 +166,7 @@ export function MedicationCreationDialog({
       
       // Create calendar event if reminders are enabled and Google Calendar is connected
       if (enableReminders && isGoogleConnected && !editingMedication) {
-        const startDateTime = new Date(date);
+        const startDateTime = new Date(date!);
         startDateTime.setHours(9, 0, 0, 0); // Default to 9 AM
         const endDateTime = new Date(startDateTime);
         endDateTime.setHours(9, 30, 0, 0); // 30 minutes duration
@@ -167,6 +178,12 @@ export function MedicationCreationDialog({
           endTime: endDateTime.toISOString(),
           isAllDay: false,
           recurrence: repeatUnit === "Day(s)" ? [`RRULE:FREQ=DAILY;INTERVAL=${repeatEvery}`] : [`RRULE:FREQ=WEEKLY;INTERVAL=${repeatEvery}`],
+        });
+        
+        // Invalidate calendar events cache to refresh the calendar view
+        queryClient.invalidateQueries({ 
+          queryKey: ["google-calendar-events"],
+          exact: false 
         });
       }
       
@@ -310,16 +327,31 @@ export function MedicationCreationDialog({
             {/* Start Date and Repeat Frequency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1 w-full">
-                <label className="block text-xs text-gray-600">
+                <Label className="text-xs text-gray-600">
                   Start date
-                </label>
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full h-11"
-                  placeholder=""
-                />
+                </Label>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 justify-between font-normal"
+                    >
+                      {date ? formatDateWithOrdinal(date) : "Select date"}
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      captionLayout="dropdown"
+                      onSelect={(selectedDate) => {
+                        setDate(selectedDate);
+                        setDatePickerOpen(false);
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1 w-full">
                 <label className="block text-xs text-gray-600">

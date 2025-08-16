@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectTrigger,
@@ -21,6 +27,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGoogleCalendar } from "@/hooks/use-google-calendar";
 import { toast } from "sonner";
+import { CalendarIcon } from "lucide-react";
+import { formatDateWithOrdinal } from "@/lib/utils";
 
 export function MedicalReminderDialog({
   open,
@@ -43,24 +51,19 @@ export function MedicalReminderDialog({
   const [ends, setEnds] = useState("never");
   const [endDate, setEndDate] = useState("");
   const [endOccurrences, setEndOccurrences] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Prefill start date when dialog opens with selected date
   useEffect(() => {
     if (open && selectedDate) {
-      // Use local date formatting to avoid timezone conversion issues
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const day = String(selectedDate.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      setStartDate(dateString);
+      setStartDate(selectedDate);
     }
   }, [open, selectedDate]);
 
   const { createEvent, isCreatingEvent } = useGoogleCalendar();
 
   const reminderTypes = [
-    "Medication",
     "Medical Checkup",
     "Doctor Appointment",
     "Custom",
@@ -107,8 +110,9 @@ export function MedicalReminderDialog({
 
     try {
        // Create start and end datetime strings with proper ISO formatting
-       const startDateTime = new Date(`${startDate}T${time}:00`).toISOString();
-       const endDateTime = new Date(new Date(`${startDate}T${time}:00`).getTime() + 60 * 60 * 1000).toISOString();
+       const startDateString = startDate!.toISOString().split('T')[0];
+       const startDateTime = new Date(`${startDateString}T${time}:00`).toISOString();
+       const endDateTime = new Date(new Date(`${startDateString}T${time}:00`).getTime() + 60 * 60 * 1000).toISOString();
        
        // Prepare recurrence rules if repeating
        const recurrenceRules = frequency === "repeat" ? [
@@ -133,7 +137,7 @@ export function MedicalReminderDialog({
       // Reset form
       setDescription("");
       setTime("");
-      setStartDate("");
+      setStartDate(undefined);
       setFrequency("repeat");
       setRepeatEvery(1);
       setRepeatUnit("Day(s)");
@@ -189,14 +193,30 @@ export function MedicalReminderDialog({
             </div>
             {/* Start Date Input */}
             <div className="space-y-1">
-              <label className="block text-sm text-gray-600">Start Date</label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-11"
-                min={new Date().toISOString().split('T')[0]} // Prevent past dates
-              />
+              <Label className="text-sm text-gray-600">Start Date</Label>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 justify-between font-normal"
+                  >
+                    {startDate ? formatDateWithOrdinal(startDate) : "Select date"}
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    captionLayout="dropdown"
+                    onSelect={(selectedDate) => {
+                      setStartDate(selectedDate);
+                      setDatePickerOpen(false);
+                    }}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             {/* Time and Frequency Row */}
             <div className="flex flex-row gap-3 items-end">

@@ -2,7 +2,8 @@
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Heart, ExternalLink } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
@@ -249,6 +250,18 @@ function TipCard({ tip }: { tip: (typeof tipsData)[0] }) {
             </div>
           </div>
         )}
+
+        {/* Read More Button */}
+        <div className="pt-4 border-t border-gray-100">
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => window.open('https://blog.mydailyhealthjournal.com/', '_blank')}
+          >
+            <ExternalLink className="w-4 h-4" />
+            Read More on Our Blog
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
