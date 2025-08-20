@@ -64,6 +64,7 @@ model FoodIntake {
   food         String
   calories     Int
   capturedDate DateTime // date when the food was actually consumed
+  dateCode     String   // date code in MMDDYYYY format for timezone-independent queries
   profileId    String
   profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())

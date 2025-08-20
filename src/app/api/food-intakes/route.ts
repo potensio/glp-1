@@ -21,12 +21,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Use service layer for business logic
+    const capturedDateObj = capturedDate ? new Date(capturedDate) : new Date();
+    const dateCode = capturedDateObj.getDate().toString().padStart(2, '0') + 
+                     (capturedDateObj.getMonth() + 1).toString().padStart(2, '0') + 
+                     capturedDateObj.getFullYear().toString();
+    
     const foodIntake = await FoodIntakeService.createFoodIntake({
       mealType,
       food,
       calories,
-      capturedDate: capturedDate ? new Date(capturedDate) : new Date(),
+      capturedDate: capturedDateObj,
       profileId: user.id,
+      dateCode,
     });
 
     return NextResponse.json(foodIntake, { status: 201 });
@@ -47,6 +53,55 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request);
+
+    if (!user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get query parameters for date filtering
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get('date');
+
+    if (!date) {
+      return NextResponse.json(
+        { error: "Date parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    // Generate dateCode from the date string (timezone-independent)
+    const dateObj = new Date(date);
+    const dateCode = dateObj.getDate().toString().padStart(2, '0') + 
+                     (dateObj.getMonth() + 1).toString().padStart(2, '0') + 
+                     dateObj.getFullYear().toString();
+
+    // Use service layer to clear food intakes by dateCode
+    const result = await FoodIntakeService.clearFoodIntakesByDateCode(
+      user.id,
+      dateCode
+    );
+
+    return NextResponse.json({ 
+      message: `Deleted ${result.count} food intake entries for ${date}`,
+      deletedCount: result.count 
+    });
+  } catch (error) {
+    console.error("Error deleting food intakes:", error);
+
+    if (error instanceof Error && error.message === "Profile not found") {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
     return NextResponse.json(

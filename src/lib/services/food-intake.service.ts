@@ -14,40 +14,98 @@ export const foodIntakeSchema = z.object({
 
 export type FoodIntakeInput = z.infer<typeof foodIntakeSchema>;
 
-// Server-side validation schema (for API)
-const createFoodIntakeSchema = z.object({
+// Server-side creation schema
+export const createFoodIntakeSchema = z.object({
+  profileId: z.string(),
   mealType: z.string().min(1),
   food: z.string().min(1),
-  calories: z.number().min(1),
+  calories: z.number().min(1).max(10000),
   capturedDate: z.date(),
-  profileId: z.string(),
+  dateCode: z.string(),
 });
 
-type CreateFoodIntakeInput = z.infer<typeof createFoodIntakeSchema>;
+export type CreateFoodIntakeInput = z.infer<typeof createFoodIntakeSchema>;
+
+// Helper function to generate date code (DDMMYYYY format)
+function generateDateCode(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear().toString();
+  return `${day}${month}${year}`;
+}
+
+// Helper function to generate date code from string
+function generateDateCodeFromString(dateString: string): string {
+  const date = new Date(dateString);
+  return generateDateCode(date);
+}
 
 export class FoodIntakeService {
+  // Create a single food intake entry
   static async createFoodIntake(data: CreateFoodIntakeInput) {
-    // Validate input
     const validatedData = createFoodIntakeSchema.parse(data);
-
-    // Check if profile exists
-    const profile = await prisma.profile.findUnique({
-      where: { id: validatedData.profileId },
+    
+    return await prisma.foodIntake.create({
+      data: validatedData,
     });
+  }
 
-    if (!profile) {
-      throw new Error("Profile not found");
+  // Clear all food intake entries for a specific date (using dateCode)
+  static async clearFoodIntakesByDateCode(profileId: string, dateCode: string) {
+    return await prisma.foodIntake.deleteMany({
+      where: {
+        profileId,
+        dateCode,
+      },
+    });
+  }
+
+  // Create multiple food intake entries with clear-before-submit strategy
+  static async createMultipleFoodIntakesWithClear(
+    profileId: string,
+    entries: Array<{
+      mealType: string;
+      food: string;
+      calories: number;
+      capturedDate: Date;
+    }>
+  ) {
+    if (entries.length === 0) {
+      throw new Error("No entries provided");
     }
 
-    // Create food intake record
-    return await prisma.foodIntake.create({
-      data: {
-        mealType: validatedData.mealType,
-        food: validatedData.food,
-        calories: validatedData.calories,
-        capturedDate: validatedData.capturedDate,
-        profileId: validatedData.profileId,
-      },
+    // Generate date code from the first entry (all entries should be for the same date)
+    const dateCode = generateDateCode(entries[0].capturedDate);
+
+    // Use transaction to ensure atomicity
+    return await prisma.$transaction(async (tx) => {
+      // First, clear all existing entries for this date
+      await tx.foodIntake.deleteMany({
+        where: {
+          profileId,
+          dateCode,
+        },
+      });
+
+      // Then, create all new entries
+      const createdEntries = [];
+      for (const entry of entries) {
+        const validatedData = createFoodIntakeSchema.parse({
+          profileId,
+          mealType: entry.mealType,
+          food: entry.food,
+          calories: entry.calories,
+          capturedDate: entry.capturedDate,
+          dateCode,
+        });
+
+        const created = await tx.foodIntake.create({
+          data: validatedData,
+        });
+        createdEntries.push(created);
+      }
+
+      return createdEntries;
     });
   }
 
@@ -75,18 +133,5 @@ export class FoodIntakeService {
     });
   }
 
-  static async deleteFoodIntake(id: string, profileId: string) {
-    // Ensure the food intake belongs to the profile
-    const foodIntake = await prisma.foodIntake.findFirst({
-      where: { id, profileId },
-    });
-
-    if (!foodIntake) {
-      throw new Error("Food intake record not found");
-    }
-
-    return await prisma.foodIntake.delete({
-      where: { id },
-    });
-  }
+  // Deletion methods removed
 }

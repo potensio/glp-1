@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
-import { FoodIntakeInput } from "@/lib/services/food-intake.service";
 import { useMemo } from "react";
+import { toast } from "sonner";
+import { FoodIntakeInput } from "@/lib/services/food-intake.service";
 
 // Fetch food intake entries from API
 async function fetchFoodIntakeEntries(dateRange?: {
@@ -64,10 +64,10 @@ function transformFoodIntakeDataForChart(entries: any[]) {
     dayData.entries.push(entry);
   });
 
-  // Convert to array and take last 14 days
-  const dailyData = Array.from(dailyCalories.values())
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(-14);
+  // Convert to array and sort by date
+  const dailyData = Array.from(dailyCalories.values()).sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
 
   // Transform data for chart with daily totals
   return dailyData.map((dayData, index) => {
@@ -124,56 +124,9 @@ const foodIntakeKeys = {
   ) => [...foodIntakeKeys.list(profileId), "filtered", dateRange] as const,
 };
 
-// Create food intake entry function
-async function createFoodIntakeEntry(data: FoodIntakeInput) {
-  const response = await fetch("/api/food-intakes", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      mealType: data.mealType,
-      food: data.food,
-      calories: data.calories,
-      capturedDate: data.capturedDate || new Date().toISOString(),
-    }),
-  });
+// Food intake creation and deletion functions removed
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to log food intake");
-  }
-
-  return await response.json();
-}
-
-// Separate mutation hook for creating food intake entries (matches weight pattern)
-export function useCreateFoodIntakeEntry() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: createFoodIntakeEntry,
-    onSuccess: (data, variables) => {
-      // Invalidate all food intake queries including filtered ones
-      queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
-      toast({
-        title: "Food logged successfully!",
-        description: `${variables.food} (${
-          variables.calories
-        } cal) has been added to your ${variables.mealType.toLowerCase()}.`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description:
-          error.message || "Failed to log food intake. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-}
+// Food intake creation and deletion hooks removed
 
 // Hook for getting food intake entries for a specific date
 export function useFoodIntakeByDate(selectedDate: Date) {
@@ -198,7 +151,9 @@ export function useFoodIntakeByDate(selectedDate: Date) {
     isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: profile?.id ? foodIntakeKeys.filtered(profile.id, dateRange) : ["food-intakes", "disabled"],
+    queryKey: profile?.id
+      ? foodIntakeKeys.filtered(profile.id, dateRange)
+      : ["food-intakes", "disabled"],
     queryFn: () => fetchFoodIntakeEntries(dateRange),
     enabled: !!profile?.id && !authLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -223,7 +178,9 @@ export function useAllFoodIntake() {
     isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: profile?.id ? foodIntakeKeys.list(profile.id) : ["food-intakes", "disabled"],
+    queryKey: profile?.id
+      ? foodIntakeKeys.list(profile.id)
+      : ["food-intakes", "disabled"],
     queryFn: () => fetchFoodIntakeEntries(), // No date range = get all entries
     enabled: !!profile?.id && !authLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -232,18 +189,20 @@ export function useAllFoodIntake() {
   // Get unique dates that have food intake data
   const datesWithData = useMemo(() => {
     if (!entries.length) return [];
-    
+
     const dates = entries.map((entry: any) => {
       const date = new Date(entry.capturedDate);
       date.setHours(0, 0, 0, 0); // Normalize to start of day
       return date;
     });
-    
+
     // Remove duplicates and sort by date (most recent first)
     const timeSet = new Set<number>(dates.map((d: Date) => d.getTime()));
-    const uniqueDates = Array.from(timeSet, (time: number) => new Date(time))
-      .sort((a, b) => b.getTime() - a.getTime());
-    
+    const uniqueDates = Array.from(
+      timeSet,
+      (time: number) => new Date(time)
+    ).sort((a, b) => b.getTime() - a.getTime());
+
     return uniqueDates;
   }, [entries]);
 
@@ -293,4 +252,83 @@ export function useFoodIntake(dateRange?: {
     isLoading,
     error,
   };
+}
+
+// Create multiple food intake entries with clear-before-submit strategy
+async function createMultipleFoodIntakeEntries(
+  entries: Array<{
+    mealType: string;
+    food: string;
+    calories: number;
+    capturedDate: string;
+  }>
+) {
+  const response = await fetch("/api/food-intakes/multiple", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ entries }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to create food intake entries");
+  }
+
+  return response.json();
+}
+
+// Hook for creating multiple food intake entries
+export function useCreateMultipleFoodIntakeEntries() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: createMultipleFoodIntakeEntries,
+    onSuccess: () => {
+      // Invalidate all food intake queries to refresh data
+      queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
+      toast.success("Food intake entries logged successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to log food intake entries");
+    },
+  });
+}
+
+// Legacy single entry creation (kept for backward compatibility)
+async function createFoodIntakeEntry(data: FoodIntakeInput & { capturedDate: string }) {
+  const response = await fetch("/api/food-intakes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to create food intake entry");
+  }
+
+  return response.json();
+}
+
+// Hook for creating a single food intake entry
+export function useCreateFoodIntakeEntry() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: createFoodIntakeEntry,
+    onSuccess: () => {
+      // Invalidate all food intake queries to refresh data
+      queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
+      toast.success("Food intake logged successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to log food intake");
+    },
+  });
 }

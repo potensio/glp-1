@@ -17,11 +17,7 @@ import {
   Check,
   CalendarIcon,
 } from "lucide-react";
-import {
-  useCreateFoodIntakeEntry,
-  useFoodIntakeByDate,
-  useAllFoodIntake,
-} from "@/hooks/use-food-intake";
+import { useFoodIntakeByDate, useAllFoodIntake, useCreateMultipleFoodIntakeEntries } from "@/hooks/use-food-intake";
 import { useEstimateCalories } from "@/hooks/use-calorie-estimation";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -69,8 +65,9 @@ export function MultiMealIntakeDialogContent({
     }
   }, [mostRecentDateWithData, loadingAllData, initialDate]);
 
-  const createFoodIntakeMutation = useCreateFoodIntakeEntry();
+  // Creation functionality with clear-before-submit strategy
   const estimateCaloriesMutation = useEstimateCalories();
+  const createMultipleFoodIntakesMutation = useCreateMultipleFoodIntakeEntries();
 
   // Fetch existing food intake data for the selected date
   const {
@@ -103,7 +100,7 @@ export function MultiMealIntakeDialogContent({
         setMeals([]);
       }
     }
-  }, [entriesLength, selectedDate, isLoadingEntries, loadingError]);
+  }, [entriesLength, selectedDate, isLoadingEntries, loadingError, existingEntries]);
 
   const addMeal = (mealType: string) => {
     const newMeal: MealEntry = {
@@ -166,65 +163,69 @@ export function MultiMealIntakeDialogContent({
   };
 
   const handleLogAllMeals = async () => {
-    setErrors({});
-
     // Validate all meals
-    const validationErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
+    let hasErrors = false;
 
-    if (meals.length === 0) {
-      validationErrors.general = "Please add at least one meal.";
-    }
-
-    meals.forEach((meal, index) => {
+    meals.forEach((meal) => {
+      // Validate food description
       if (!meal.food.trim()) {
-        validationErrors[`food-${meal.id}`] = "Food description is required.";
+        newErrors[`food-${meal.id}`] = "Food description is required.";
+        hasErrors = true;
+      } else if (meal.food.trim().length < 3) {
+        newErrors[`food-${meal.id}`] = "Food description must be at least 3 characters.";
+        hasErrors = true;
       }
-      if (!meal.calories || isNaN(parseInt(meal.calories))) {
-        validationErrors[`calories-${meal.id}`] =
-          "Valid calories amount is required.";
+
+      // Validate calories
+      const calories = parseInt(meal.calories);
+      if (!meal.calories || isNaN(calories)) {
+        newErrors[`calories-${meal.id}`] = "Calories are required.";
+        hasErrors = true;
+      } else if (calories <= 0) {
+        newErrors[`calories-${meal.id}`] = "Calories must be greater than 0.";
+        hasErrors = true;
+      } else if (calories > 5000) {
+        newErrors[`calories-${meal.id}`] = "Calories cannot exceed 5000 per meal.";
+        hasErrors = true;
       }
     });
 
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    if (hasErrors) {
+      setErrors(newErrors);
       return;
     }
 
-    // Set the captured date to the selected date
-    const capturedDate = new Date(selectedDate);
-    capturedDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-
-    // Log all meals sequentially
-    try {
-      for (const meal of meals) {
-        await new Promise((resolve, reject) => {
-          createFoodIntakeMutation.mutate(
-            {
-              mealType: meal.mealType,
-              food: meal.food,
-              calories: parseInt(meal.calories),
-              capturedDate: capturedDate.toISOString(),
-            },
-            {
-              onSuccess: resolve,
-              onError: reject,
-            }
-          );
-        });
-      }
-
-      // Reset and close after all meals are logged
-      setMeals([]);
-      toast.success(
-        `Successfully logged ${meals.length} meal${
-          meals.length > 1 ? "s" : ""
-        }!`
-      );
-      onSave?.();
-      onClose?.();
-    } catch (error) {
-      toast.error("Failed to log some meals. Please try again.");
+    if (meals.length === 0) {
+      toast.error("Please add at least one meal before logging.");
+      return;
     }
+
+    // Clear any previous errors
+    setErrors({});
+
+    // Prepare entries for submission
+    const entries = meals.map((meal) => ({
+      mealType: meal.mealType,
+      food: meal.food.trim(),
+      calories: parseInt(meal.calories),
+      capturedDate: selectedDate.toISOString(),
+    }));
+
+    // Submit using the clear-before-submit strategy
+    createMultipleFoodIntakesMutation.mutate(entries, {
+      onSuccess: () => {
+        // Reset form and close dialog
+        setMeals([]);
+        setErrors({});
+        onSave?.();
+        onClose?.();
+      },
+      onError: (error) => {
+        // Error is already handled by the mutation hook with toast
+        console.error("Failed to log meals:", error);
+      },
+    });
   };
 
   const getTotalCalories = () => {
@@ -451,23 +452,23 @@ export function MultiMealIntakeDialogContent({
           variant="outline"
           className="flex-1 h-11 text-md"
           onClick={onClose}
-          disabled={createFoodIntakeMutation.isPending}
+          disabled={false}
         >
           Cancel
         </Button>
         <Button
           className="flex-1 h-11 text-md"
           onClick={handleLogAllMeals}
-          disabled={meals.length === 0 || createFoodIntakeMutation.isPending}
+          disabled={createMultipleFoodIntakesMutation.isPending || meals.length === 0}
         >
-          {createFoodIntakeMutation.isPending ? (
+          {createMultipleFoodIntakesMutation.isPending ? (
             <>
-              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-              Logging meals...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging...
             </>
           ) : (
             <>
-              Log
+              Log All Meals
               {meals.length > 0 && ` (${getTotalCalories()} cal)`}
             </>
           )}
