@@ -24,6 +24,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/auth-context";
+import { BMICalculator } from "@/components/progress/bmi-calculator";
 
 function useActivityStreak(activities: any[]) {
   return useMemo(() => {
@@ -146,6 +147,7 @@ function ProgressPageContent() {
         </div>
 
         <ProgressOverview />
+        <BMICalculator />
         <HealthCharts />
       </div>
     </>
