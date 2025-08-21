@@ -4,7 +4,14 @@ import { useWeight } from "@/hooks/use-weight";
 import { useDateFilter } from "@/contexts/date-filter-context";
 import { Scale } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { XAxis, YAxis, ResponsiveContainer, AreaChart, Area, Tooltip } from "recharts";
+import {
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Tooltip,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import React from "react";
 
@@ -62,7 +69,7 @@ const WeightTrendDisplay = ({
                 tick={{ fontSize: 12, fill: "#6b7280" }}
                 tickFormatter={(value) => {
                   // Extract just the date part (before the dash) for display
-                  return value.split('-')[0] || "";
+                  return value.split("-")[0] || "";
                 }}
                 interval={0}
               />
@@ -73,7 +80,9 @@ const WeightTrendDisplay = ({
                     const data = payload[0].payload;
                     return (
                       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-xl">
-                        <p className="text-sm font-semibold text-gray-900 mb-1">{data.value} lbs</p>
+                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                          {data.value} lbs
+                        </p>
                         <p className="text-xs text-gray-600">{data.fullDate}</p>
                         <p className="text-xs text-gray-500">{data.time}</p>
                       </div>
@@ -111,7 +120,7 @@ export const WeightTrendChart: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Card className="rounded-2xl p-5 md:p-6 animate-pulse">
+      <Card className="rounded-2xl p-5 md:p-6">
         <div className="flex items-center space-x-3 mb-4">
           <div className="bg-gray-200 p-2 rounded-lg w-9 h-9"></div>
           <div className="h-6 bg-gray-200 rounded w-32"></div>

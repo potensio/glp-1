@@ -72,10 +72,10 @@ export function ActivityDialogContent({
             </DialogTitle>
           </div>
           
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
       </DialogHeader>
       <div className="flex flex-col gap-2">

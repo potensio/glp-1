@@ -5,7 +5,7 @@ A comprehensive health tracking application for GLP-1 medication users, built wi
 ## Features
 
 - **Health Tracking**: Weight, blood pressure, blood sugar, and medication logging
-- **Food Intake**: AI-powered calorie estimation using OpenRouter API
+- **Food Intake**: AI-powered calorie estimation using OpenAI or OpenRouter API
 - **Progress Visualization**: Interactive charts and progress tracking
 - **Google Calendar Integration**: Sync health events with your calendar
 - **Subscription Management**: Stripe-powered billing system
@@ -69,17 +69,27 @@ DATABASE_URL="your_neon_database_url_here"
 JWT_SECRET="your_jwt_secret_here"
 ```
 
-### OpenRouter API (for AI calorie estimation)
+### AI API (for calorie estimation)
 ```env
-OPENROUTER_API_KEY="your_openrouter_api_key_here"
+AI_API_KEY="your_ai_api_key_here"
+AI_PROVIDER="openrouter"  # or "openai"
 ```
 
-**To get an OpenRouter API key:**
+**To get an API key:**
+
+**For OpenRouter (default):**
 1. Visit [OpenRouter](https://openrouter.ai/keys)
 2. Sign up for an account
 3. Generate a new API key
 4. Add credits to your account for API usage
-5. Update the `OPENROUTER_API_KEY` in your `.env.local` file
+5. Set `AI_PROVIDER=openrouter` and `AI_API_KEY` to your OpenRouter key
+
+**For OpenAI:**
+1. Visit [OpenAI API](https://platform.openai.com/api-keys)
+2. Sign up for an account
+3. Generate a new API key
+4. Add credits to your account for API usage
+5. Set `AI_PROVIDER=openai` and `AI_API_KEY` to your OpenAI key
 
 ### Stripe (for billing)
 ```env

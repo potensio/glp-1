@@ -80,10 +80,10 @@ export function Glp1DialogContent({
             </div>
           </div>
 
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
       </DialogHeader>
       {/* GLP-1 type selector */}

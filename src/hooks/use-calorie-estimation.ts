@@ -6,6 +6,8 @@ interface EstimateCaloriesRequest {
 
 interface EstimateCaloriesResponse {
   estimatedCalories: number;
+  confidence: number;
+  breakdown: string;
 }
 
 async function estimateCalories(data: EstimateCaloriesRequest): Promise<EstimateCaloriesResponse> {

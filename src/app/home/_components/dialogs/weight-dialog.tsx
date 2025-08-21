@@ -121,10 +121,10 @@ export function WeightDialogContent({
             </div>
           </div>
 
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
         <Slider
           min={min}

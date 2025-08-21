@@ -147,8 +147,8 @@ function ProgressPageContent() {
         </div>
 
         <ProgressOverview />
-        <BMICalculator />
         <HealthCharts />
+        <BMICalculator />
       </div>
     </>
   );

@@ -142,10 +142,11 @@ export function MultiMealIntakeDialogContent({
       { foodDescription },
       {
         onSuccess: (data) => {
-          updateMeal(mealId, "calories", data.estimatedCalories.toString());
           setMeals(
             meals.map((meal) =>
-              meal.id === mealId ? { ...meal, isEstimating: false } : meal
+              meal.id === mealId 
+                ? { ...meal, calories: data.estimatedCalories.toString(), isEstimating: false } 
+                : meal
             )
           );
           toast.success("Calories estimated successfully!");
@@ -265,10 +266,10 @@ export function MultiMealIntakeDialogContent({
             </div>
           </div>
 
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
       </DialogHeader>
 

@@ -101,10 +101,10 @@ export function BloodSugarDialogContent({
             </div>
           </div>
 
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
       </DialogHeader>
 

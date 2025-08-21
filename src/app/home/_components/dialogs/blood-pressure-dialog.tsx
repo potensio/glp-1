@@ -175,10 +175,10 @@ export function BloodPressureDialogContent({
             </DialogTitle>
           </div>
           
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
-          />
+          /> */}
         </div>
         <DialogDescription className="text-muted-foreground text-sm mb-2">
           Enter your blood pressure readings below.

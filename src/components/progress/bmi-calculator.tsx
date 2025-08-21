@@ -117,7 +117,7 @@ export function BMICalculator() {
   };
 
   return (
-    <Card className="p-8 bg-white shadow-sm border border-gray-100">
+    <Card className="rounded-2xl p-5 md:p-6 shadow-xl w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
