@@ -65,14 +65,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users from root to home
-  if (request.nextUrl.pathname === "/" && isAuthenticated) {
-    return NextResponse.redirect(new URL("/home", request.url));
-  }
-
-  // Redirect unauthenticated users from root to custom login
-  if (request.nextUrl.pathname === "/" && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Allow public access to root page and privacy page
+  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/privacy") {
+    return NextResponse.next();
   }
 
   return NextResponse.next();
@@ -81,6 +76,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/privacy",
+    "/terms",
     "/home/:path*",
     "/billing/:path*",
     "/login",
