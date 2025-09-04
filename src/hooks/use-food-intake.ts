@@ -15,10 +15,10 @@ async function fetchFoodIntakeEntries(params?: {
   if (params) {
     const urlParams = new URLSearchParams();
     if (params.dateCode) {
-      urlParams.append('dateCode', params.dateCode);
+      urlParams.append("dateCode", params.dateCode);
     } else if (params.startDate && params.endDate) {
-      urlParams.append('startDate', params.startDate);
-      urlParams.append('endDate', params.endDate);
+      urlParams.append("startDate", params.startDate);
+      urlParams.append("endDate", params.endDate);
     }
     if (urlParams.toString()) {
       url += `?${urlParams.toString()}`;
@@ -138,11 +138,12 @@ const foodIntakeKeys = {
 export function useFoodIntakeByDate(selectedDate: Date) {
   const { profile, isLoading: authLoading } = useAuth();
 
-  // Generate dateCode for the selected date (DDMMYYYY format)
+  // Generate dateCode in DDMMYYYY format as constraint to find existing food intake entries
+  // Uses user's timezone from selectedDate to ensure timezone-independent queries
   // Memoize to prevent infinite re-renders
   const dateCode = useMemo(() => {
-    const day = selectedDate.getDate().toString().padStart(2, '0');
-    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = selectedDate.getDate().toString().padStart(2, "0");
+    const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
     const year = selectedDate.getFullYear().toString();
     return `${day}${month}${year}`;
   }, [selectedDate]);
@@ -160,13 +161,10 @@ export function useFoodIntakeByDate(selectedDate: Date) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Don't return error if user is not authenticated - this is expected
-  const shouldShowError = error && !!profile?.id;
-
   return {
     entries,
     isLoading: authLoading || queryLoading,
-    error: shouldShowError ? error : null,
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
@@ -210,15 +208,12 @@ export function useAllFoodIntake() {
   // Get the most recent date with data
   const mostRecentDateWithData = datesWithData[0] || null;
 
-  // Don't return error if user is not authenticated - this is expected
-  const shouldShowError = error && !!profile?.id;
-
   return {
     entries,
     datesWithData,
     mostRecentDateWithData,
     isLoading: authLoading || queryLoading,
-    error: shouldShowError ? error : null,
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
@@ -227,24 +222,20 @@ export function useFoodIntake(dateRange?: {
   startDate: string;
   endDate: string;
 }) {
-  const { profile } = useAuth();
-
-  // Throw error if no profile - this will be caught by error boundary
-  if (!profile?.id) {
-    throw new Error("Profile not available");
-  }
+  const { profile, isLoading: authLoading } = useAuth();
 
   const {
     data: entries = [],
-    isLoading,
+    isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: foodIntakeKeys.filtered(profile.id, dateRange),
-    queryFn: () => fetchFoodIntakeEntries({ 
-      startDate: dateRange?.startDate, 
-      endDate: dateRange?.endDate 
-    }),
-    enabled: !!profile?.id,
+    queryKey: foodIntakeKeys.filtered(profile?.id || '', dateRange),
+    queryFn: () =>
+      fetchFoodIntakeEntries({
+        startDate: dateRange?.startDate,
+        endDate: dateRange?.endDate,
+      }),
+    enabled: !!profile?.id && !authLoading, // Only run when profile exists and auth is not loading
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -253,8 +244,8 @@ export function useFoodIntake(dateRange?: {
   return {
     entries,
     chartData,
-    isLoading,
-    error,
+    isLoading: authLoading || queryLoading, // Include auth loading state
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
@@ -293,6 +284,18 @@ export function useCreateMultipleFoodIntakeEntries() {
     onSuccess: () => {
       // Invalidate all food intake queries to refresh data
       queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
+      
+      // Also invalidate specific patterns that might not be caught
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          // Check if query key starts with 'food-intakes'
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'food-intakes';
+        }
+      });
+      
+      // Force invalidate all queries to ensure chart updates
+      queryClient.invalidateQueries();
+      
       toast.success("Food intake entries logged successfully!");
     },
     onError: (error: Error) => {
@@ -302,7 +305,9 @@ export function useCreateMultipleFoodIntakeEntries() {
 }
 
 // Legacy single entry creation (kept for backward compatibility)
-async function createFoodIntakeEntry(data: FoodIntakeInput & { capturedDate: string }) {
+async function createFoodIntakeEntry(
+  data: FoodIntakeInput & { capturedDate: string }
+) {
   const response = await fetch("/api/food-intakes", {
     method: "POST",
     headers: {
@@ -329,6 +334,18 @@ export function useCreateFoodIntakeEntry() {
     onSuccess: () => {
       // Invalidate all food intake queries to refresh data
       queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
+      
+      // Also invalidate specific patterns that might not be caught
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          // Check if query key starts with 'food-intakes'
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'food-intakes';
+        }
+      });
+      
+      // Force invalidate all queries to ensure chart updates
+      queryClient.invalidateQueries();
+      
       toast.success("Food intake logged successfully!");
     },
     onError: (error: Error) => {

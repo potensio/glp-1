@@ -8,15 +8,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useState, useEffect, useMemo } from "react";
+import { Utensils, Sparkles, Loader2, Plus, X, Check } from "lucide-react";
 import {
-  Utensils,
-  Sparkles,
-  Loader2,
-  Plus,
-  X,
-  Check,
-} from "lucide-react";
-import { useFoodIntakeByDate, useCreateMultipleFoodIntakeEntries } from "@/hooks/use-food-intake";
+  useFoodIntakeByDate,
+  useCreateMultipleFoodIntakeEntries,
+} from "@/hooks/use-food-intake";
 import { useEstimateCalories } from "@/hooks/use-calorie-estimation";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -44,17 +40,19 @@ export function MultiMealIntakeDialogContent({
   onSave?: () => void;
   onClose?: () => void;
 }) {
-  // Always use today's date in user's timezone
+  // Always use today's date in user's timezone for capturedDate
+  // This ensures capturedDate reflects the user's local time
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize to start of day
-  
+  today.setHours(0, 0, 0, 0); // Normalize to start of day in user's timezone
+
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedDate] = useState<Date>(today); // Date is fixed to today, no picker needed
 
   // Creation functionality with clear-before-submit strategy
   const estimateCaloriesMutation = useEstimateCalories();
-  const createMultipleFoodIntakesMutation = useCreateMultipleFoodIntakeEntries();
+  const createMultipleFoodIntakesMutation =
+    useCreateMultipleFoodIntakeEntries();
 
   // Fetch existing food intake data for today
   const {
@@ -63,13 +61,7 @@ export function MultiMealIntakeDialogContent({
     error: loadingError,
   } = useFoodIntakeByDate(selectedDate);
 
-  // Memoize entries length to prevent unnecessary re-renders
-  const entriesLength = useMemo(
-    () => existingEntries?.length || 0,
-    [existingEntries]
-  );
-
-  // Pre-load existing data for today when component mounts
+  // Pre-load existing data for today when component mounts or when existingEntries changes
   useEffect(() => {
     if (!isLoadingEntries && !loadingError) {
       if (existingEntries && existingEntries.length > 0) {
@@ -87,7 +79,14 @@ export function MultiMealIntakeDialogContent({
         setMeals([]);
       }
     }
-  }, [entriesLength, isLoadingEntries, loadingError, existingEntries]);
+  }, [isLoadingEntries, loadingError, existingEntries]);
+
+  // Reset meals when dialog is closed (to ensure fresh data on next open)
+  useEffect(() => {
+    return () => {
+      setMeals([]);
+    };
+  }, []);
 
   const addMeal = (mealType: string) => {
     const newMeal: MealEntry = {
@@ -131,8 +130,12 @@ export function MultiMealIntakeDialogContent({
         onSuccess: (data) => {
           setMeals(
             meals.map((meal) =>
-              meal.id === mealId 
-                ? { ...meal, calories: data.estimatedCalories.toString(), isEstimating: false } 
+              meal.id === mealId
+                ? {
+                    ...meal,
+                    calories: data.estimatedCalories.toString(),
+                    isEstimating: false,
+                  }
                 : meal
             )
           );
@@ -161,7 +164,8 @@ export function MultiMealIntakeDialogContent({
         newErrors[`food-${meal.id}`] = "Food description is required.";
         hasErrors = true;
       } else if (meal.food.trim().length < 3) {
-        newErrors[`food-${meal.id}`] = "Food description must be at least 3 characters.";
+        newErrors[`food-${meal.id}`] =
+          "Food description must be at least 3 characters.";
         hasErrors = true;
       }
 
@@ -174,7 +178,8 @@ export function MultiMealIntakeDialogContent({
         newErrors[`calories-${meal.id}`] = "Calories must be greater than 0.";
         hasErrors = true;
       } else if (calories > 5000) {
-        newErrors[`calories-${meal.id}`] = "Calories cannot exceed 5000 per meal.";
+        newErrors[`calories-${meal.id}`] =
+          "Calories cannot exceed 5000 per meal.";
         hasErrors = true;
       }
     });
@@ -193,11 +198,13 @@ export function MultiMealIntakeDialogContent({
     setErrors({});
 
     // Prepare entries for submission
+    // Create entries with capturedDate in user's timezone
+    // selectedDate is already in user's timezone, toISOString() preserves the date
     const entries = meals.map((meal) => ({
       mealType: meal.mealType,
       food: meal.food.trim(),
       calories: parseInt(meal.calories),
-      capturedDate: selectedDate.toISOString(),
+      capturedDate: selectedDate.toISOString(), // Uses user timezone
     }));
 
     // Submit using the clear-before-submit strategy
@@ -229,6 +236,9 @@ export function MultiMealIntakeDialogContent({
     return mealTypes.filter((type) => !usedTypes.includes(type.label));
   };
 
+  // Check if any meal is currently estimating calories
+  const isAnyMealEstimating = meals.some((meal) => meal.isEstimating);
+
   return (
     <>
       <DialogHeader className="pb-3">
@@ -242,7 +252,12 @@ export function MultiMealIntakeDialogContent({
                 Daily Food Intake
               </DialogTitle>
               <div className="text-sm font-normal text-muted-foreground">
-                {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {selectedDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </div>
               {isLoadingEntries && (
                 <span className="text-sm font-normal text-muted-foreground">
@@ -272,6 +287,7 @@ export function MultiMealIntakeDialogContent({
                   size="sm"
                   className="h-auto p-2 flex flex-col items-center gap-0.5 hover:bg-primary/5 hover:border-primary"
                   onClick={() => addMeal(type.label)}
+                  disabled={isAnyMealEstimating}
                 >
                   <span className="text-sm">{type.icon}</span>
                   <span className="text-xs font-medium">{type.label}</span>
@@ -408,7 +424,11 @@ export function MultiMealIntakeDialogContent({
                 )}
               </div>
               <div className="flex items-end gap-2 mb-1">
-                <Button variant={"outline"} onClick={() => removeMeal(meal.id)}>
+                <Button 
+                  variant={"outline"} 
+                  onClick={() => removeMeal(meal.id)}
+                  disabled={isAnyMealEstimating}
+                >
                   <X />
                 </Button>
               </div>
@@ -446,7 +466,11 @@ export function MultiMealIntakeDialogContent({
         <Button
           className="flex-1 h-11 text-md"
           onClick={handleLogAllMeals}
-          disabled={createMultipleFoodIntakesMutation.isPending || meals.length === 0}
+          disabled={
+            createMultipleFoodIntakesMutation.isPending || 
+            meals.length === 0 || 
+            isAnyMealEstimating
+          }
         >
           {createMultipleFoodIntakesMutation.isPending ? (
             <>
