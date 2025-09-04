@@ -208,36 +208,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    console.log("refreshUser called - clearing cache and refetching");
+    console.log("refreshUser called - invalidating and refetching");
 
-    // Completely clear all auth-related cache
-    queryClient.removeQueries({ queryKey: authKeys.me });
-
-    // Clear all cache to ensure no stale data anywhere
-    queryClient.clear();
-
-    // Force invalidation and refetch with fresh data
+    // Simply invalidate the auth query to trigger a refetch
     await queryClient.invalidateQueries({
       queryKey: authKeys.me,
-      refetchType: "all", // Refetch all queries, not just active ones
     });
-
-    // Force a completely fresh fetch
-    const freshData = await queryClient.fetchQuery({
-      queryKey: authKeys.me,
-      queryFn: fetchCurrentUser,
-      staleTime: 0,
-      gcTime: 0,
-    });
-
-    console.log("refreshUser - fresh data fetched:", freshData);
-
-    // Small delay to ensure all components re-render
-    await new Promise((resolve) => setTimeout(resolve, 200));
 
     console.log("refreshUser completed");
 
-    return freshData;
+    return queryClient.getQueryData(authKeys.me);
   };
 
   const updateProfileCompletion = (isComplete: boolean) => {
