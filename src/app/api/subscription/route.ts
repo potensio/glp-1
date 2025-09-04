@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
       try {
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
         const session = await StripeService.createCheckoutSession({
           userId: authUser.id,

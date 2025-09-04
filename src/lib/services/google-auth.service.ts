@@ -9,7 +9,7 @@ export class GoogleAuthService {
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       `${
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
       }/api/google/callback`
     );
   }
