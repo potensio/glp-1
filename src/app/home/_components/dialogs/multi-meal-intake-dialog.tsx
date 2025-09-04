@@ -236,6 +236,9 @@ export function MultiMealIntakeDialogContent({
     return mealTypes.filter((type) => !usedTypes.includes(type.label));
   };
 
+  // Check if any meal is currently estimating calories
+  const isAnyMealEstimating = meals.some((meal) => meal.isEstimating);
+
   return (
     <>
       <DialogHeader className="pb-3">
@@ -284,6 +287,7 @@ export function MultiMealIntakeDialogContent({
                   size="sm"
                   className="h-auto p-2 flex flex-col items-center gap-0.5 hover:bg-primary/5 hover:border-primary"
                   onClick={() => addMeal(type.label)}
+                  disabled={isAnyMealEstimating}
                 >
                   <span className="text-sm">{type.icon}</span>
                   <span className="text-xs font-medium">{type.label}</span>
@@ -420,7 +424,11 @@ export function MultiMealIntakeDialogContent({
                 )}
               </div>
               <div className="flex items-end gap-2 mb-1">
-                <Button variant={"outline"} onClick={() => removeMeal(meal.id)}>
+                <Button 
+                  variant={"outline"} 
+                  onClick={() => removeMeal(meal.id)}
+                  disabled={isAnyMealEstimating}
+                >
                   <X />
                 </Button>
               </div>
@@ -459,7 +467,9 @@ export function MultiMealIntakeDialogContent({
           className="flex-1 h-11 text-md"
           onClick={handleLogAllMeals}
           disabled={
-            createMultipleFoodIntakesMutation.isPending || meals.length === 0
+            createMultipleFoodIntakesMutation.isPending || 
+            meals.length === 0 || 
+            isAnyMealEstimating
           }
         >
           {createMultipleFoodIntakesMutation.isPending ? (
