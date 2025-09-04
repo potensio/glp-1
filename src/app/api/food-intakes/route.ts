@@ -146,6 +146,9 @@ export async function GET(request: NextRequest) {
         );
       }
       
+      // Set end date to end of day to include all entries for that date
+      end.setHours(23, 59, 59, 999);
+      
       foodIntakes = await FoodIntakeService.getFoodIntakesByDateRange(
         user.id,
         start,

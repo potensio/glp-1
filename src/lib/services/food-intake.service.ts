@@ -26,10 +26,11 @@ export const createFoodIntakeSchema = z.object({
 
 export type CreateFoodIntakeInput = z.infer<typeof createFoodIntakeSchema>;
 
-// Helper function to generate date code (DDMMYYYY format)
+// Helper function to generate date code in DDMMYYYY format
+// This is used as a constraint to find existing food intake entries
 function generateDateCode(date: Date): string {
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear().toString();
   return `${day}${month}${year}`;
 }
@@ -44,7 +45,7 @@ export class FoodIntakeService {
   // Create a single food intake entry
   static async createFoodIntake(data: CreateFoodIntakeInput) {
     const validatedData = createFoodIntakeSchema.parse(data);
-    
+
     return await prisma.foodIntake.create({
       data: validatedData,
     });
@@ -74,16 +75,17 @@ export class FoodIntakeService {
       throw new Error("No entries provided");
     }
 
-    // Generate date code from the first entry (all entries should be for the same date)
+    // Generate dateCode in DDMMYYYY format from the first entry (all entries should be for the same date)
+    // This dateCode is used as constraint to find and clear existing food intake entries
     const dateCode = generateDateCode(entries[0].capturedDate);
 
     // Use transaction to ensure atomicity
     return await prisma.$transaction(async (tx) => {
-      // First, clear all existing entries for this date
+      // First, clear all existing entries for this date using dateCode as constraint
       await tx.foodIntake.deleteMany({
         where: {
           profileId,
-          dateCode,
+          dateCode, // DDMMYYYY format constraint
         },
       });
 
@@ -116,14 +118,12 @@ export class FoodIntakeService {
     });
   }
 
-  static async getFoodIntakesByDateCode(
-    profileId: string,
-    dateCode: string
-  ) {
+  // Get food intake entries using dateCode (DDMMYYYY format) as constraint
+  static async getFoodIntakesByDateCode(profileId: string, dateCode: string) {
     return await prisma.foodIntake.findMany({
       where: {
         profileId,
-        dateCode,
+        dateCode, // DDMMYYYY format constraint for timezone-independent queries
       },
       orderBy: { capturedDate: "desc" },
     });
