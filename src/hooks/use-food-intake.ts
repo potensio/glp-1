@@ -161,13 +161,10 @@ export function useFoodIntakeByDate(selectedDate: Date) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Don't return error if user is not authenticated - this is expected
-  const shouldShowError = error && !!profile?.id;
-
   return {
     entries,
     isLoading: authLoading || queryLoading,
-    error: shouldShowError ? error : null,
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
@@ -211,15 +208,12 @@ export function useAllFoodIntake() {
   // Get the most recent date with data
   const mostRecentDateWithData = datesWithData[0] || null;
 
-  // Don't return error if user is not authenticated - this is expected
-  const shouldShowError = error && !!profile?.id;
-
   return {
     entries,
     datesWithData,
     mostRecentDateWithData,
     isLoading: authLoading || queryLoading,
-    error: shouldShowError ? error : null,
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
@@ -228,25 +222,20 @@ export function useFoodIntake(dateRange?: {
   startDate: string;
   endDate: string;
 }) {
-  const { profile } = useAuth();
-
-  // Throw error if no profile - this will be caught by error boundary
-  if (!profile?.id) {
-    throw new Error("Profile not available");
-  }
+  const { profile, isLoading: authLoading } = useAuth();
 
   const {
     data: entries = [],
-    isLoading,
+    isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: foodIntakeKeys.filtered(profile.id, dateRange),
+    queryKey: foodIntakeKeys.filtered(profile?.id || '', dateRange),
     queryFn: () =>
       fetchFoodIntakeEntries({
         startDate: dateRange?.startDate,
         endDate: dateRange?.endDate,
       }),
-    enabled: !!profile?.id,
+    enabled: !!profile?.id && !authLoading, // Only run when profile exists and auth is not loading
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -255,8 +244,8 @@ export function useFoodIntake(dateRange?: {
   return {
     entries,
     chartData,
-    isLoading,
-    error,
+    isLoading: authLoading || queryLoading, // Include auth loading state
+    error: authLoading ? null : error, // Don't show error while auth is loading
   };
 }
 
