@@ -116,6 +116,19 @@ export class FoodIntakeService {
     });
   }
 
+  static async getFoodIntakesByDateCode(
+    profileId: string,
+    dateCode: string
+  ) {
+    return await prisma.foodIntake.findMany({
+      where: {
+        profileId,
+        dateCode,
+      },
+      orderBy: { capturedDate: "desc" },
+    });
+  }
+
   static async getFoodIntakesByDateRange(
     profileId: string,
     startDate: Date,

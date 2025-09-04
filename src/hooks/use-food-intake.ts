@@ -5,18 +5,24 @@ import { toast } from "sonner";
 import { FoodIntakeInput } from "@/lib/services/food-intake.service";
 
 // Fetch food intake entries from API
-async function fetchFoodIntakeEntries(dateRange?: {
-  startDate: string;
-  endDate: string;
+async function fetchFoodIntakeEntries(params?: {
+  startDate?: string;
+  endDate?: string;
+  dateCode?: string;
 }) {
   let url = "/api/food-intakes";
 
-  if (dateRange) {
-    const params = new URLSearchParams({
-      startDate: dateRange.startDate,
-      endDate: dateRange.endDate,
-    });
-    url += `?${params.toString()}`;
+  if (params) {
+    const urlParams = new URLSearchParams();
+    if (params.dateCode) {
+      urlParams.append('dateCode', params.dateCode);
+    } else if (params.startDate && params.endDate) {
+      urlParams.append('startDate', params.startDate);
+      urlParams.append('endDate', params.endDate);
+    }
+    if (urlParams.toString()) {
+      url += `?${urlParams.toString()}`;
+    }
   }
 
   const response = await fetch(url);
@@ -132,18 +138,13 @@ const foodIntakeKeys = {
 export function useFoodIntakeByDate(selectedDate: Date) {
   const { profile, isLoading: authLoading } = useAuth();
 
-  // Create date range for the selected date (start and end of day)
+  // Generate dateCode for the selected date (DDMMYYYY format)
   // Memoize to prevent infinite re-renders
-  const dateRange = useMemo(() => {
-    const startDate = new Date(selectedDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(selectedDate);
-    endDate.setHours(23, 59, 59, 999);
-
-    return {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    };
+  const dateCode = useMemo(() => {
+    const day = selectedDate.getDate().toString().padStart(2, '0');
+    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = selectedDate.getFullYear().toString();
+    return `${day}${month}${year}`;
   }, [selectedDate]);
 
   const {
@@ -152,9 +153,9 @@ export function useFoodIntakeByDate(selectedDate: Date) {
     error,
   } = useQuery({
     queryKey: profile?.id
-      ? foodIntakeKeys.filtered(profile.id, dateRange)
+      ? [...foodIntakeKeys.list(profile.id), "by-date-code", dateCode]
       : ["food-intakes", "disabled"],
-    queryFn: () => fetchFoodIntakeEntries(dateRange),
+    queryFn: () => fetchFoodIntakeEntries({ dateCode }),
     enabled: !!profile?.id && !authLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -239,7 +240,10 @@ export function useFoodIntake(dateRange?: {
     error,
   } = useQuery({
     queryKey: foodIntakeKeys.filtered(profile.id, dateRange),
-    queryFn: () => fetchFoodIntakeEntries(dateRange),
+    queryFn: () => fetchFoodIntakeEntries({ 
+      startDate: dateRange?.startDate, 
+      endDate: dateRange?.endDate 
+    }),
     enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

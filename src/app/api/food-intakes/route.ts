@@ -123,10 +123,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const dateCode = searchParams.get('dateCode');
 
     // Use service layer for business logic
     let foodIntakes;
-    if (startDate && endDate) {
+    if (dateCode) {
+      // Get food intakes by dateCode
+      foodIntakes = await FoodIntakeService.getFoodIntakesByDateCode(
+        user.id,
+        dateCode
+      );
+    } else if (startDate && endDate) {
       // Parse the ISO date strings directly
       const start = new Date(startDate);
       const end = new Date(endDate);

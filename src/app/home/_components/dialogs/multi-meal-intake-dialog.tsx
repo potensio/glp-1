@@ -15,13 +15,11 @@ import {
   Plus,
   X,
   Check,
-  CalendarIcon,
 } from "lucide-react";
-import { useFoodIntakeByDate, useAllFoodIntake, useCreateMultipleFoodIntakeEntries } from "@/hooks/use-food-intake";
+import { useFoodIntakeByDate, useCreateMultipleFoodIntakeEntries } from "@/hooks/use-food-intake";
 import { useEstimateCalories } from "@/hooks/use-calorie-estimation";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { DatePicker } from "@/components/ui/date-picker";
 
 const mealTypes = [
   { label: "Breakfast", icon: "🌅" },
@@ -41,35 +39,24 @@ interface MealEntry {
 export function MultiMealIntakeDialogContent({
   onSave,
   onClose,
-  initialDate,
 }: {
   todayCalories?: number;
   onSave?: () => void;
   onClose?: () => void;
-  initialDate?: Date;
 }) {
-  // Get all food intake data to find the most recent date with data
-  const { mostRecentDateWithData, isLoading: loadingAllData } =
-    useAllFoodIntake();
-
+  // Always use today's date in user's timezone
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to start of day
+  
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    initialDate || new Date()
-  );
-
-  // Update selectedDate when mostRecentDateWithData becomes available (only if no initialDate was provided)
-  useEffect(() => {
-    if (!initialDate && mostRecentDateWithData && !loadingAllData) {
-      setSelectedDate(mostRecentDateWithData);
-    }
-  }, [mostRecentDateWithData, loadingAllData, initialDate]);
+  const [selectedDate] = useState<Date>(today); // Date is fixed to today, no picker needed
 
   // Creation functionality with clear-before-submit strategy
   const estimateCaloriesMutation = useEstimateCalories();
   const createMultipleFoodIntakesMutation = useCreateMultipleFoodIntakeEntries();
 
-  // Fetch existing food intake data for the selected date
+  // Fetch existing food intake data for today
   const {
     entries: existingEntries,
     isLoading: isLoadingEntries,
@@ -82,7 +69,7 @@ export function MultiMealIntakeDialogContent({
     [existingEntries]
   );
 
-  // Pre-load existing data when date changes or component mounts
+  // Pre-load existing data for today when component mounts
   useEffect(() => {
     if (!isLoadingEntries && !loadingError) {
       if (existingEntries && existingEntries.length > 0) {
@@ -96,11 +83,11 @@ export function MultiMealIntakeDialogContent({
         );
         setMeals(preloadedMeals);
       } else {
-        // Clear meals if no existing data for the selected date
+        // Clear meals if no existing data for today
         setMeals([]);
       }
     }
-  }, [entriesLength, selectedDate, isLoadingEntries, loadingError, existingEntries]);
+  }, [entriesLength, isLoadingEntries, loadingError, existingEntries]);
 
   const addMeal = (mealType: string) => {
     const newMeal: MealEntry = {
@@ -219,6 +206,7 @@ export function MultiMealIntakeDialogContent({
         // Reset form and close dialog
         setMeals([]);
         setErrors({});
+        toast.success("Food intake entries logged successfully!");
         onSave?.();
         onClose?.();
       },
@@ -253,6 +241,9 @@ export function MultiMealIntakeDialogContent({
               <DialogTitle className="text-lg font-semibold">
                 Daily Food Intake
               </DialogTitle>
+              <div className="text-sm font-normal text-muted-foreground">
+                {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
               {isLoadingEntries && (
                 <span className="text-sm font-normal text-muted-foreground">
                   Loading existing data...
@@ -265,11 +256,6 @@ export function MultiMealIntakeDialogContent({
               )}
             </div>
           </div>
-
-          {/* <DatePicker
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-          /> */}
         </div>
       </DialogHeader>
 
@@ -277,7 +263,7 @@ export function MultiMealIntakeDialogContent({
         {/* Add meal buttons */}
         {getAvailableMealTypes().length > 0 && (
           <div className="space-y-2">
-            <DialogDescription>Log multiple meals at once</DialogDescription>
+            <DialogDescription>Log multiple meals for today</DialogDescription>
             <div className="grid grid-cols-4 gap-1">
               {getAvailableMealTypes().map((type) => (
                 <Button
