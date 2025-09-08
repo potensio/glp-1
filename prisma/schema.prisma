@@ -334,3 +334,13 @@ model PasswordResetToken {
 
   @@map("password_reset_tokens")
 }
+
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  source    String?  // Track where the signup came from (e.g., "landing_page")
+  metadata  Json?    // Store additional data like user agent, referrer, etc.
+
+  @@map("waitlist")
+}
