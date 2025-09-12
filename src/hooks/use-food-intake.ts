@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { FoodIntakeInput } from "@/lib/services/food-intake.service";
+import type { CalorieEstimationResponse } from "@/lib/services/ai-calorie-estimation.service";
 
 // Fetch food intake entries from API
 async function fetchFoodIntakeEntries(params?: {
@@ -229,7 +230,7 @@ export function useFoodIntake(dateRange?: {
     isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: foodIntakeKeys.filtered(profile?.id || '', dateRange),
+    queryKey: foodIntakeKeys.filtered(profile?.id || "", dateRange),
     queryFn: () =>
       fetchFoodIntakeEntries({
         startDate: dateRange?.startDate,
@@ -250,61 +251,7 @@ export function useFoodIntake(dateRange?: {
 }
 
 // Create multiple food intake entries with clear-before-submit strategy
-async function createMultipleFoodIntakeEntries(
-  entries: Array<{
-    mealType: string;
-    food: string;
-    calories: number;
-    capturedDate: string;
-  }>
-) {
-  const response = await fetch("/api/food-intakes/multiple", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ entries }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to create food intake entries");
-  }
-
-  return response.json();
-}
-
-// Hook for creating multiple food intake entries
-export function useCreateMultipleFoodIntakeEntries() {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: createMultipleFoodIntakeEntries,
-    onSuccess: () => {
-      // Invalidate all food intake queries to refresh data
-      queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
-      
-      // Also invalidate specific patterns that might not be caught
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          // Check if query key starts with 'food-intakes'
-          return Array.isArray(query.queryKey) && query.queryKey[0] === 'food-intakes';
-        }
-      });
-      
-      // Force invalidate all queries to ensure chart updates
-      queryClient.invalidateQueries();
-      
-      toast.success("Food intake entries logged successfully!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to log food intake entries");
-    },
-  });
-}
-
-// Legacy single entry creation (kept for backward compatibility)
+// Single entry creation
 async function createFoodIntakeEntry(
   data: FoodIntakeInput & { capturedDate: string }
 ) {
@@ -334,18 +281,21 @@ export function useCreateFoodIntakeEntry() {
     onSuccess: () => {
       // Invalidate all food intake queries to refresh data
       queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
-      
+
       // Also invalidate specific patterns that might not be caught
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         predicate: (query) => {
           // Check if query key starts with 'food-intakes'
-          return Array.isArray(query.queryKey) && query.queryKey[0] === 'food-intakes';
-        }
+          return (
+            Array.isArray(query.queryKey) &&
+            query.queryKey[0] === "food-intakes"
+          );
+        },
       });
-      
+
       // Force invalidate all queries to ensure chart updates
       queryClient.invalidateQueries();
-      
+
       toast.success("Food intake logged successfully!");
     },
     onError: (error: Error) => {
@@ -353,3 +303,114 @@ export function useCreateFoodIntakeEntry() {
     },
   });
 }
+
+// Enhanced food entry input with nutrition data
+interface EnhancedFoodEntryInput {
+  mealType: string;
+  food: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  quantity: number;
+  unit: string;
+  capturedDate: string;
+}
+
+// API function for creating enhanced food entries
+async function createEnhancedFoodEntry(data: EnhancedFoodEntryInput) {
+  const response = await fetch("/api/food-intakes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to create food entry");
+  }
+
+  return response.json();
+}
+
+// Enhanced hook for creating food entries with full nutrition data
+export function useCreateFoodEntry() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: createEnhancedFoodEntry,
+    onMutate: async (newEntry) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: foodIntakeKeys.all });
+
+      // Snapshot previous value
+      const previousData = queryClient.getQueryData(foodIntakeKeys.all);
+
+      // Optimistically update with new entry
+      queryClient.setQueryData(foodIntakeKeys.all, (old: any[]) => {
+        if (!old)
+          return [
+            { ...newEntry, id: `temp-${Date.now()}`, createdAt: new Date() },
+          ];
+        return [
+          ...old,
+          {
+            ...newEntry,
+            id: `temp-${Date.now()}`,
+            createdAt: new Date(),
+            isOptimistic: true,
+          },
+        ];
+      });
+
+      return { previousData };
+    },
+    onError: (err, newEntry, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(foodIntakeKeys.all, context.previousData);
+      }
+      toast.error("Failed to save food entry");
+    },
+    onSuccess: () => {
+      toast.success("Food entry saved successfully!");
+    },
+    onSettled: () => {
+      // Always refetch after mutation
+      queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
+    },
+  });
+}
+
+// Helper function to create food entry from AI estimation
+export function createFoodEntryFromEstimation(
+  estimation: CalorieEstimationResponse,
+  mealType: string,
+  foodDescription: string,
+  capturedDate: string
+): EnhancedFoodEntryInput {
+  const portion = estimation.estimatedPortion || {
+    quantity: 1,
+    unit: "serving",
+  };
+
+  return {
+    mealType,
+    food: foodDescription,
+    calories: estimation.calories,
+    protein: estimation.nutrition.protein,
+    carbs: estimation.nutrition.carbs,
+    fat: estimation.nutrition.fat,
+    fiber: estimation.nutrition.fiber,
+    quantity: portion.quantity,
+    unit: portion.unit,
+    capturedDate,
+  };
+}
+
+// Export types
+export type { EnhancedFoodEntryInput };

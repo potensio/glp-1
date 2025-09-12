@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "food_intakes" ADD COLUMN     "carbs" DOUBLE PRECISION,
+ADD COLUMN     "fat" DOUBLE PRECISION,
+ADD COLUMN     "fiber" DOUBLE PRECISION,
+ADD COLUMN     "protein" DOUBLE PRECISION,
+ADD COLUMN     "quantity" DOUBLE PRECISION,
+ADD COLUMN     "unit" TEXT;

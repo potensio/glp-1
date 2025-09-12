@@ -9,6 +9,14 @@ export const foodIntakeSchema = z.object({
     .number()
     .min(1, "Calories must be at least 1")
     .max(10000, "Calories must be less than 10,000"),
+  // Enhanced nutrition fields
+  protein: z.coerce.number().min(0).max(1000).optional(),
+  carbs: z.coerce.number().min(0).max(1000).optional(),
+  fat: z.coerce.number().min(0).max(1000).optional(),
+  fiber: z.coerce.number().min(0).max(200).optional(),
+  // Portion tracking
+  quantity: z.coerce.number().min(0.1).max(100).optional(),
+  unit: z.string().optional(),
   capturedDate: z.string().optional(),
 });
 
@@ -20,6 +28,14 @@ export const createFoodIntakeSchema = z.object({
   mealType: z.string().min(1),
   food: z.string().min(1),
   calories: z.number().min(1).max(10000),
+  // Enhanced nutrition fields
+  protein: z.number().min(0).max(1000).optional(),
+  carbs: z.number().min(0).max(1000).optional(),
+  fat: z.number().min(0).max(1000).optional(),
+  fiber: z.number().min(0).max(200).optional(),
+  // Portion tracking
+  quantity: z.number().min(0.1).max(100).optional(),
+  unit: z.string().optional(),
   capturedDate: z.date(),
   dateCode: z.string(),
 });
@@ -58,56 +74,6 @@ export class FoodIntakeService {
         profileId,
         dateCode,
       },
-    });
-  }
-
-  // Create multiple food intake entries with clear-before-submit strategy
-  static async createMultipleFoodIntakesWithClear(
-    profileId: string,
-    entries: Array<{
-      mealType: string;
-      food: string;
-      calories: number;
-      capturedDate: Date;
-    }>
-  ) {
-    if (entries.length === 0) {
-      throw new Error("No entries provided");
-    }
-
-    // Generate dateCode in DDMMYYYY format from the first entry (all entries should be for the same date)
-    // This dateCode is used as constraint to find and clear existing food intake entries
-    const dateCode = generateDateCode(entries[0].capturedDate);
-
-    // Use transaction to ensure atomicity
-    return await prisma.$transaction(async (tx) => {
-      // First, clear all existing entries for this date using dateCode as constraint
-      await tx.foodIntake.deleteMany({
-        where: {
-          profileId,
-          dateCode, // DDMMYYYY format constraint
-        },
-      });
-
-      // Then, create all new entries
-      const createdEntries = [];
-      for (const entry of entries) {
-        const validatedData = createFoodIntakeSchema.parse({
-          profileId,
-          mealType: entry.mealType,
-          food: entry.food,
-          calories: entry.calories,
-          capturedDate: entry.capturedDate,
-          dateCode,
-        });
-
-        const created = await tx.foodIntake.create({
-          data: validatedData,
-        });
-        createdEntries.push(created);
-      }
-
-      return createdEntries;
     });
   }
 
