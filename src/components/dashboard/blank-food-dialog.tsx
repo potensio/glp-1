@@ -4,8 +4,16 @@ import React, { useState, useEffect, useMemo } from "react";
 import { ChevronUp, ChevronDown, Utensils, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useEstimateNutrition, useGetUnitSuggestions } from "@/hooks/use-calorie-estimation";
-import { useCreateFoodEntry, createFoodEntryFromEstimation, useFoodIntakeByDate } from "@/hooks/use-food-intake";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useEstimateNutrition,
+  useGetUnitSuggestions,
+} from "@/hooks/use-calorie-estimation";
+import {
+  useCreateFoodEntry,
+  createFoodEntryFromEstimation,
+  useFoodIntakeByDate,
+} from "@/hooks/use-food-intake";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import type { CalorieEstimationResponse } from "@/lib/services/ai-calorie-estimation.service";
@@ -39,7 +47,9 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
 
   const [selectedDate] = useState<Date>(today);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<'food-name' | 'quantity' | 'nutrition'>('food-name');
+  const [currentStep, setCurrentStep] = useState<
+    "food-name" | "quantity" | "nutrition"
+  >("food-name");
   const [expandedMeals, setExpandedMeals] = useState<{
     [key: string]: boolean;
   }>({});
@@ -52,23 +62,26 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
 
   // Group entries by meal type
   const meals = useMemo(() => {
-    const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+    const mealTypes = ["Breakfast", "Lunch", "Dinner", "Snacks"];
     const groupedMeals: Meals = {};
-    
-    mealTypes.forEach(mealType => {
-      const mealEntries = foodEntries.filter((entry: any) => 
-        entry.mealType?.toLowerCase() === mealType.toLowerCase()
-      ).map((entry: any) => ({
-        name: entry.food || 'Unknown Food',
-        calories: entry.calories || 0,
-        protein: entry.protein || 0,
-        carbs: entry.carbs || 0,
-        fat: entry.fat || 0,
-      }));
-      
+
+    mealTypes.forEach((mealType) => {
+      const mealEntries = foodEntries
+        .filter(
+          (entry: any) =>
+            entry.mealType?.toLowerCase() === mealType.toLowerCase()
+        )
+        .map((entry: any) => ({
+          name: entry.food || "Unknown Food",
+          calories: entry.calories || 0,
+          protein: entry.protein || 0,
+          carbs: entry.carbs || 0,
+          fat: entry.fat || 0,
+        }));
+
       groupedMeals[mealType] = { entries: mealEntries };
     });
-    
+
     return groupedMeals;
   }, [foodEntries]);
 
@@ -83,11 +96,12 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
   const [quantityData, setQuantityData] = useState({
     amount: "",
     unit: "",
-    availableUnits: [] as string[]
+    availableUnits: [] as string[],
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
-  const [nutritionData, setNutritionData] = useState<CalorieEstimationResponse | null>(null);
+  const [nutritionData, setNutritionData] =
+    useState<CalorieEstimationResponse | null>(null);
 
   const sum = (arr: FoodEntry[], key: keyof FoodEntry): number => {
     return arr.reduce((s, i) => s + (Number(i[key]) || 0), 0);
@@ -104,29 +118,33 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
   };
 
   // Real nutrition calculation using AI service
-  const calculateNutrition = async (foodName: string, quantity?: number, unit?: string) => {
+  const calculateNutrition = async (
+    foodName: string,
+    quantity?: number,
+    unit?: string
+  ) => {
     if (!foodName.trim()) return;
-    
+
     setIsCalculating(true);
-    
+
     try {
       const result = await estimateNutrition.mutateAsync({
         foodDescription: foodName,
         quantity: quantity || 1,
-        unit: unit || 'serving'
+        unit: unit || "serving",
       });
-      
+
       setNutritionData(result);
-      
+
       setFormData((prev) => ({
-         ...prev,
-         calories: (result.calories || 0).toString(),
-         protein: (result.nutrition?.protein || 0).toString(),
-         carbs: (result.nutrition?.carbs || 0).toString(),
-         fat: (result.nutrition?.fat || 0).toString(),
-       }));
+        ...prev,
+        calories: (result.calories || 0).toString(),
+        protein: (result.nutrition?.protein || 0).toString(),
+        carbs: (result.nutrition?.carbs || 0).toString(),
+        fat: (result.nutrition?.fat || 0).toString(),
+      }));
     } catch (error) {
-      console.error('Failed to estimate nutrition:', error);
+      console.error("Failed to estimate nutrition:", error);
       // Fallback to mock data on error
       const mockNutrition = {
         apple: { calories: 95, protein: 0.5, carbs: 25, fat: 0.3 },
@@ -163,7 +181,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
 
   const backToMeals = () => {
     setSelectedMeal(null);
-    setCurrentStep('food-name');
+    setCurrentStep("food-name");
     setFormData({
       name: "",
       calories: "",
@@ -174,22 +192,22 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
     setQuantityData({
       amount: "",
       unit: "",
-      availableUnits: []
+      availableUnits: [],
     });
     setNutritionData(null);
   };
 
   const backToFoodName = () => {
-    setCurrentStep('food-name');
+    setCurrentStep("food-name");
     setQuantityData({
       amount: "",
       unit: "",
-      availableUnits: []
+      availableUnits: [],
     });
   };
 
   const backToQuantity = () => {
-    setCurrentStep('quantity');
+    setCurrentStep("quantity");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -203,7 +221,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
       const month = (localDate.getMonth() + 1).toString().padStart(2, "0");
       const year = localDate.getFullYear().toString();
       const dateCode = `${day}${month}${year}`;
-      
+
       // Use the user's edited values from formData instead of original estimation
       const foodEntryData = {
         mealType: selectedMeal,
@@ -215,13 +233,13 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
         fiber: nutritionData.nutrition.fiber || 0, // Keep original fiber value
         quantity: nutritionData.estimatedPortion?.quantity || 1,
         unit: nutritionData.estimatedPortion?.unit || "serving",
-        capturedDate: selectedDate.toISOString().split('T')[0],
-        dateCode: dateCode // Add client-generated dateCode
+        capturedDate: selectedDate.toISOString().split("T")[0],
+        dateCode: dateCode, // Add client-generated dateCode
       };
 
       await createFoodEntry.mutateAsync(foodEntryData);
 
-      // Reset form
+      // Reset form and return to first view instead of closing dialog
       setFormData({
         name: "",
         calories: "",
@@ -230,15 +248,13 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
         fat: "",
       });
       setNutritionData(null);
-      setCurrentStep('food-name');
-      setSelectedMeal(null);
-      
-      // Call onSave if provided
-      if (onSave) {
-        onSave();
-      }
+      setCurrentStep("food-name");
+      setSelectedMeal(null); // This returns to meal selection view
+
+      // Don't call onSave to prevent dialog closure
+      // User stays in dialog and can log more food
     } catch (error) {
-      console.error('Failed to save food entry:', error);
+      console.error("Failed to save food entry:", error);
     }
   };
 
@@ -262,32 +278,38 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
     if (formData.name.trim()) {
       try {
         // Get AI-powered unit suggestions
-        const suggestedUnits = await getUnitSuggestions.mutateAsync(formData.name.trim());
-        
+        const suggestedUnits = await getUnitSuggestions.mutateAsync(
+          formData.name.trim()
+        );
+
         setQuantityData({
           amount: "",
-          unit: suggestedUnits[0] || 'serving', // Use first suggested unit or fallback
-          availableUnits: suggestedUnits
+          unit: suggestedUnits[0] || "serving", // Use first suggested unit or fallback
+          availableUnits: suggestedUnits,
         });
-        setCurrentStep('quantity');
+        setCurrentStep("quantity");
       } catch (error) {
-        console.error('Failed to get unit suggestions:', error);
+        console.error("Failed to get unit suggestions:", error);
         // Fallback to default units if AI fails
-        const fallbackUnits = ['serving', 'cup', 'gram', 'ounce', 'piece'];
+        const fallbackUnits = ["serving", "cup", "gram", "ounce", "piece"];
         setQuantityData({
           amount: "",
           unit: fallbackUnits[0],
-          availableUnits: fallbackUnits
+          availableUnits: fallbackUnits,
         });
-        setCurrentStep('quantity');
+        setCurrentStep("quantity");
       }
     }
   };
 
   const handleQuantitySubmit = () => {
     if (quantityData.amount.trim()) {
-      calculateNutrition(formData.name, parseFloat(quantityData.amount), quantityData.unit);
-      setCurrentStep('nutrition');
+      calculateNutrition(
+        formData.name,
+        parseFloat(quantityData.amount),
+        quantityData.unit
+      );
+      setCurrentStep("nutrition");
     }
   };
 
@@ -446,7 +468,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
         {selectedMeal && (
           <div className="mt-6">
             {/* Step 1: Food Name Entry */}
-            {currentStep === 'food-name' && (
+            {currentStep === "food-name" && (
               <>
                 <Button
                   onClick={backToMeals}
@@ -458,10 +480,14 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
 
                 <div className="space-y-4">
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold mb-2">What did you eat?</h3>
-                    <p className="text-sm text-gray-500">Enter the name of the food item</p>
+                    <h3 className="text-lg font-semibold mb-2">
+                      What did you eat?
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Enter the name of the food item
+                    </p>
                   </div>
-                  
+
                   <div className="relative">
                     <input
                       value={formData.name}
@@ -469,7 +495,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
                       className="w-full border rounded-lg px-4 py-4 text-lg font-medium text-center"
                       placeholder="e.g., apple, coffee, chicken breast"
                       onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleFoodNameSubmit();
                         }
@@ -480,16 +506,20 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
                   <Button
                     onClick={handleFoodNameSubmit}
                     className="w-full bg-blue-600 text-white rounded-lg py-3 font-medium hover:bg-blue-700 transition-colors"
-                    disabled={!formData.name.trim() || getUnitSuggestions.isPending}
+                    disabled={
+                      !formData.name.trim() || getUnitSuggestions.isPending
+                    }
                   >
-                    {getUnitSuggestions.isPending ? 'Getting suggestions...' : 'Continue'}
+                    {getUnitSuggestions.isPending
+                      ? "Getting suggestions..."
+                      : "Continue"}
                   </Button>
                 </div>
               </>
             )}
 
             {/* Step 2: Quantity Selection */}
-            {currentStep === 'quantity' && (
+            {currentStep === "quantity" && (
               <>
                 <Button
                   onClick={backToFoodName}
@@ -501,20 +531,29 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
 
                 <div className="space-y-4">
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold mb-2">How much {formData.name}?</h3>
-                    <p className="text-sm text-gray-500">Select the quantity and unit</p>
+                    <h3 className="text-lg font-semibold mb-2">
+                      How much {formData.name}?
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Select the quantity and unit
+                    </p>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="relative">
                       <input
                         value={quantityData.amount}
-                        onChange={(e) => setQuantityData(prev => ({ ...prev, amount: e.target.value }))}
+                        onChange={(e) =>
+                          setQuantityData((prev) => ({
+                            ...prev,
+                            amount: e.target.value,
+                          }))
+                        }
                         className="w-full border rounded-lg px-4 py-4 text-lg font-medium text-center"
                         placeholder="Enter amount (e.g., 1, 2.5)"
                         inputMode="decimal"
                         onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault();
                             handleQuantitySubmit();
                           }
@@ -527,11 +566,13 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
                         <button
                           key={unit}
                           type="button"
-                          onClick={() => setQuantityData(prev => ({ ...prev, unit }))}
+                          onClick={() =>
+                            setQuantityData((prev) => ({ ...prev, unit }))
+                          }
                           className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
                             quantityData.unit === unit
-                              ? 'bg-blue-100 border-blue-500 text-blue-700'
-                              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                              ? "bg-blue-100 border-blue-500 text-blue-700"
+                              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                           }`}
                         >
                           {unit}
@@ -556,7 +597,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
             )}
 
             {/* Step 3: Nutrition Details */}
-            {currentStep === 'nutrition' && (
+            {currentStep === "nutrition" && (
               <>
                 <Button
                   onClick={backToQuantity}
@@ -569,85 +610,138 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="text-center">
                     <h3 className="text-lg font-semibold mb-2">
-                      {quantityData.amount} {quantityData.unit} of {formData.name}
+                      {quantityData.amount} {quantityData.unit} of{" "}
+                      {formData.name}
                     </h3>
-                    <p className="text-sm text-gray-500">Review and adjust nutritional values</p>
+                    <p className="text-sm text-gray-500">
+                      Review and adjust nutritional values
+                    </p>
                   </div>
 
-                  {isCalculating && (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
-                      <span className="text-sm text-gray-600">Calculating nutrition...</span>
+                  {isCalculating ? (
+                    <>
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                        <span className="text-sm text-gray-600">
+                          Calculating nutrition...
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Calories
+                          </label>
+                          <Skeleton className="w-full h-12 rounded-lg" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Protein (g)
+                          </label>
+                          <Skeleton className="w-full h-12 rounded-lg" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Carbs (g)
+                          </label>
+                          <Skeleton className="w-full h-12 rounded-lg" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Fat (g)
+                          </label>
+                          <Skeleton className="w-full h-12 rounded-lg" />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Calories
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.calories}
+                          onChange={(e) =>
+                            handleInputChange("calories", e.target.value)
+                          }
+                          required
+                          inputMode="numeric"
+                          pattern="\\d*"
+                          className="w-full border rounded-lg px-3 py-3 text-center font-medium"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Protein (g)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.protein}
+                          onChange={(e) =>
+                            handleInputChange("protein", e.target.value)
+                          }
+                          inputMode="decimal"
+                          className="w-full border rounded-lg px-3 py-3 text-center font-medium"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Carbs (g)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.carbs}
+                          onChange={(e) =>
+                            handleInputChange("carbs", e.target.value)
+                          }
+                          inputMode="decimal"
+                          className="w-full border rounded-lg px-3 py-3 text-center font-medium"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Fat (g)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.fat}
+                          onChange={(e) =>
+                            handleInputChange("fat", e.target.value)
+                          }
+                          inputMode="decimal"
+                          className="w-full border rounded-lg px-3 py-3 text-center font-medium"
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Calories</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={formData.calories}
-                        onChange={(e) => handleInputChange("calories", e.target.value)}
-                        required
-                        inputMode="numeric"
-                        pattern="\\d*"
-                        className="w-full border rounded-lg px-3 py-3 text-center font-medium"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Protein (g)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={formData.protein}
-                        onChange={(e) => handleInputChange("protein", e.target.value)}
-                        inputMode="decimal"
-                        className="w-full border rounded-lg px-3 py-3 text-center font-medium"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Carbs (g)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={formData.carbs}
-                        onChange={(e) => handleInputChange("carbs", e.target.value)}
-                        inputMode="decimal"
-                        className="w-full border rounded-lg px-3 py-3 text-center font-medium"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Fat (g)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={formData.fat}
-                        onChange={(e) => handleInputChange("fat", e.target.value)}
-                        inputMode="decimal"
-                        className="w-full border rounded-lg px-3 py-3 text-center font-medium"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
                   <div className="text-xs text-gray-500 text-center">
-                    Nutritional values are estimated. You can adjust them as needed.
+                    Nutritional values are estimated. You can adjust them as
+                    needed.
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-green-600 text-white rounded-lg py-3 font-medium hover:bg-green-700 transition-colors"
+                    className="w-full text-white rounded-lg py-3 font-medium transition-colors"
                     disabled={isCalculating}
                   >
-                    {isCalculating ? "Calculating..." : "Add to " + selectedMeal}
+                    {isCalculating
+                      ? "Calculating..."
+                      : "Add to " + selectedMeal}
                   </Button>
                 </form>
               </>

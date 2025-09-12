@@ -70,27 +70,26 @@ export function useGetUnitSuggestions() {
       const response = await estimateNutrition({
         foodDescription: foodName,
         quantity: 1, // Default quantity for getting suggestions
-        unit: "serving", // Default unit for getting suggestions
+        unit: 'serving' // Default unit for getting suggestions
       });
-
+      
       // Extract unique units from portionSuggestions
-      const suggestedUnits =
-        response.portionSuggestions
-          ?.map((suggestion) => suggestion.unit)
-          .filter((unit, index, array) => array.indexOf(unit) === index) || // Remove duplicates
-        [];
-
+      const suggestedUnits = response.portionSuggestions
+        ?.map(suggestion => suggestion.unit)
+        .filter((unit, index, array) => array.indexOf(unit) === index) // Remove duplicates
+        || [];
+      
       // Add fallback units if no suggestions or limited suggestions
-      const fallbackUnits = ["serving", "cup", "gram", "ounce", "piece"];
+      const fallbackUnits = ['serving', 'cup', 'gram', 'ounce', 'piece'];
       const allUnits = [...suggestedUnits];
-
+      
       // Add fallbacks that aren't already included
-      fallbackUnits.forEach((unit) => {
+      fallbackUnits.forEach(unit => {
         if (!allUnits.includes(unit)) {
           allUnits.push(unit);
         }
       });
-
+      
       return allUnits.slice(0, 8); // Limit to 8 units for UI
     },
     retry: 1,

@@ -230,7 +230,7 @@ export function useFoodIntake(dateRange?: {
     isLoading: queryLoading,
     error,
   } = useQuery({
-    queryKey: foodIntakeKeys.filtered(profile?.id || "", dateRange),
+    queryKey: foodIntakeKeys.filtered(profile?.id || '', dateRange),
     queryFn: () =>
       fetchFoodIntakeEntries({
         startDate: dateRange?.startDate,
@@ -281,21 +281,18 @@ export function useCreateFoodIntakeEntry() {
     onSuccess: () => {
       // Invalidate all food intake queries to refresh data
       queryClient.invalidateQueries({ queryKey: foodIntakeKeys.all });
-
+      
       // Also invalidate specific patterns that might not be caught
-      queryClient.invalidateQueries({
+      queryClient.invalidateQueries({ 
         predicate: (query) => {
           // Check if query key starts with 'food-intakes'
-          return (
-            Array.isArray(query.queryKey) &&
-            query.queryKey[0] === "food-intakes"
-          );
-        },
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'food-intakes';
+        }
       });
-
+      
       // Force invalidate all queries to ensure chart updates
       queryClient.invalidateQueries();
-
+      
       toast.success("Food intake logged successfully!");
     },
     onError: (error: Error) => {
@@ -352,10 +349,7 @@ export function useCreateFoodEntry() {
 
       // Optimistically update with new entry
       queryClient.setQueryData(foodIntakeKeys.all, (old: any[]) => {
-        if (!old)
-          return [
-            { ...newEntry, id: `temp-${Date.now()}`, createdAt: new Date() },
-          ];
+        if (!old) return [{ ...newEntry, id: `temp-${Date.now()}`, createdAt: new Date() }];
         return [
           ...old,
           {
@@ -393,11 +387,8 @@ export function createFoodEntryFromEstimation(
   foodDescription: string,
   capturedDate: string
 ): EnhancedFoodEntryInput {
-  const portion = estimation.estimatedPortion || {
-    quantity: 1,
-    unit: "serving",
-  };
-
+  const portion = estimation.estimatedPortion || { quantity: 1, unit: "serving" };
+  
   return {
     mealType,
     food: foodDescription,

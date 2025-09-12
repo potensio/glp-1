@@ -77,6 +77,8 @@ export class FoodIntakeService {
     });
   }
 
+
+
   static async getFoodIntakesByProfile(profileId: string) {
     return await prisma.foodIntake.findMany({
       where: { profileId },
