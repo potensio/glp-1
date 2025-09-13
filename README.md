@@ -110,6 +110,11 @@ RESEND_API_KEY="your_resend_api_key_here"
 RESEND_FROM_EMAIL="noreply@yourdomain.com"
 ```
 
+### Contact Email
+```env
+NEXT_PUBLIC_CONTACT_EMAIL="contact@yourdomain.com"
+```
+
 ### File Upload (Vercel Blob)
 ```env
 BLOB_READ_WRITE_TOKEN="your_blob_token_here"

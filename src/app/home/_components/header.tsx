@@ -218,6 +218,12 @@ export default function Header() {
                   >
                     Account Settings
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex h-10 items-center hover:bg-muted px-4 rounded cursor-pointer"
+                    onSelect={() => handleNavigation("/contact")}
+                  >
+                    Contact Us
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
@@ -418,6 +424,12 @@ export default function Header() {
                   className="flex items-center w-full px-6 py-3 text-left text-secondary hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
                 >
                   <span className="text-sm">Account Settings</span>
+                </button>
+                <button
+                  onClick={() => handleNavigation("/contact")}
+                  className="flex items-center w-full px-6 py-3 text-left text-secondary hover:bg-gray-100/80 transition-colors touch-manipulation active:bg-gray-200/80"
+                >
+                  <span className="text-sm">Contact Us</span>
                 </button>
                 <button
                   onClick={() => {
