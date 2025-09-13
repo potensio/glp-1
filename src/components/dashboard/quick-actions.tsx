@@ -6,10 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { WeightDialogContent } from "../../app/home/_components/dialogs/weight-dialog";
 import { BloodPressureDialogContent } from "../../app/home/_components/dialogs/blood-pressure-dialog";
-import { MultiMealIntakeDialogContent } from "../../app/home/_components/dialogs/multi-meal-intake-dialog";
 import { Glp1DialogContent } from "../../app/home/_components/dialogs/glp1-dialog";
 import { ActivityDialogContent } from "../../app/home/_components/dialogs/activity-dialog";
 import { BloodSugarDialogContent } from "../../app/home/_components/dialogs/blood-sugar-dialog";
+import { BlankFoodDialog } from "./blank-food-dialog";
 import { RegistrationPopup } from "@/components/registration-popup";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -80,7 +80,7 @@ export const QuickActions = () => {
         );
       case "Food":
         return (
-          <MultiMealIntakeDialogContent
+          <BlankFoodDialog
             onSave={() => setOpenDialog(null)}
             onClose={() => setOpenDialog(null)}
           />

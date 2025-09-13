@@ -63,6 +63,14 @@ model FoodIntake {
   mealType     String
   food         String
   calories     Int
+  // Enhanced nutrition fields
+  protein      Float?   // protein in grams
+  carbs        Float?   // carbohydrates in grams
+  fat          Float?   // fat in grams
+  fiber        Float?   // fiber in grams
+  // Portion tracking
+  quantity     Float?   // quantity amount (e.g., 1.5)
+  unit         String?  // unit of measurement (e.g., "cup", "oz", "piece")
   capturedDate DateTime // date when the food was actually consumed
   dateCode     String   // date code in DDMMYYYY format for timezone-independent queries
   profileId    String

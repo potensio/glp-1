@@ -10,10 +10,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { mealType, food, calories, capturedDate } = await request.json();
+    const {
+      mealType,
+      food,
+      calories,
+      protein,
+      carbs,
+      fat,
+      fiber,
+      quantity,
+      unit,
+      capturedDate,
+      dateCode,
+    } = await request.json();
 
     // Validate required fields
-    if (!mealType || !food || typeof calories !== 'number') {
+    if (!mealType || !food || typeof calories !== "number") {
       return NextResponse.json(
         { error: "Missing required fields: mealType, food, calories" },
         { status: 400 }
@@ -22,17 +34,24 @@ export async function POST(request: NextRequest) {
 
     // Use service layer for business logic
     const capturedDateObj = capturedDate ? new Date(capturedDate) : new Date();
-    const dateCode = capturedDateObj.getDate().toString().padStart(2, '0') + 
-                     (capturedDateObj.getMonth() + 1).toString().padStart(2, '0') + 
-                     capturedDateObj.getFullYear().toString();
     
+    // Use client-provided dateCode or generate fallback if not provided
+    const finalDateCode = dateCode || 
+      `${capturedDateObj.getDate().toString().padStart(2, "0")}${(capturedDateObj.getMonth() + 1).toString().padStart(2, "0")}${capturedDateObj.getFullYear()}`;
+
     const foodIntake = await FoodIntakeService.createFoodIntake({
       mealType,
       food,
       calories,
+      protein,
+      carbs,
+      fat,
+      fiber,
+      quantity,
+      unit,
       capturedDate: capturedDateObj,
       profileId: user.id,
-      dateCode,
+      dateCode: finalDateCode,
     });
 
     return NextResponse.json(foodIntake, { status: 201 });
@@ -72,7 +91,7 @@ export async function DELETE(request: NextRequest) {
 
     // Get query parameters for date filtering
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date');
+    const date = searchParams.get("date");
 
     if (!date) {
       return NextResponse.json(
@@ -83,9 +102,10 @@ export async function DELETE(request: NextRequest) {
 
     // Generate dateCode from the date string (timezone-independent)
     const dateObj = new Date(date);
-    const dateCode = dateObj.getDate().toString().padStart(2, '0') + 
-                     (dateObj.getMonth() + 1).toString().padStart(2, '0') + 
-                     dateObj.getFullYear().toString();
+    const dateCode =
+      dateObj.getDate().toString().padStart(2, "0") +
+      (dateObj.getMonth() + 1).toString().padStart(2, "0") +
+      dateObj.getFullYear().toString();
 
     // Use service layer to clear food intakes by dateCode
     const result = await FoodIntakeService.clearFoodIntakesByDateCode(
@@ -93,9 +113,9 @@ export async function DELETE(request: NextRequest) {
       dateCode
     );
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: `Deleted ${result.count} food intake entries for ${date}`,
-      deletedCount: result.count 
+      deletedCount: result.count,
     });
   } catch (error) {
     console.error("Error deleting food intakes:", error);
@@ -121,9 +141,9 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters for date filtering
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const dateCode = searchParams.get('dateCode');
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const dateCode = searchParams.get("dateCode");
 
     // Use service layer for business logic
     let foodIntakes;
@@ -137,7 +157,7 @@ export async function GET(request: NextRequest) {
       // Parse the ISO date strings directly
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       // Validate that the dates are valid
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return NextResponse.json(
@@ -145,10 +165,10 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       // Set end date to end of day in UTC to include all entries for that date
       end.setUTCHours(23, 59, 59, 999);
-      
+
       foodIntakes = await FoodIntakeService.getFoodIntakesByDateRange(
         user.id,
         start,

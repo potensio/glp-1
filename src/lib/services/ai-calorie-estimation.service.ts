@@ -1,14 +1,30 @@
 interface CalorieEstimationRequest {
   foodDescription: string;
+  quantity?: number;
+  unit?: string;
+}
+
+interface NutritionBreakdown {
+  protein: number;  // grams
+  carbs: number;    // grams
+  fat: number;      // grams
+  fiber: number;    // grams
+}
+
+interface PortionSuggestion {
+  quantity: number;
+  unit: string;
+  description: string;
 }
 
 interface CalorieEstimationResponse {
   calories: number;
   confidence: number;
-  breakdown?: {
-    protein?: number;
-    carbs?: number;
-    fat?: number;
+  nutrition: NutritionBreakdown;
+  portionSuggestions: PortionSuggestion[];
+  estimatedPortion?: {
+    quantity: number;
+    unit: string;
   };
 }
 
@@ -39,23 +55,37 @@ class AICalorieEstimationService {
   }
 
   async estimateCalories(request: CalorieEstimationRequest): Promise<CalorieEstimationResponse> {
-    const prompt = `Analyze the following food description and provide a calorie estimation:
+    const quantityInfo = request.quantity && request.unit ? ` (${request.quantity} ${request.unit})` : '';
+    
+    const prompt = `Analyze the following food description and provide comprehensive nutritional information:
 
-"${request.foodDescription}"
+"${request.foodDescription}${quantityInfo}"
 
 Please respond with a JSON object containing:
 - calories: estimated total calories (number)
 - confidence: confidence level from 0-1 (number)
-- breakdown: object with protein, carbs, fat in grams (optional)
+- nutrition: object with protein, carbs, fat, fiber in grams (required)
+- portionSuggestions: array of 3-5 common portion options with quantity, unit, and description
+- estimatedPortion: best guess at the actual portion described (optional)
 
 Example response:
 {
   "calories": 350,
   "confidence": 0.8,
-  "breakdown": {
+  "nutrition": {
     "protein": 25,
     "carbs": 30,
-    "fat": 15
+    "fat": 15,
+    "fiber": 5
+  },
+  "portionSuggestions": [
+    { "quantity": 1, "unit": "cup", "description": "Standard cup serving" },
+    { "quantity": 0.5, "unit": "cup", "description": "Half cup" },
+    { "quantity": 100, "unit": "grams", "description": "100g portion" }
+  ],
+  "estimatedPortion": {
+    "quantity": 1,
+    "unit": "cup"
   }
 }
 
@@ -108,7 +138,14 @@ Only respond with valid JSON, no additional text.`;
       return {
         calories: Math.round(result.calories),
         confidence: Math.max(0, Math.min(1, result.confidence)),
-        breakdown: result.breakdown
+        nutrition: result.nutrition || {
+          protein: result.breakdown?.protein || 0,
+          carbs: result.breakdown?.carbs || 0,
+          fat: result.breakdown?.fat || 0,
+          fiber: result.breakdown?.fiber || 0
+        },
+        portionSuggestions: result.portionSuggestions || [],
+        estimatedPortion: result.estimatedPortion
       };
 
     } catch (error) {
@@ -120,7 +157,17 @@ Only respond with valid JSON, no additional text.`;
       return {
         calories: fallbackCalories,
         confidence: 0.3, // Low confidence for fallback
-        breakdown: undefined
+        nutrition: {
+          protein: Math.round(fallbackCalories * 0.15 / 4), // ~15% protein
+          carbs: Math.round(fallbackCalories * 0.50 / 4),   // ~50% carbs
+          fat: Math.round(fallbackCalories * 0.35 / 9),     // ~35% fat
+          fiber: Math.round(fallbackCalories * 0.02)        // ~2% fiber
+        },
+        portionSuggestions: [
+          { quantity: 1, unit: "serving", description: "Standard serving" },
+          { quantity: 0.5, unit: "serving", description: "Half serving" },
+          { quantity: 1.5, unit: "serving", description: "Large serving" }
+        ]
       };
     }
   }
@@ -165,4 +212,10 @@ Only respond with valid JSON, no additional text.`;
 export const aiCalorieEstimationService = new AICalorieEstimationService();
 
 // Export types
-export type { CalorieEstimationRequest, CalorieEstimationResponse, AIProvider };
+export type { 
+  CalorieEstimationRequest, 
+  CalorieEstimationResponse, 
+  NutritionBreakdown,
+  PortionSuggestion,
+  AIProvider 
+};
