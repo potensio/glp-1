@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
     // Ini aman, cuma optimize import bundling
     optimizePackageImports: ["recharts", "zod"],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.dribbble.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
