@@ -257,12 +257,12 @@ export default function LandingPage() {
                 Your Health Journey
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                The Health Tracking App That Actually Works
+                My Daily Health Journal: A Web-Based Dashboard That Actually
+                Works.
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Track your daily health journey with comprehensive tools for
-                GLP-1 users, diabetics, and anyone focused on wellness. Monitor
-                medications, weight, blood sugar, and more.
+                Track Your Health Anywhere. No App. No Frustration. Just
+                Results.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
