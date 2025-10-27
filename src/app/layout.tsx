@@ -18,7 +18,7 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "My Daily Health Journal",
   description:
-    "Track weight, blood pressure, blood sugar, medications, and more — designed for GLP‑1 users, diabetics, and anyone committed to better health.",
+    "Track weight, blood pressure, blood sugar, medications, and more — designed for GLP‑1 users, diabetics, and anyone committed to better health. My Daily Health Journal is a web-based health dashboard — no app required.",
 };
 
 export default function RootLayout({

@@ -240,7 +240,7 @@ export default function LandingPage() {
       </header>
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-20 md:py-32 lg:py-40 overflow-hidden">
+        <section className="w-full py-20 overflow-hidden">
           <div className="container px-4 md:px-6 relative mx-auto">
             <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
 
@@ -251,18 +251,18 @@ export default function LandingPage() {
               className="text-center max-w-3xl mx-auto mb-12"
             >
               <Badge
-                className="mb-4 rounded-full px-4 py-1.5 text-sm font-medium"
+                className="my-4 rounded-full px-4 py-1.5 text-sm font-medium bg-background"
                 variant="outline"
               >
-                Your Health Journey
+                Web-based health dashboard
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                The Health Tracking App That Actually Works
+                My Daily Health Journal: A Web-Based Dashboard That Actually
+                Works.
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Track your daily health journey with comprehensive tools for
-                GLP-1 users, diabetics, and anyone focused on wellness. Monitor
-                medications, weight, blood sugar, and more.
+                Track Your Health Anywhere. No App. No Frustration. Just
+                Results.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
@@ -271,7 +271,7 @@ export default function LandingPage() {
                   onClick={() => navigateBasedOnAuth()}
                 >
                   Start Tracking
-                  <ArrowRight className="ml-2 size-4" />
+                  <ArrowRight className="size-4" />
                 </Button>
                 <Button
                   size="lg"
@@ -322,7 +322,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="w-full py-20 md:py-32">
+        <section id="features" className="w-full py-20">
           <div className="container px-4 md:px-6 mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -376,7 +376,7 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works Section */}
-        <section className="w-full py-20 md:py-32 bg-muted/30 relative overflow-hidden">
+        <section className="w-full py-20 bg-muted/30 relative overflow-hidden">
           <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_40%,transparent_100%)]"></div>
 
           <div className="container px-4 md:px-6 mx-auto relative">
@@ -443,7 +443,7 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="w-full py-20 md:py-32">
+        <section id="testimonials" className="w-full py-20">
           <div className="container px-4 md:px-6 mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -535,7 +535,7 @@ export default function LandingPage() {
         {/* Pricing Section */}
         <section
           id="pricing"
-          className="w-full py-20 md:py-32 bg-muted/30 relative overflow-hidden"
+          className="w-full py-20 bg-muted/30 relative overflow-hidden"
         >
           <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_40%,transparent_100%)]"></div>
           <div className="container px-4 md:px-6 mx-auto relative">
@@ -658,7 +658,7 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <section id="faq" className="w-full py-20 md:py-32">
+        <section id="faq" className="w-full py-20">
           <div className="container px-4 md:px-6 mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -737,7 +737,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-20 md:py-32 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground relative overflow-hidden">
+        <section className="w-full py-20 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground relative overflow-hidden">
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
@@ -795,7 +795,8 @@ export default function LandingPage() {
               <p className="text-sm text-muted-foreground max-w-md">
                 Your comprehensive health tracking companion. Monitor GLP-1
                 medications, track vital health metrics, and achieve your
-                wellness goals with ease.
+                wellness goals with ease. My Daily Health Journal is a web-based
+                health dashboard — no app required.
               </p>
             </div>
 
