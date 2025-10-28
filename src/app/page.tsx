@@ -158,6 +158,14 @@ export default function LandingPage() {
             >
               FAQ
             </button>
+            <Link
+              href="https://blog.mydailyhealthjournal.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Blog
+            </Link>
           </nav>
           <div className="hidden md:flex gap-4 items-center">
             <Button
@@ -228,6 +236,15 @@ export default function LandingPage() {
               >
                 FAQ
               </button>
+              <Link
+                href="https://ap.mydailyhealthjournal.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2 text-sm font-medium text-left"
+              >
+                Blog
+              </Link>
               <div className="flex flex-col gap-2 pt-2 mb-4">
                 <Button className="rounded-full" onClick={navigateToRegister}>
                   Get Started
@@ -792,12 +809,19 @@ export default function LandingPage() {
                 </div>
                 <span>My Daily Health Journal</span>
               </div>
-              <p className="text-sm text-muted-foreground max-w-md">
+              <div className="text-sm text-muted-foreground max-w-md">
                 Your comprehensive health tracking companion. Monitor GLP-1
                 medications, track vital health metrics, and achieve your
-                wellness goals with ease. My Daily Health Journal is a web-based
-                health dashboard — no app required.
-              </p>
+                wellness goals with ease. My Daily Health Journal is a{" "}
+                <Link
+                  href="/not-an-app"
+                  target="_blank"
+                  className="text-foreground hover:underline"
+                >
+                  web-based health dashboard
+                </Link>{" "}
+                — no app required.
+              </div>
             </div>
 
             {/* Quick Links Section */}
@@ -818,6 +842,16 @@ export default function LandingPage() {
                     className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Sign up
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="https://ap.mydailyhealthjournal.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Blog
                   </Link>
                 </li>
               </ul>
