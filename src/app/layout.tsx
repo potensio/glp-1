@@ -52,8 +52,44 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "My Daily Health Journal",
+    "alternateName": ["Daily Health Journal", "Health Tracker", "GLP-1 Tracker"],
+    "description": "Track weight, blood pressure, blood sugar, medications, and more — designed for GLP‑1 users, diabetics, and anyone committed to better health.",
+    "url": "https://mydailyhealthjournal.com",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Daily health journal",
+      "GLP-1 medication tracking",
+      "Weight tracking",
+      "Blood pressure monitoring",
+      "Blood sugar tracking",
+      "Calorie logging",
+      "Health analytics"
+    ],
+    "publisher": {
+      "@type": "Organization",
+      "name": "My Daily Health Journal",
+      "url": "https://mydailyhealthjournal.com"
+    }
+  };
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         data-theme="light"
