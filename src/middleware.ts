@@ -66,7 +66,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow public access to root page and privacy page
-  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/privacy") {
+  if (
+    request.nextUrl.pathname === "/" ||
+    request.nextUrl.pathname === "/privacy"
+  ) {
     return NextResponse.next();
   }
 
@@ -85,6 +88,7 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/handler/:path*",
-    "/api/:path*",
+    // Exclude Stripe webhooks from middleware to allow signature verification
+    "/((?!api/stripe/webhooks).*)",
   ],
 };

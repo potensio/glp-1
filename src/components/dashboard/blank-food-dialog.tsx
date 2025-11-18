@@ -215,7 +215,7 @@ export function BlankFoodDialog({ onSave, onClose }: BlankFoodDialogProps) {
     if (!selectedMeal || !formData.name.trim() || !nutritionData) return;
 
     try {
-      // Generate dateCode using client-side local timezone in DDMMYYYY format
+      // Generate dateCode using client-side local timezone in DDMMYYYY formats
       const localDate = new Date(selectedDate);
       const day = localDate.getDate().toString().padStart(2, "0");
       const month = (localDate.getMonth() + 1).toString().padStart(2, "0");
