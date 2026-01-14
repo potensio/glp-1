@@ -88,6 +88,7 @@ export class StripeService {
         },
       ],
       mode: "subscription",
+      allow_promotion_codes: true,
       success_url: data.successUrl,
       cancel_url: data.cancelUrl,
       metadata: {
@@ -186,20 +187,20 @@ export class StripeService {
   private static async handleCheckoutCompleted(
     session: Stripe.Checkout.Session
   ) {
-    console.log('🛒 Processing checkout completion');
-    console.log('📋 Session metadata:', session.metadata);
-    console.log('🔗 Session subscription:', session.subscription);
-    
+    console.log("🛒 Processing checkout completion");
+    console.log("📋 Session metadata:", session.metadata);
+    console.log("🔗 Session subscription:", session.subscription);
+
     const { userId, planId } = session.metadata || {};
 
-    console.log('👤 User ID:', userId);
-    console.log('📦 Plan ID:', planId);
+    console.log("👤 User ID:", userId);
+    console.log("📦 Plan ID:", planId);
 
     if (!userId || !planId || !session.subscription) {
       console.error("❌ Missing metadata in checkout session:", {
         userId: !!userId,
         planId: !!planId,
-        subscription: !!session.subscription
+        subscription: !!session.subscription,
       });
       return;
     }
@@ -208,7 +209,7 @@ export class StripeService {
     const stripeSubscription = await stripe.subscriptions.retrieve(
       session.subscription as string,
       {
-        expand: ['default_payment_method']
+        expand: ["default_payment_method"],
       }
     );
 
@@ -273,11 +274,14 @@ export class StripeService {
     if (session.payment_method_types.includes("card")) {
       // Extract payment method details from Stripe subscription
       let cardMetadata = {};
-      
-      if (stripeSubscription.default_payment_method && 
-          typeof stripeSubscription.default_payment_method === 'object' &&
-          'card' in stripeSubscription.default_payment_method) {
-        const paymentMethod = stripeSubscription.default_payment_method as Stripe.PaymentMethod;
+
+      if (
+        stripeSubscription.default_payment_method &&
+        typeof stripeSubscription.default_payment_method === "object" &&
+        "card" in stripeSubscription.default_payment_method
+      ) {
+        const paymentMethod =
+          stripeSubscription.default_payment_method as Stripe.PaymentMethod;
         if (paymentMethod.card) {
           cardMetadata = {
             last4: paymentMethod.card.last4,
@@ -286,7 +290,7 @@ export class StripeService {
             exp_year: paymentMethod.card.exp_year,
             funding: paymentMethod.card.funding,
           };
-          console.log('💳 Card details extracted:', cardMetadata);
+          console.log("💳 Card details extracted:", cardMetadata);
         }
       }
 
@@ -310,7 +314,9 @@ export class StripeService {
             metadata: cardMetadata,
           },
         });
-        console.log(`Updated existing payment method ${existingPaymentMethod.id} for subscription ${subscription.id} with card details`);
+        console.log(
+          `Updated existing payment method ${existingPaymentMethod.id} for subscription ${subscription.id} with card details`
+        );
       } else {
         // Create new payment method with card details
         await prisma.paymentMethod.create({
@@ -323,7 +329,9 @@ export class StripeService {
             metadata: cardMetadata,
           },
         });
-        console.log(`Created new payment method for subscription ${subscription.id} with card details`);
+        console.log(
+          `Created new payment method for subscription ${subscription.id} with card details`
+        );
       }
     }
   }
