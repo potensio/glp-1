@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-export async function middleware(request: NextRequest) {
-  // Skip middleware for static assets only (not API routes)
+export async function proxy(request: NextRequest) {
+  // Skip proxy for static assets only (not API routes)
   if (
     request.nextUrl.pathname.startsWith("/_next/") ||
     (request.nextUrl.pathname.includes(".") &&
@@ -53,8 +53,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Authentication check already done above for auth routes
-
   // Protect /home and /billing routes - redirect to custom login if not authenticated
   if (
     request.nextUrl.pathname.startsWith("/home") ||
@@ -88,7 +86,6 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/handler/:path*",
-    // Exclude Stripe webhooks from middleware to allow signature verification
-    "/((?!api/stripe/webhooks).*)",
+    "/api/:path*",
   ],
 };
