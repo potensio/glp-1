@@ -37,11 +37,17 @@ export class StripeService {
     // Check if user already has a Stripe customer ID
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true },
+      select: { id: true, email: true, stripeCustomerId: true },
     });
 
-    // For now, create a new customer each time
-    // TODO: Add stripeCustomerId field to User model in schema
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Return existing Stripe customer ID if available
+    if (user.stripeCustomerId) {
+      return user.stripeCustomerId;
+    }
 
     // Create new Stripe customer
     const customer = await stripe.customers.create({
@@ -50,11 +56,11 @@ export class StripeService {
       metadata: { userId },
     });
 
-    // TODO: Save customer ID to user record when stripeCustomerId field is added
-    // await prisma.user.update({
-    //   where: { id: userId },
-    //   data: { stripeCustomerId: customer.id },
-    // });
+    // Save customer ID to user record
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId: customer.id },
+    });
 
     return customer.id;
   }
