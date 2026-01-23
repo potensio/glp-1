@@ -75,7 +75,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
       setError(
         error instanceof Error
           ? error.message
-          : "An error occurred during signup"
+          : "An error occurred during signup",
       );
     } finally {
       setIsLoading(false);
@@ -89,9 +89,12 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Let’s get to know you</h1>
+        <h1 className="text-2xl font-bold">Let's get to know you</h1>
         <p className="text-muted-foreground text-sm text-balance">
           Just a few details to personalize your experience.
+        </p>
+        <p className="text-sm font-medium">
+          Free to join. No credit card required.
         </p>
       </div>
 

@@ -50,7 +50,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
       setError(
         error instanceof Error
           ? error.message
-          : "An error occurred during login"
+          : "An error occurred during login",
       );
     } finally {
       setIsLoading(false);
@@ -64,9 +64,12 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-muted-foreground text-sm text-balance">
-          Enter your credentials to access your account
+        <h1 className="text-2xl font-bold leading-tight">Welcome back</h1>
+        <p className="text-sm font-medium">
+          Free to start. No credit card required.
+        </p>
+        <p className="text-muted-foreground text-sm">
+          Track trends, not just the scale.
         </p>
       </div>
 
@@ -120,7 +123,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
         <Link href="/register" className="underline underline-offset-4">
-          Join
+          Create your free account
         </Link>
       </div>
     </form>
