@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useEffect, useState } from "react";
 import {
-  Dialog,
+  Dialog, 
   DialogContent,
   DialogDescription,
   DialogFooter,
