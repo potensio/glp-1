@@ -123,12 +123,15 @@ export default function PlanCard() {
 
   // Define features for the premium plan
   const premiumFeatures = [
-    "Advance health tracking",
-    "Interactive daily journal",
-    "Google Calendar Integration",
-    "Medication Management",
-    "Tips & Trick",
-    "Health analytics export",
+const premiumFeatures = [
+  "Calorie counter (see why stalls happen)",
+  "GLP-1 tracker (dose + side effects)",
+  "Daily journal (symptoms + patterns)",
+  "Calendar (stay consistent)",
+  "Medication management",
+  "Export and print doctor-ready graphs",
+];
+,
   ];
 
   if (!premiumPlan) {
@@ -165,9 +168,13 @@ export default function PlanCard() {
             )}
           </h3>
           <div className="text-muted-foreground text-sm mb-7">
-            {premiumPlan.description ||
-              "Upgrade to premium for advanced features"}
-          </div>
+  {premiumPlan.description ||
+    "Upgrade to premium for advanced features"}
+</div>
+
+       <div className="text-sm font-medium text-foreground mb-4">
+  Free tracks weight, blood pressure, and blood sugar. Premium explains the trend with calories.
+</div>
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
